@@ -11,7 +11,7 @@ namespace Mabron.DiscordBots
     class CommandHandler
     {
         readonly DiscordSocketClient client;
-        CommandService commands;
+        readonly CommandService commands;
 
         public CommandHandler(DiscordSocketClient client, CommandService commands)
             => (this.client, this.commands) = (client, commands);

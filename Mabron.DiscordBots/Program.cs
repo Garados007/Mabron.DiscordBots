@@ -57,6 +57,9 @@ namespace Mabron.DiscordBots
             await scheduler.Start();
             await InitSchedules(scheduler);
 
+            Games.Werwolf.GameServer.Start();
+            MaxLib.WebServer.WebServerLog.LogPreAdded += WebServerLog_LogPreAdded;
+
             using var canceller = new CancellationTokenSource();
             _ = Task.Run(() =>
             {
@@ -70,6 +73,7 @@ namespace Mabron.DiscordBots
 
             await scheduler.Shutdown();
             Shop.ShopCommand.Dispose();
+            Games.Werwolf.GameServer.Stop();
         }
 
         private static async Task InitSchedules(IScheduler scheduler)
@@ -92,6 +96,13 @@ namespace Mabron.DiscordBots
         private static async Task Client_Log(LogMessage msg)
         {
             await Console.Out.WriteLineAsync($"[{DateTime.Now:G}] [{msg.Severity}] [{msg.Source}] {msg.Message} {msg.Exception}");
+        }
+
+        private static void WebServerLog_LogPreAdded(MaxLib.WebServer.ServerLogArgs eventArgs)
+        {
+            eventArgs.Discard = true;
+            Console.Out.WriteLine($"[{DateTime.Now:G}] [{eventArgs.LogItem.Type}] " +
+                $"[{eventArgs.LogItem.SenderType}] {eventArgs.LogItem.InfoType}: {eventArgs.LogItem.Information}");
         }
     }
 

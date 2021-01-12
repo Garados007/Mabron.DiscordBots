@@ -6,6 +6,7 @@ using Discord.WebSocket;
 
 namespace Mabron.DiscordBots.Games.Werwolf
 {
+    [Group("werwolf")]
     public class GameCommand : ModuleBase<SocketCommandContext>
     {
         [Command("start")]
@@ -17,21 +18,21 @@ namespace Mabron.DiscordBots.Games.Werwolf
             );
             var game = GameController.Current.GetGame(id)!;
             using var typing = Context.Channel.EnterTypingState();
-            var message = (SocketUserMessage)await ReplyAsync(
+            var message = game.Message = await Context.Channel.SendMessageAsync(
                 embed: GetGameEmbed(game)
             );
             CommandHandler.AddReactionHandler(message.Id, 
                 async (reaction, added) => 
                 {
                     var user = (SocketUser)reaction.User;
-                    if (user.IsBot)
+                    if (user.IsBot || !added)
                         return;
-                    if (added)
+                    if (reaction.Emote.Name == "\u2705")
                     {
                         if (game.AddParticipant(user))
                             await SendInvite(game, user);
                     }
-                    else
+                    else if (reaction.Emote.Name == "\u274C")
                     {
                         game.RemoveParticipant(user);
                     }
@@ -41,33 +42,50 @@ namespace Mabron.DiscordBots.Games.Werwolf
                             properties.Embed = GetGameEmbed(game);
                         }
                     );
+                    await message.RemoveReactionAsync(reaction.Emote, reaction.UserId);
                 });
 
-            await message.AddReactionAsync(Emote.Parse(":white_check_mark:"));
-            await message.AddReactionAsync(Emote.Parse(":x:"));
+            await message.AddReactionAsync(new Emoji("\u2705"));
+            await message.AddReactionAsync(new Emoji("\u274C"));
             await SendInvite(game, Context.Message.Author);
         }
 
-        Embed GetGameEmbed(GameRoom game)
+        public static Embed GetGameEmbed(GameRoom game)
         {
-            var fields = new List<EmbedFieldBuilder>();
-            fields.Add(new EmbedFieldBuilder
+            string GetName(ulong id)
             {
-                IsInline = false,
-                Name = "Teilnehmer",
-                Value = $"{game.Participants.Count + 1}",
-            });
-            fields.Add(new EmbedFieldBuilder
+                if (game.UserCache.TryGetValue(id, out SocketUser? user))
+                    return user.Username;
+                user = Program.DiscordClient?.GetUser(id);
+                if (user != null)
+                {
+                    game.UserCache.Add(id, user);
+                    return user.Username;
+                }
+                return $"User {id}";
+            }
+
+            var fields = new List<EmbedFieldBuilder>
             {
-                IsInline = true,
-                Name = $"<@{game.Leader}>",
-                Value = "Leiter",
-            });
+                new EmbedFieldBuilder
+                {
+                    IsInline = false,
+                    Name = "Teilnehmer",
+                    Value = $"{game.Participants.Count + 1}",
+                },
+                new EmbedFieldBuilder
+                {
+                    IsInline = true,
+                    Name = GetName(game.Leader),
+                    //Name = $"<@{game.Leader}>",
+                    Value = "Leiter",
+                }
+            };
             foreach (var user in game.Participants.Keys)
                 fields.Add(new EmbedFieldBuilder
                 {
                     IsInline = true,
-                    Name = $"<@{user}>",
+                    Name = GetName(user),
                     Value = "Spieler",
                 });
             return new EmbedBuilder
@@ -82,7 +100,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
         async Task SendInvite(GameRoom game, SocketUser user)
         {
             var urlBase = Program.Config?[0]["game.werwolf.urlbase"].String ?? "http://localhost/";
-            var url = $"{urlBase}/game/{GameController.Current.GetUserToken(game, user)}";
+            var url = $"{urlBase}game/{GameController.Current.GetUserToken(game, user)}";
             await user.SendMessageAsync(
                 embed: new EmbedBuilder
                 {
