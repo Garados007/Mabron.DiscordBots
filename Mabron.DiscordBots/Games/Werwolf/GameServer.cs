@@ -7,7 +7,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -205,7 +204,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                         {
                             writer.WriteStartObject(id.ToString()); // id
                             writer.WriteString("name", option.Name);
-                            writer.WriteStartArray();
+                            writer.WriteStartArray("user");
                             foreach (var vuser in option.Users)
                                 writer.WriteNumberValue(vuser);
                             writer.WriteEndArray();
