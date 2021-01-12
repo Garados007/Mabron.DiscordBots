@@ -18,6 +18,8 @@ namespace Mabron.DiscordBots
     {
         public static DiscordSocketClient? DiscordClient { get; private set; }
 
+        public static IniFile? Config { get; private set; }
+
         static async Task Main(string[] args)
         {
             if (!File.Exists("config.ini"))
@@ -25,7 +27,7 @@ namespace Mabron.DiscordBots
                 Console.Error.WriteLine("config.ini not found");
                 return;
             }
-            var config = new IniParser().Parse("config.ini");
+            var config = Config = new IniParser().Parse("config.ini");
             var token = config[0].GetString("token", null);
             if (token == null)
             {

@@ -15,9 +15,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="config.ini">
+    <!--<None Update="config.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
+    </None>-->
   </ItemGroup>
 
 </Project>
