@@ -1,0 +1,103 @@
+body {
+  font-family: sans-serif;
+}
+.frame-game-outer {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+.frame-game-left {
+  width: 20em;
+  overflow-y: auto;
+  height: 100%;
+}
+
+.user-frame {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin: 0.5em 1em;
+  border: 0.3em solid #888;
+  padding: 0.5em 0.8em;
+  border-radius: 0.8em;
+}
+.user-image-box {
+  padding-right: 0.5em;
+}
+.user-image img {
+  width: 3em;
+  height: 3em;
+  border-radius: 40%;
+  transition: border-radius 0.25s;
+}
+.user-frame:hover .user-image img {
+  border-radius: 0;
+}
+.user-frame .user-name {
+  font-size: 1.2em;
+}
+
+.editor-role-box {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  width: 30em;
+  background-color: #ddd;
+  margin: 0.5em 0;
+  padding: 0.5em 0.8em;
+
+}
+.editor-role-name {
+  flex-grow: 1;
+  flex-shrink: 1;
+}
+.editor-role-box input {
+  width: 3em;
+  font-family: inherit;
+}
+.editor-role-box .editor-role-count {
+  padding-left: 0.5em;
+}
+
+.editor-bar-box {
+  margin: 4em 1em;
+  position: relative;
+}
+.editor-bar-fill-outer {
+  margin: 2em 0;
+  position: relative;
+  height: 2em;
+  background-color: #999;
+}
+.editor-bar-fill-inner {
+  position: absolute;
+  height: 100%;
+  background-color: #333;
+  transition: width 0.3s;
+}
+.editor-bar-player-box, .editor-bar-roles-box {
+  position: absolute;
+  top: 0;
+  width: 0;
+  transition: left 0.3s;
+}
+.editor-bar-player-box .line, .editor-bar-roles-box .line {
+  position: absolute;
+  height: 2.5em;
+  bottom: -2em;
+  border: 0.1em solid black;
+  transform: translateX(-50%);
+}
+.editor-bar-player-box .number, .editor-bar-roles-box .number {
+  position: absolute;
+  bottom: 0.6em;
+  transform: translateX(-50%);
+}
+.editor-bar-player-box .line {
+  bottom: unset;;
+  top: 0em;
+}
+.editor-bar-player-box .number {
+  bottom: unset;
+  top: 2.6em;
+}

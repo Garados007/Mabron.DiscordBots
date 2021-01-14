@@ -49,6 +49,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
             server.AddWebService(searcher);
             server.AddWebService(new HttpDirectoryMapper(false));
             server.AddWebService(new DisallowRootAccess());
+            server.AddWebService(new GameService());
 
             // init api
             var api = new RestApiService("api");

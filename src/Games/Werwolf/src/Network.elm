@@ -110,6 +110,7 @@ convertEditGameConfig config =
                 []
                 conf
             |> List.intersperse ","
+            |> (::) "config="
             |> String.concat
         )
         config.newConfig

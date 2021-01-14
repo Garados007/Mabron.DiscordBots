@@ -8,6 +8,7 @@ import Data
 import Dict exposing (Dict)
 import Network exposing (NetworkResponse(..))
 import Browser.Navigation exposing (Key)
+import Time exposing (Posix)
 
 type alias Model =
     { game: Maybe Data.GameUserResult
@@ -15,6 +16,9 @@ type alias Model =
     , errors: List String
     , token: String
     , key: Key
+    , now: Posix
+    -- local editor
+    , editor: Dict String Int
     }
 
 init : String -> Key -> Model
@@ -24,6 +28,8 @@ init token key =
     , errors = []
     , token = token
     , key = key
+    , now = Time.millisToPosix 0
+    , editor = Dict.empty
     }
 
 applyResponse : NetworkResponse -> Model -> Model
