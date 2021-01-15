@@ -33,6 +33,9 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
         public virtual IEnumerable<int> GetResults()
         {
+            var hasEntries = Options.Any();
+            if (!hasEntries)
+                return Options.Select(x => x.id);
             int max = Options.Max(x => x.option.Users.Count);
             return Options.Where(x => x.option.Users.Count == max)
                 .Select(x => x.id);

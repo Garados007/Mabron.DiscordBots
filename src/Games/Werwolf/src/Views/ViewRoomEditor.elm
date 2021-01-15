@@ -2,18 +2,18 @@ module Views.ViewRoomEditor exposing (..)
 
 import Data
 import Model exposing (Model)
-import Network exposing (NetworkRequest(..))
+import Network exposing (NetworkRequest(..), EditGameConfig)
 
 import Html exposing (Html, div, text)
 import Html.Attributes as HA exposing (class)
 import Html.Events as HE
 import Dict exposing (Dict)
 import Maybe.Extra
-import Network exposing (EditGameConfig)
 
 type Msg
     = SetBuffer (Dict String Int) EditGameConfig
     | SendConf EditGameConfig
+    | StartGame
     | Noop
 
 view : Dict String Data.RoleTemplate -> Data.Game -> Bool 
@@ -148,5 +148,18 @@ view roles game editable buffer =
                     , newDeadCanSeeAllRoles = Just new
                     }
             ]
+        , if editable
+            then div 
+                [ HA.classList
+                    [ ("start-button", True)
+                    , Tuple.pair "disabled"
+                        <| maxRoles /= maxPlayer
+                    ]
+                , HE.onClick <| if maxRoles /= maxPlayer 
+                    then Noop 
+                    else StartGame
+                ]
+                [ text "Start" ]
+            else text ""
         ]
 

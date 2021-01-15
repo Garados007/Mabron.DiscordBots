@@ -6,6 +6,8 @@ import Network exposing (NetworkResponse)
 
 import Views.ViewUserList
 import Views.ViewRoomEditor
+import Views.ViewNoGame
+import Views.ViewGamePhase
 
 import Browser
 import Html exposing (Html, div, text)
@@ -17,14 +19,18 @@ import Debug.Extra
 import Time exposing (Posix)
 import Maybe.Extra
 import Dict exposing (Dict)
+import Views.ViewGamePhase
+import Maybe.Extra
 
 type Msg
     = Response NetworkResponse
     | SetUrl Url
     | SetTime Posix
+    | FetchData
     | Noop
     | Init
     | WrapEditor Views.ViewRoomEditor.Msg
+    | WrapPhase Views.ViewGamePhase.Msg
 
 main : Program () Model Msg
 main = Browser.application
@@ -43,7 +49,14 @@ main = Browser.application
                 , HA.attribute "property" "stylesheet"
                 , HA.attribute "href" "/content/games/werwolf/css/style.css"
                 ] []
-            , tryViewGameFrame model
+            , tryViewGamePhase model
+                |> Maybe.Extra.orElseLazy
+                    (\() -> tryViewGameFrame model)
+                |> Maybe.Extra.orElseLazy
+                    (\() -> Just
+                        <| Views.ViewNoGame.view
+                        <| model.game == Nothing || model.roles == Nothing
+                    )
                 |> Maybe.withDefault (text "")
             , Debug.Extra.viewModel model
             ]
@@ -91,6 +104,45 @@ viewGameFrame model roles game user =
             ]
         ]
 
+tryViewGamePhase : Model -> Maybe (Html Msg)
+tryViewGamePhase model =
+    Maybe.Extra.andThen2
+        (\result roles ->
+            Maybe.Extra.andThen2
+                (\game user ->
+                    Maybe.map
+                        (\phase -> 
+                            viewGamePhase model.token roles game user phase
+                        )
+                        game.phase
+                )
+                result.game
+                result.user
+        )
+        model.game
+        model.roles
+
+viewGamePhase : String
+    -> Dict String Data.RoleTemplate
+    -> Data.Game
+    -> Int
+    -> Data.GamePhase
+    -> Html Msg
+viewGamePhase token roles game user phase =
+    div [ class "frame-game-outer" ]
+        [ div [ class "frame-game-left" ]
+            [ Views.ViewUserList.view game user roles
+            ]
+        , div [ class "frame-game-body", class "top" ]
+            [ Html.map WrapPhase
+                <| Views.ViewGamePhase.view
+                    token
+                    game
+                    phase
+                <| user == game.leader
+            ]
+        ]
+
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
     case msg of
@@ -119,9 +171,12 @@ update msg model =
         SetTime now ->
             Tuple.pair
                 { model | now = now }
-            <| Cmd.map Response
-            <| Network.executeRequest
-            <| Network.GetGame model.token
+                Cmd.none
+        FetchData ->
+            Tuple.pair model
+                <| Cmd.map Response
+                <| Network.executeRequest
+                <| Network.GetGame model.token
         WrapEditor (Views.ViewRoomEditor.SetBuffer buffer req) ->
             Tuple.pair
                 { model | editor = buffer }
@@ -133,12 +188,34 @@ update msg model =
                 <| Cmd.map Response
                 <| Network.executeRequest
                 <| Network.PostGameConfig model.token req
+        WrapEditor Views.ViewRoomEditor.StartGame ->
+            Tuple.pair model
+                <| Cmd.map Response
+                <| Network.executeRequest
+                <| Network.GetGameStart model.token
         WrapEditor Views.ViewRoomEditor.Noop ->
             Tuple.pair model Cmd.none
+        WrapPhase Views.ViewGamePhase.Noop ->
+            Tuple.pair model Cmd.none
+        WrapPhase (Views.ViewGamePhase.Send req) ->
+            Tuple.pair model
+                <| Cmd.map Response
+                <| Network.executeRequest req
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Time.every 3000 SetTime
+    Sub.batch
+        -- [ Time.every 1000 SetTime
+        [ Sub.none
+        , if model.game 
+                |> Maybe.map 
+                    (\result -> result.game /= Nothing &&
+                        result.user /= Nothing
+                    )
+                |> Maybe.withDefault True
+            then Time.every 3000 (always FetchData)
+            else Time.every 20000 (always FetchData)
+        ]
 
 getId : Url -> Maybe String
 getId =

@@ -1,15 +1,41 @@
 body {
   font-family: sans-serif;
 }
+.frame-status-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100vw;
+  height: 100vh;
+}
+.frame-status {
+  margin: 1em;
+  font-size: 2em;
+  border: 0.3em solid #888;
+  border-radius: 0.8em;
+  padding: 0.5em 0.8em;
+}
 .frame-game-outer {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
+  width: 100vw;
+  height: 100vh;
 }
 .frame-game-left {
   width: 20em;
   overflow-y: auto;
   height: 100%;
+}
+.frame-game-body {
+  flex-grow: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.frame-game-body.top {
+  align-items: unset;
 }
 
 .user-frame {
@@ -37,11 +63,14 @@ body {
   font-size: 1.2em;
 }
 
+.editor {
+  width: 35em;
+  max-width: 100%;
+}
 .editor-role-box {
   display: flex;
   flex-direction: row;
   align-items: center;
-  width: 30em;
   background-color: #ddd;
   margin: 0.5em 0;
   padding: 0.5em 0.8em;
@@ -54,6 +83,7 @@ body {
 .editor-role-box input {
   width: 3em;
   font-family: inherit;
+  box-sizing: border-box;
 }
 .editor-role-box .editor-role-count {
   padding-left: 0.5em;
@@ -100,4 +130,93 @@ body {
 .editor-bar-player-box .number {
   bottom: unset;
   top: 2.6em;
+}
+.editor .start-button {
+  margin: 2em 0 0;
+  padding: 0.5em 0.8em;
+  background-color: #ddd;
+  cursor: pointer;
+  text-align: center;
+  font-size: 1.1em;
+  border-radius: 0.4em;
+}
+.editor .start-button.disabled {
+  cursor: not-allowed;
+}
+
+.phase-header,
+.phase-controls {
+  border: 0.3em solid #888;
+  padding: 1.5em;
+  width: 50em;
+  max-width: 100%;
+  margin: 1em 0;
+  box-sizing: border-box;
+}
+.phase-header .title {
+  font-size: 2.5em;
+  text-align: center;
+}
+.phase-votings {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: space-evenly;
+}
+.voting-box {
+  margin: 1em;
+  border: 0.3em solid #888;
+  width: 25em;
+  max-width: 100%;
+}
+.voting-box .voting-header {
+  border-bottom: 0.1em solid #888;
+}
+.voting-header .title {
+  font-size: 1.5em;
+  padding: 0.5em 0.8em;
+  text-align: center;
+}
+.voting-header .status {
+  display: flex;
+}
+.voting-header .status > div {
+  flex-grow: 1;
+  padding: 0.2em;
+  color: red;
+}
+.voting-header .can-vote-state {
+  text-align: right;
+}
+.voting-header .started-state.stated,
+.voting-header .can-vote-state.can-vote {
+  color: green;
+}
+.voting-box .button {
+  margin: 0.5em;
+  padding: 0.5em 0.8em;
+  text-align: center;
+  border: 0.1em solid #888;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+.voting-box .button:hover {
+  background-color: #aaa;
+}
+.voting-controls {
+  border-top: 0.1em solid #888;
+}
+.phase-controls {
+  padding: 0;
+  display: flex;
+}
+.phase-controls .button {
+  flex-grow: 1;
+  text-align: center;
+  padding: 1em 1.5em;
+  font-size: 1.3em;
+  cursor: pointer;
+}
+.phase-controls .button:hover {
+  background-color: #aaa;
 }
