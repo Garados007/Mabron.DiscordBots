@@ -101,6 +101,8 @@ namespace Mabron.DiscordBots
         private static void WebServerLog_LogPreAdded(MaxLib.WebServer.ServerLogArgs eventArgs)
         {
             eventArgs.Discard = true;
+            if (eventArgs.LogItem.Type == MaxLib.WebServer.ServerLogType.Debug || eventArgs.LogItem.Type == MaxLib.WebServer.ServerLogType.Information)
+                return;
             Console.Out.WriteLine($"[{DateTime.Now:G}] [{eventArgs.LogItem.Type}] " +
                 $"[{eventArgs.LogItem.SenderType}] {eventArgs.LogItem.InfoType}: {eventArgs.LogItem.Information}");
         }
