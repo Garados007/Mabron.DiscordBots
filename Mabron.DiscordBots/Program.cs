@@ -11,12 +11,15 @@ using Microsoft.Extensions.DependencyInjection;
 using Quartz;
 using Quartz.Impl;
 using Quartz.Logging;
+using Discord.Rest;
 
 namespace Mabron.DiscordBots
 {
     class Program
     {
         public static DiscordSocketClient? DiscordClient { get; private set; }
+
+        public static DiscordRestClient? DiscordRestClient { get; private set; }
 
         public static IniFile? Config { get; private set; }
 
@@ -35,8 +38,11 @@ namespace Mabron.DiscordBots
                 return;
             }
 
-            LogProvider.SetCurrentLogProvider(new Logger());
+            using var restClient = DiscordRestClient = new DiscordRestClient();
+            restClient.Log += Client_Log;
+            await restClient.LoginAsync(TokenType.Bot, token);
 
+            LogProvider.SetCurrentLogProvider(new Logger());
             using var client = DiscordClient = new DiscordSocketClient();
             client.Log += Client_Log;
             var commands = new CommandService();

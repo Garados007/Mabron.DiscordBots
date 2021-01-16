@@ -23,6 +23,13 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
         public abstract bool CanVote(Role voter);
 
+        public IEnumerable<Role> GetVoter(GameRoom game)
+        {
+            foreach (var role in game.Participants.Values)
+                if (role != null && CanVote(role))
+                    yield return role;
+        }
+
         public virtual int? GetResult()
         {
             var options = GetResults().ToArray();

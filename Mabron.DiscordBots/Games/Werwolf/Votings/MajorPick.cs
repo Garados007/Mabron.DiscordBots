@@ -9,8 +9,6 @@ namespace Mabron.DiscordBots.Games.Werwolf.Votings
         {
         }
 
-        public override string Name => "Auswahl des Kandidaten durch den Bürgermeister";
-
         public override bool CanView(Role viewer)
         {
             return true;
@@ -24,6 +22,10 @@ namespace Mabron.DiscordBots.Games.Werwolf.Votings
         public override void Execute(GameRoom game, ulong id, Role role)
         {
             role.IsAlive = false;
+            if (role.IsLoved)
+                foreach (var other in game.AliveRoles)
+                    if (other.IsLoved)
+                        other.IsAlive = false;
         }
     }
 }

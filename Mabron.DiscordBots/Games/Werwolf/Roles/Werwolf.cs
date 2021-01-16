@@ -8,7 +8,7 @@
 
         public override Role CreateNew()
         {
-            return CreateNew();
+            return new Werwolf();
         }
     }
 }

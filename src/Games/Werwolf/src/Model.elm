@@ -45,6 +45,9 @@ applyResponse response model =
             }
         RespError error ->
             { model
-            | errors = error :: model.errors
+            | errors = 
+                if List.member error model.errors
+                then model.errors
+                else error :: model.errors
             }
         RespNoError -> model

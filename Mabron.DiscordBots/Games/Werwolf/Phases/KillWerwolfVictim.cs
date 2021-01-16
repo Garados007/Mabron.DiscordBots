@@ -12,6 +12,10 @@
                 {
                     role.IsAlive = false;
                     role.IsSelectedByWerewolves = false;
+                    if (role.IsLoved)
+                        foreach (var other in game.AliveRoles)
+                            if (other.IsLoved)
+                                other.IsAlive = false;
                 }
             }
         }

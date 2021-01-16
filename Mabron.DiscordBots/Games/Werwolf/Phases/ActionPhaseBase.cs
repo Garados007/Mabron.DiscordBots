@@ -13,6 +13,7 @@
 
         public sealed override void Init(GameRoom game)
         {
+            base.Init(game);
             Execute(game);
         }
     }

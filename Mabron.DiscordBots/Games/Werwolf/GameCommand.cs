@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
@@ -14,7 +16,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
         public async Task StartAsync()
         {
             var id = GameController.Current.CreateGame(
-                Context.Message.Author
+                GameUser.Create(Context.Message.Author)
             );
             var game = GameController.Current.GetGame(id)!;
             using var typing = Context.Channel.EnterTypingState();
@@ -24,17 +26,51 @@ namespace Mabron.DiscordBots.Games.Werwolf
             CommandHandler.AddReactionHandler(message.Id, 
                 async (reaction, added) => 
                 {
-                    var user = (SocketUser)reaction.User;
-                    if (user.IsBot || !added)
+                    if (!added)
                         return;
+                    var gameUser = GameUser.Get(reaction.UserId);
+                    if (gameUser == null)
+                    {
+                        IUser user = reaction.User.IsSpecified
+                            ? (SocketUser)reaction.User
+                            : Program.DiscordClient!.GetUser(reaction.UserId);
+                        if (user == null)
+                        {
+                            user = await reaction.Channel.GetUserAsync(reaction.UserId);
+                        }
+                        if (user == null)
+                        {
+                            user = Context.Guild.GetUser(reaction.UserId);
+                        }
+                        if (user == null)
+                        {
+                            user = await Program.DiscordRestClient!.GetUserAsync(reaction.UserId);
+                        }
+                        if (user == null)
+                        {
+                            await reaction.Channel.SendMessageAsync($"Sorry <@!{reaction.UserId}> but it seems I have no stats for you. Do you have written something" +
+                                $"in this text channel before? Just write `!werwolf join {GetPublicId(game.Id)}` to join the game. Next time you can use " +
+                                $"the reactions like any other user - I promise!.");
+                            await message.RemoveReactionAsync(reaction.Emote, reaction.UserId);
+                            return;
+                        }
+                        if (user.IsBot)
+                            return;
+                        gameUser = GameUser.Create(user);
+                    }
                     if (reaction.Emote.Name == "\u2705")
                     {
-                        if (game.AddParticipant(user))
-                            await SendInvite(game, user);
+                        if (game.Participants.Count >= 500)
+                        {
+                            await reaction.Channel.SendMessageAsync($"I am sorry <@!{reaction.UserId}> but it seems that the game is full.");
+                            return;
+                        }
+                        if (game.AddParticipant(gameUser))
+                            await SendInvite(game, gameUser);
                     }
                     else if (reaction.Emote.Name == "\u274C")
                     {
-                        game.RemoveParticipant(user);
+                        game.RemoveParticipant(gameUser);
                     }
                     await message.ModifyAsync(
                         properties =>
@@ -47,19 +83,83 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
             await message.AddReactionAsync(new Emoji("\u2705"));
             await message.AddReactionAsync(new Emoji("\u274C"));
-            await SendInvite(game, Context.Message.Author);
+            await SendInvite(game, GameUser.Create(Context.Message.Author));
+            //if (!Context.Guild.HasAllMembers)
+            //    _ = Context.Guild.DownloadUsersAsync();
+        }
+
+        [Command("join")]
+        [Summary("Join an existing Werwolf game")]
+        public async Task JoinAsync(string id)
+        {
+            var decodedId = GetLocalId(id);
+            GameRoom? game = decodedId != null ? GameController.Current.GetGame(decodedId.Value) : null;
+            using var typing = Context.Channel.EnterTypingState();
+            if (game == null)
+            {
+                await ReplyAsync($"Game with ID {id} not found.");
+                return;
+            }
+            if (Context.User.IsBot)
+                return;
+            if (game.Participants.Count >= 500)
+            {
+                await ReplyAsync("Game is full");
+                return;
+            }
+            var gameUser = GameUser.Create(Context.User);
+            if (game.AddParticipant(gameUser))
+                await SendInvite(game, gameUser);
+            if (game.Message != null)
+                await game.Message.ModifyAsync(
+                    properties =>
+                    {
+                        properties.Embed = GetGameEmbed(game);
+                    }
+                );
+        }
+
+        private static string GetPublicId(int id)
+        {
+            var bytes = BitConverter.GetBytes(id);
+            var mask = new[] { 0b01010101, 0b10101010, 0b11001100, 0b00110011 };
+            for (int i = 0; i < 4; ++i)
+                bytes[i] = (byte)(bytes[i] ^ mask[i]);
+            var encoded = Convert.ToBase64String(bytes);
+            return encoded.TrimEnd('=');
+        }
+
+        private static int? GetLocalId(string rawId)
+        {
+            try
+            {
+                var pad = 4 - (rawId.Length % 4);
+                if (pad == 4)
+                    pad = 0;
+                rawId = rawId.PadRight(rawId.Length + pad, '=');
+                var bytes = Convert.FromBase64String(rawId);
+                var mask = new[] { 0b01010101, 0b10101010, 0b11001100, 0b00110011 };
+                for (int i = 0; i < 4; ++i)
+                    bytes[i] = (byte)(bytes[i] ^ mask[i]);
+                return BitConverter.ToInt32(bytes, 0);
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         public static Embed GetGameEmbed(GameRoom game)
         {
             string GetName(ulong id)
             {
-                if (game.UserCache.TryGetValue(id, out SocketUser? user))
+                if (game.UserCache.TryGetValue(id, out GameUser? user))
                     return user.Username;
-                user = Program.DiscordClient?.GetUser(id);
+                var discordUser = Program.DiscordClient?.GetUser(id);
+                user = discordUser != null ? GameUser.Create(discordUser) : null;
                 if (user != null)
                 {
-                    game.UserCache.Add(id, user);
+                    game.UserCache.TryAdd(id, user);
                     return user.Username;
                 }
                 return $"User {id}";
@@ -71,7 +171,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                 {
                     IsInline = false,
                     Name = "Teilnehmer",
-                    Value = $"{game.Participants.Count + 1}",
+                    Value = $"{game.Participants.Count + 1}/500",
                 },
                 new EmbedFieldBuilder
                 {
@@ -92,16 +192,23 @@ namespace Mabron.DiscordBots.Games.Werwolf
             {
                 Title = "Werwölfe von Düsterwald",
                 Description = "Reagiere mit :white_check_mark: um an dem Spiel " +
-                    "teilzunehmen. Reagiere mit :x: um wieder auszutreten.",
+                    "teilzunehmen. Reagiere mit :x: um wieder auszutreten. " +
+                    $"Alternativ kannst du auch mit `!werwolf join {GetPublicId(game.Id)}` " +
+                    $"antworten.",
                 Fields = fields
             }.Build();
         }
     
-        async Task SendInvite(GameRoom game, SocketUser user)
+        async Task SendInvite(GameRoom game, GameUser user)
         {
             var urlBase = Program.Config?[0]["game.werwolf.urlbase"].String ?? "http://localhost/";
             var url = $"{urlBase}game/{GameController.Current.GetUserToken(game, user)}";
-            await user.SendMessageAsync(
+            IUser discordUser = Program.DiscordClient!.GetUser(user.DiscordId);
+            if (discordUser == null)
+            {
+                discordUser = await Program.DiscordRestClient!.GetUserAsync(user.DiscordId);
+            }
+            await discordUser.SendMessageAsync(
                 embed: new EmbedBuilder
                 {
                     Title = "Willkommen bei Werwölfe von Düsterwald",

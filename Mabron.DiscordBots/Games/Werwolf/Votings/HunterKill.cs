@@ -1,22 +1,24 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
 
 namespace Mabron.DiscordBots.Games.Werwolf.Votings
 {
-    public class DailyVote : PlayerVotingBase
+    public class HunterKill : PlayerVotingBase
     {
-        public DailyVote(GameRoom game, IEnumerable<ulong>? participants = null) 
+        public HunterKill(GameRoom game, IEnumerable<ulong>? participants = null) 
             : base(game, participants)
         {
         }
 
         public override bool CanView(Role viewer)
         {
-            return true;
+            return viewer is Roles.Hunter;
         }
 
         public override bool CanVote(Role voter)
         {
-            return voter.IsAlive;
+            return voter is Roles.Hunter hunter && !hunter.IsAlive && !hunter.HasKilled;
         }
 
         public override void Execute(GameRoom game, ulong id, Role role)

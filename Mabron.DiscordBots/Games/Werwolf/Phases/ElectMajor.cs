@@ -2,7 +2,7 @@
 
 namespace Mabron.DiscordBots.Games.Werwolf.Phases
 {
-    public class ElectMajor : DayPhaseBase
+    public class ElectMajor : Phase, IDayPhase<ElectMajor>
     {
         public override string Name => "Bürgermeisterwahl";
 
@@ -24,6 +24,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Phases
                 var ids = em.GetResultUserIds().ToArray();
                 if (ids.Length > 0)
                     AddVoting(new Votings.ElectMajor(game, ids));
+                RemoveVoting(voting);
             }
         }
     }

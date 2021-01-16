@@ -12,6 +12,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
         public virtual void Init(GameRoom game)
         {
+            autostart = game.AutostartVotings;
         }
 
         public virtual bool IsGamePhase => true;
@@ -19,10 +20,12 @@ namespace Mabron.DiscordBots.Games.Werwolf
         readonly List<Voting> votings = new List<Voting>();
         public IEnumerable<Voting> Votings => votings;
 
+        private bool autostart;
 
         protected virtual void AddVoting(Voting voting)
         {
             votings.Add(voting);
+            voting.Started = autostart;
         }
 
         public virtual void RemoveVoting(Voting voting)
@@ -44,31 +47,45 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
         public static IEnumerable<Phase> GetPhases()
         {
+            yield return new Phases.AmorPick();
+
+            yield return new Phases.OraclePick();
             yield return new Phases.WerwolfPhase();
+
             yield return new Phases.KillWerwolfVictim();
+            yield return new Phases.HunterKill();
+            yield return new Phases.InheritMajor();
+
             yield return new Phases.ElectMajor();
             yield return new Phases.DailyVictimElection();
+
+            yield return new Phases.HunterKill();
+            yield return new Phases.InheritMajor();
         }
 
         public static Phase? GetNextPhase(GameRoom game)
         {
-            var phases = GetPhases().Union(GetPhases())
-                .Where(x => x.CanExecute(game));
             bool currentPhaseFound = false;
-            foreach (var phase in phases)
-            {
-                if (game.Phase == null || currentPhaseFound)
+            for (int i = 0; i < 2; ++i)
+                foreach (var phase in GetPhases())
                 {
-                    if (!phase.IsGamePhase)
+                    if (phase == game.Phase)
                     {
-                        // this phase executes some stuff
-                        phase.Init(game); // execute their routine
+                        currentPhaseFound = true;
+                        continue;
                     }
-                    else return phase;
+                    if (!phase.CanExecute(game))
+                        continue;
+                    if (game.Phase == null || currentPhaseFound)
+                    {
+                        if (!phase.IsGamePhase)
+                        {
+                            // this phase executes some stuff
+                            phase.Init(game); // execute their routine
+                        }
+                        else return phase;
+                    }
                 }
-                if (phase == game.Phase)
-                    currentPhaseFound = true;
-            }
             return null;
         }
 

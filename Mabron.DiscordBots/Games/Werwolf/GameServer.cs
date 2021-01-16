@@ -1,4 +1,4 @@
-﻿using Discord.WebSocket;
+﻿using LiteDB;
 using MaxLib.WebServer;
 using MaxLib.WebServer.Api.Rest;
 using MaxLib.WebServer.Post;
@@ -16,6 +16,9 @@ namespace Mabron.DiscordBots.Games.Werwolf
     {
         private static Server? server;
 
+        private static LiteDatabase? database;
+        public static ILiteCollection<GameUser>? User { get; private set; }
+
         class PostRule : ApiRule
         {
             public string Target { get; }
@@ -25,15 +28,21 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
             public override bool Check(RestQueryArgs args)
             {
-                if (args.Post.Data == null)
-                    return false;
-                args.ParsedArguments[Target] = args.Post.Data;
-                return true;
+                if (args.Post.Data is UrlEncodedData data)
+                {
+                    args.ParsedArguments[Target] = data;
+                    return true;
+                }
+                else return false;
             }
         }
 
         public static void Start()
         {
+            database = new LiteDatabase("game.werwolf.litedb");
+            User = database.GetCollection<GameUser>("user");
+            User.EnsureIndex(x => x.DiscordId, true);
+
             var port = Program.Config?[0]["game.werwolf.server.port"]?.Int16 ?? 6712;
             var config = new WebServerSettings(port, 5000);
             server = new Server(config);
@@ -166,12 +175,12 @@ namespace Mabron.DiscordBots.Games.Werwolf
             if (result != null)
             {
                 var (game, user) = result.Value;
-                if (!game.Participants.TryGetValue(user.Id, out Role? ownRole))
+                if (!game.Participants.TryGetValue(user.DiscordId, out Role? ownRole))
                     ownRole = null;
 
-                static bool CanViewVoting(GameRoom game, SocketUser user, Role? ownRole, Voting voting)
+                static bool CanViewVoting(GameRoom game, GameUser user, Role? ownRole, Voting voting)
                 {
-                    if (game.Leader == user.Id)
+                    if (game.Leader == user.DiscordId)
                         return true;
                     if (ownRole == null)
                         return false;
@@ -200,6 +209,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                         writer.WriteString("name", voting.Name);
                         writer.WriteBoolean("started", voting.Started);
                         writer.WriteBoolean("can-vote", ownRole != null && voting.CanVote(ownRole));
+                        writer.WriteNumber("max-voter", voting.GetVoter(game).Count());
                         writer.WriteStartObject("options"); // options
                         foreach (var (id, option) in voting.Options)
                         {
@@ -219,22 +229,32 @@ namespace Mabron.DiscordBots.Games.Werwolf
                 }
 
                 writer.WriteStartObject("participants");
-                foreach (var participant in game.Participants)
+                foreach (var participant in game.Participants.ToArray())
                 {
                     if (participant.Value == null)
                         writer.WriteNull(participant.Key.ToString());
                     else
                     {
-                        var seenRole = game.Leader == user.Id || participant.Key == user.Id ||
+                        var seenRole = game.Leader == user.DiscordId || participant.Key == user.DiscordId ||
                                 (ownRole != null && game.DeadCanSeeAllRoles && !ownRole.IsAlive)?
                             participant.Value :
                             ownRole != null ?
                             participant.Value.ViewRole(ownRole) :
                             null;
+                        var loved = 
+                            (game.Leader == user.DiscordId || 
+                                participant.Key == user.DiscordId ||
+                                (ownRole != null && game.DeadCanSeeAllRoles && !ownRole.IsAlive)
+                            ) && 
+                            (ownRole != null ? 
+                                participant.Value.ViewLoved(ownRole) : 
+                                participant.Value.IsLoved
+                            );
 
                         writer.WriteStartObject(participant.Key.ToString());
                         writer.WriteBoolean("alive", participant.Value.IsAlive);
                         writer.WriteBoolean("major", participant.Value.IsMajor);
+                        writer.WriteBoolean("loved", loved);
                         writer.WriteString("role", seenRole?.GetType().Name);
                         writer.WriteEndObject();
                     }
@@ -242,26 +262,28 @@ namespace Mabron.DiscordBots.Games.Werwolf
                 writer.WriteEndObject();
 
                 writer.WriteStartObject("user");
-                foreach (var (id, entry) in game.UserCache)
+                foreach (var (id, entry) in game.UserCache.ToArray())
                 {
                     writer.WriteStartObject($"{id}");
                     writer.WriteString("name", entry.Username);
-                    writer.WriteString("img", entry.GetAvatarUrl(size: 128) ?? entry.GetDefaultAvatarUrl());
+                    writer.WriteString("img", entry.Image);
                     writer.WriteEndObject();
                 }
                 writer.WriteEndObject();
 
                 writer.WriteStartObject("config");
-                foreach (var (role, amount) in game.RoleConfiguration)
+                foreach (var (role, amount) in game.RoleConfiguration.ToArray())
                 {
                     writer.WriteNumber(role.GetType().Name, amount);
                 }
                 writer.WriteEndObject();
 
                 writer.WriteBoolean("dead-can-see-all-roles", game.DeadCanSeeAllRoles);
+                writer.WriteBoolean("autostart-votings", game.AutostartVotings);
+                writer.WriteBoolean("autofinish-votings", game.AutoFinishVotings);
 
                 writer.WriteEndObject();
-                writer.WriteNumber("user", user.Id);
+                writer.WriteNumber("user", user.DiscordId);
             }
             else
             {
@@ -289,7 +311,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
             {
                 var (game, user) = result.Value;
 
-                static string? Set(GameRoom game, SocketUser user, UrlEncodedData post)
+                static string? Set(GameRoom game, GameUser user, UrlEncodedData post)
                 {
                     if (game.IsRunning)
                         return "cannot change settings of running game";
@@ -298,6 +320,8 @@ namespace Mabron.DiscordBots.Games.Werwolf
                         var newLeader = game.Leader;
                         Dictionary<Role, int>? newConfig = null;
                         var deadCanSeeRoles = game.DeadCanSeeAllRoles;
+                        var autostartVotings = game.AutostartVotings;
+                        var autoFinishVotings = game.AutoFinishVotings;
 
                         if (post.Parameter.TryGetValue("leader", out string? value))
                         {
@@ -326,11 +350,21 @@ namespace Mabron.DiscordBots.Games.Werwolf
                             deadCanSeeRoles = bool.Parse(value);
                         }
 
+                        if (post.Parameter.TryGetValue("autostart-votings", out value))
+                        {
+                            autostartVotings = bool.Parse(value);
+                        }
+
+                        if (post.Parameter.TryGetValue("autofinish-votings", out value))
+                        {
+                            autoFinishVotings = bool.Parse(value);
+                        }
+
                         // input is valid use the new data
                         if (game.Leader != newLeader)
                         {
-                            game.Participants.Add(game.Leader, null);
-                            game.Participants.Remove(newLeader);
+                            game.Participants.TryAdd(game.Leader, null);
+                            game.Participants!.Remove(newLeader, out _);
                             game.Leader = newLeader;
                             _ = game.Message?.ModifyAsync(x => x.Embed = GameCommand.GetGameEmbed(game));
                         }
@@ -338,9 +372,11 @@ namespace Mabron.DiscordBots.Games.Werwolf
                         {
                             game.RoleConfiguration.Clear();
                             foreach (var (k, p) in newConfig)
-                                game.RoleConfiguration.Add(k, p);
+                                game.RoleConfiguration.TryAdd(k, p);
                         }
                         game.DeadCanSeeAllRoles = deadCanSeeRoles;
+                        game.AutostartVotings = autostartVotings;
+                        game.AutoFinishVotings = autoFinishVotings;
                     }
                     catch (Exception e)
                     {
@@ -349,7 +385,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                     return null;
                 }
 
-                if (user.Id == game.Leader)
+                if (user.DiscordId == game.Leader)
                 {
                     writer.WriteString("error", Set(game, user, post));
                 }
@@ -385,7 +421,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                     return "token not found";
 
                 var (game, user) = result.Value;
-                if (user.Id != game.Leader)
+                if (user.DiscordId != game.Leader)
                     return "you are not the leader of the group";
 
                 if (game.IsRunning)
@@ -394,8 +430,12 @@ namespace Mabron.DiscordBots.Games.Werwolf
                 if (!game.FullConfiguration)
                     return "some roles are missing or there are to much roles defined";
 
+                
                 var random = new Random();
-                var roles = game.RoleConfiguration.SelectMany(x => Enumerable.Repeat(x.Key, x.Value)).ToList();
+                var roles = game.RoleConfiguration
+                    .SelectMany(x => Enumerable.Repeat(x.Key, x.Value))
+                    .Select(x => x.CreateNew())
+                    .ToList();
                 var players = game.Participants.Keys.ToArray();
 
                 foreach (var player in players)
@@ -434,7 +474,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                     return "token not found";
 
                 var (game, user) = result.Value;
-                if (user.Id != game.Leader)
+                if (user.DiscordId != game.Leader)
                     return "you are not the leader of the group";
 
                 var voting = game.Phase?.Votings.Where(x => x.Id == vid).FirstOrDefault();
@@ -478,13 +518,16 @@ namespace Mabron.DiscordBots.Games.Werwolf
                 if (voting == null)
                     return "no voting exists";
 
-                if (!game.Participants.TryGetValue(user.Id, out Role? ownRole))
+                if (!game.Participants.TryGetValue(user.DiscordId, out Role? ownRole))
                     ownRole = null;
                 if (ownRole == null || !voting.CanVote(ownRole))
                     return "you are not allowed to vote";
 
                 if (!voting.Started)
                     return "voting is not started";
+
+                if (voting.Options.Any(x => x.option.Users.Contains(user.DiscordId)))
+                    return "already voted";
 
                 var option = voting.Options
                     .Where(x => x.id == id)
@@ -494,10 +537,26 @@ namespace Mabron.DiscordBots.Games.Werwolf
                 if (option == null)
                     return "option not found";
 
-                if (option.Users.Contains(user.Id))
-                    return "already voted";
+                option.Users.Add(user.DiscordId);
 
-                option.Users.Add(user.Id);
+                if (game.AutoFinishVotings && voting.GetVoter(game).Count() == voting.Options.Sum(x => x.option.Users.Count))
+                {
+                    var vote = voting.GetResult();
+                    if (vote != null)
+                    {
+                        voting.Execute(game, vote.Value);
+                        game.Phase!.RemoveVoting(voting);
+
+                        if (new WinCondition().Check(game))
+                        {
+                            game.StopGame();
+                        }
+                    }
+                    else
+                    {
+                        game.Phase!.ExecuteMultipleWinner(voting, game);
+                    }
+                }
 
                 return null;
             }
@@ -525,7 +584,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                     return "token not found";
 
                 var (game, user) = result.Value;
-                if (user.Id != game.Leader)
+                if (user.DiscordId != game.Leader)
                     return "you are not the leader of the group";
 
                 var voting = game.Phase?.Votings.Where(x => x.Id == vid).FirstOrDefault();
@@ -577,7 +636,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                     return "token not found";
 
                 var (game, user) = result.Value;
-                if (user.Id != game.Leader)
+                if (user.DiscordId != game.Leader)
                     return "you are not the leader of the group";
 
                 if (game.Phase == null)
@@ -611,7 +670,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                     return "token not found";
 
                 var (game, user) = result.Value;
-                if (user.Id != game.Leader)
+                if (user.DiscordId != game.Leader)
                     return "you are not the leader of the group";
 
                 if (!game.IsRunning)

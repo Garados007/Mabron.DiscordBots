@@ -8,6 +8,7 @@ import Views.ViewUserList
 import Views.ViewRoomEditor
 import Views.ViewNoGame
 import Views.ViewGamePhase
+import Views.ViewErrors
 
 import Browser
 import Html exposing (Html, div, text)
@@ -31,6 +32,7 @@ type Msg
     | Init
     | WrapEditor Views.ViewRoomEditor.Msg
     | WrapPhase Views.ViewGamePhase.Msg
+    | WrapError Int
 
 main : Program () Model Msg
 main = Browser.application
@@ -58,6 +60,8 @@ main = Browser.application
                         <| model.game == Nothing || model.roles == Nothing
                     )
                 |> Maybe.withDefault (text "")
+            , Views.ViewErrors.view model.errors
+                |> Html.map WrapError
             , Debug.Extra.viewModel model
             ]
         }
@@ -139,7 +143,8 @@ viewGamePhase token roles game user phase =
                     token
                     game
                     phase
-                <| user == game.leader
+                    (user == game.leader)
+                    user
             ]
         ]
 
@@ -201,6 +206,20 @@ update msg model =
             Tuple.pair model
                 <| Cmd.map Response
                 <| Network.executeRequest req
+        WrapError index ->
+            Tuple.pair
+                { model 
+                | errors = 
+                    List.filterMap
+                        (\(ind, entry) ->
+                            if ind /= index
+                            then Just entry
+                            else Nothing
+                        )
+                    <| List.indexedMap Tuple.pair
+                    <| model.errors
+                }
+                Cmd.none
 
 subscriptions : Model -> Sub Msg
 subscriptions model =

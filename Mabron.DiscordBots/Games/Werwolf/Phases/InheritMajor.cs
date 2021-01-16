@@ -1,8 +1,9 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace Mabron.DiscordBots.Games.Werwolf.Phases
 {
-    public class InheritMajor : Phase
+    public class InheritMajor : SingleVotingPhase<Votings.InheritMajor>
     {
         public override string Name => "Vererbung des Bürgermeisters";
 
@@ -13,20 +14,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Phases
                 .Any();
         }
 
-        public override void Init(GameRoom game)
-        {
-            base.Init(game);
-            AddVoting(new Votings.InheritMajor(game));
-        }
-
-        public override void ExecuteMultipleWinner(Voting voting, GameRoom game)
-        {
-            if (voting is Votings.InheritMajor im)
-            {
-                var ids = im.GetResultUserIds().ToArray();
-                if (ids.Length > 0)
-                    AddVoting(new Votings.InheritMajor(game, ids));
-            }
-        }
+        protected override Votings.InheritMajor Create(GameRoom game, IEnumerable<ulong>? ids = null)
+            => new Votings.InheritMajor(game, ids);
     }
 }

@@ -11,7 +11,7 @@
 
         public override Role ViewRole(Role viewer)
         {
-            if (viewer is WerwolfBase)
+            if (viewer is WerwolfBase || viewer is Girl)
                 return new Werwolf();
             return base.ViewRole(viewer);
         }

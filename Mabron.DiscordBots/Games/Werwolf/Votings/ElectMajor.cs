@@ -4,8 +4,6 @@ namespace Mabron.DiscordBots.Games.Werwolf.Votings
 {
     public class ElectMajor : PlayerVotingBase
     {
-        public override string Name => "Wahl des Bürgermeisters";
-
         public ElectMajor(GameRoom game, IEnumerable<ulong>? participants = null)
             : base(game, participants)
         {

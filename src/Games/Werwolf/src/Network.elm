@@ -2,6 +2,7 @@ module Network exposing
     ( EditGameConfig
     , NetworkRequest (..)
     , NetworkResponse (..)
+    , editGameConfig
     , executeRequest
     )
 
@@ -89,10 +90,21 @@ getGame token =
         , expect = Http.expectJson identity Data.decodeGameUserResult
         }
 
+editGameConfig : EditGameConfig
+editGameConfig =
+    { newLeader = Nothing
+    , newConfig = Nothing
+    , newDeadCanSeeAllRoles = Nothing
+    , autostartVotings = Nothing
+    , autofinishVotings = Nothing
+    }
+
 type alias EditGameConfig =
     { newLeader: Maybe Int
     , newConfig: Maybe (Dict String Int)
     , newDeadCanSeeAllRoles: Maybe Bool
+    , autostartVotings: Maybe Bool
+    , autofinishVotings: Maybe Bool
     }
 
 convertEditGameConfig : EditGameConfig -> String
@@ -119,6 +131,16 @@ convertEditGameConfig config =
             if new then "true" else "false"
         )
         config.newDeadCanSeeAllRoles
+    , Maybe.map
+        (\new -> "autostart-votings=" ++
+            if new then "true" else "false"        
+        )
+        config.autostartVotings
+    , Maybe.map
+        (\new -> "autofinish-votings=" ++
+            if new then "true" else "false"
+        )
+        config.autofinishVotings
     ]
     |> List.filterMap identity
     |> List.intersperse "&"

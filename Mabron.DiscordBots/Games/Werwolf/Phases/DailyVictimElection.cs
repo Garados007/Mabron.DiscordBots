@@ -2,7 +2,7 @@
 
 namespace Mabron.DiscordBots.Games.Werwolf.Phases
 {
-    public class DailyVictimElection : DayPhaseBase
+    public class DailyVictimElection : Phase, IDayPhase<DailyVictimElection>
     {
         public override string Name => "Tag: Dorfwahl";
 
@@ -24,12 +24,14 @@ namespace Mabron.DiscordBots.Games.Werwolf.Phases
                 var ids = dv.GetResultUserIds().ToArray();
                 if (ids.Length > 0)
                     AddVoting(new Votings.MajorPick(game, ids));
+                RemoveVoting(voting);
             }
             if (voting is Votings.MajorPick mp)
             {
                 var ids = mp.GetResultUserIds().ToArray();
                 if (ids.Length > 0)
                     AddVoting(new Votings.MajorPick(game, ids));
+                RemoveVoting(voting);
             }
         }
     }

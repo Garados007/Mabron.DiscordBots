@@ -2,7 +2,7 @@ module Views.ViewRoomEditor exposing (..)
 
 import Data
 import Model exposing (Model)
-import Network exposing (NetworkRequest(..), EditGameConfig)
+import Network exposing (NetworkRequest(..), EditGameConfig, editGameConfig)
 
 import Html exposing (Html, div, text)
 import Html.Attributes as HA exposing (class)
@@ -28,10 +28,9 @@ view roles game editable buffer =
                 Just new ->
                     SetBuffer
                         (Dict.insert id new buffer)
-                        { newLeader = Nothing
-                        , newConfig = Just
+                        { editGameConfig
+                        | newConfig = Just
                             <| Dict.insert id new buffer
-                        , newDeadCanSeeAllRoles = Nothing
                         }
         
         viewSingleRole : String -> Html Msg
@@ -48,6 +47,7 @@ view roles game editable buffer =
                         [ HA.type_ "number"
                         , HA.min "0"
                         , HA.step "1"
+                        , HA.max "500"
                         , HA.value
                             <| String.fromInt
                             <| Maybe.withDefault 0
@@ -130,6 +130,7 @@ view roles game editable buffer =
                         <| if editable
                             then onChange
                             else always Noop
+                    , HA.disabled <| not editable
                     ] []
                 , Html.span [] [ text title ]
                 ]
@@ -143,9 +144,20 @@ view roles game editable buffer =
             [ viewCheckbox "Tote können alle Rollen sehen"
                 game.deadCanSeeAllRoles
                 <| \new -> SendConf
-                    { newLeader = Nothing
-                    , newConfig = Nothing
-                    , newDeadCanSeeAllRoles = Just new
+                    { editGameConfig
+                    | newDeadCanSeeAllRoles = Just new
+                    }
+            , viewCheckbox "Votings automatisch starten"
+                game.autostartVotings
+                <| \new -> SendConf
+                    { editGameConfig
+                    | autostartVotings = Just new
+                    }
+            , viewCheckbox "Votings automatisch beenden"
+                game.autofinishVotings
+                <| \new -> SendConf
+                    { editGameConfig
+                    | autofinishVotings = Just new
                     }
             ]
         , if editable

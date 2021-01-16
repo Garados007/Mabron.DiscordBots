@@ -14,8 +14,8 @@ type Msg
     = Noop
     | Send NetworkRequest
 
-view : String -> Data.Game -> Data.GamePhase -> Bool -> Html Msg
-view token game phase isLeader =
+view : String -> Data.Game -> Data.GamePhase -> Bool -> Int -> Html Msg
+view token game phase isLeader myId =
     let
         viewPhaseHeader : Html Msg
         viewPhaseHeader =
@@ -59,8 +59,12 @@ view token game phase isLeader =
                     <| List.map
                         (\(oid, option) -> 
                             div 
-                                [ class "voting-option"
-                                , class "button"
+                                [ HA.classList
+                                    [ ("voting-option", True)
+                                    , ("button", True)
+                                    , Tuple.pair "voted"
+                                        <| List.member myId option.user
+                                    ]
                                 , HA.title <|
                                     if List.isEmpty option.user
                                     then "Niemand hat bisher so abgestimmt"
@@ -79,7 +83,19 @@ view token game phase isLeader =
                                         then Send <| GetVote token voting.id oid
                                         else Noop
                                 ]
-                                [ text option.name ]
+                                [ div 
+                                    [ class "bar" 
+                                    , HA.style "width"
+                                        <|  ( String.fromFloat
+                                                <| 100 *
+                                                    (toFloat <| List.length option.user) /
+                                                    (toFloat voting.maxVoter)
+                                            )
+                                        ++ "%"
+                                    ]
+                                    []
+                                , Html.span [] [ text option.name ]
+                                ]
                         )
                     <| Dict.toList voting.options
                 , if isLeader

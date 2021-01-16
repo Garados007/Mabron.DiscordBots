@@ -1,19 +1,18 @@
-﻿using Discord.WebSocket;
-using System;
+﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
 
 namespace Mabron.DiscordBots.Games.Werwolf.Votings
 {
     public abstract class PlayerVotingBase : Voting
     {
-        readonly Dictionary<int, (ulong id, VoteOption opt)> options
-            = new Dictionary<int, (ulong id, VoteOption opt)>();
+        protected readonly ConcurrentDictionary<int, (ulong id, VoteOption opt)> options
+            = new ConcurrentDictionary<int, (ulong id, VoteOption opt)>();
 
         public override IEnumerable<(int id, VoteOption option)> Options
             => options.Select(x => (x.Key, x.Value.opt));
+
+        public override string Name => "Wähle einen Spieler";
 
         public PlayerVotingBase(GameRoom game, IEnumerable<ulong>? participants = null)
         {
@@ -23,10 +22,10 @@ namespace Mabron.DiscordBots.Games.Werwolf.Votings
                 .Select(x => x.Key);
             foreach (var id in participants)
             {
-                var name = game.UserCache.TryGetValue(id, out SocketUser? user) ?
+                var name = game.UserCache.TryGetValue(id, out GameUser? user) ?
                     user.Username :
                     $"User {id}";
-                options.Add(index++, (id, new VoteOption(name)));
+                options.TryAdd(index++, (id, new VoteOption(name)));
             }
         }
 

@@ -22,11 +22,20 @@ view game myId roles =
                         <| List.intersperse " "
                         <| List.filterMap identity
                         [ player.role
+                            |> Maybe.map
+                                (\rid ->
+                                    Dict.get rid roles
+                                        |> Maybe.map .name
+                                        |> Maybe.withDefault rid
+                                )
                             |> Maybe.withDefault "???"
                             |> Just
                         , if player.alive
                             then Nothing
                             else Just "(tot)"
+                        , if player.loved
+                            then Just "(verliebt)"
+                            else Nothing
                         , if player.major
                             then Just "(Bürgermeister)"
                             else Nothing

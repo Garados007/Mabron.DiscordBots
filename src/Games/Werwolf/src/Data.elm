@@ -65,6 +65,8 @@ type alias Game =
     , user: Dict Int GameUser
     , config: Dict String Int
     , deadCanSeeAllRoles: Bool
+    , autostartVotings: Bool
+    , autofinishVotings: Bool
     }
 
 type alias GamePhase =
@@ -77,6 +79,7 @@ type alias GameVoting =
     , name: String
     , started: Bool
     , canVote: Bool
+    , maxVoter: Int
     , options: Dict Int GameVotingOption
     }
 
@@ -88,6 +91,7 @@ type alias GameVotingOption =
 type alias GameParticipant =
     { alive: Bool
     , major: Bool
+    , loved: Bool
     , role: Maybe String
     }
 
@@ -112,6 +116,7 @@ decodeGameUserResult =
                                 |> required "name" JD.string
                                 |> required "started" JD.bool
                                 |> required "can-vote" JD.bool
+                                |> required "max-voter" JD.int
                                 |> required "options"
                                     (JD.succeed GameVotingOption
                                         |> required "name" JD.string
@@ -127,6 +132,7 @@ decodeGameUserResult =
                     (JD.succeed GameParticipant
                         |> required "alive" JD.bool
                         |> required "major" JD.bool
+                        |> required "loved" JD.bool
                         |> required "role" (JD.nullable JD.string)
                         |> JD.nullable
                         |> JD.dict
@@ -141,6 +147,8 @@ decodeGameUserResult =
                     )
                 |> required "config" (JD.dict JD.int)
                 |> required "dead-can-see-all-roles" JD.bool
+                |> required "autostart-votings" JD.bool
+                |> required "autofinish-votings" JD.bool
                 |> JD.nullable
             )
         |> required "user" (JD.nullable JD.int)

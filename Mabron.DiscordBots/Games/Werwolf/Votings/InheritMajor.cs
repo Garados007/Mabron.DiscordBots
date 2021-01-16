@@ -14,8 +14,6 @@ namespace Mabron.DiscordBots.Games.Werwolf.Votings
             return role.IsAlive && !role.IsMajor;
         }
 
-        public override string Name => "Bürgermeister vererben.";
-
         public override bool CanView(Role viewer)
         {
             return viewer.IsMajor;

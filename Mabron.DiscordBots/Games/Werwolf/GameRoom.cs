@@ -1,5 +1,5 @@
 using Discord.Rest;
-using Discord.WebSocket;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -17,40 +17,44 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
         public Phase? Phase { get; private set; }
 
-        public Dictionary<ulong, Role?> Participants { get; }
+        public ConcurrentDictionary<ulong, Role?> Participants { get; }
 
-        public Dictionary<ulong, SocketUser> UserCache { get; }
+        public ConcurrentDictionary<ulong, GameUser> UserCache { get; }
 
-        public Dictionary<Role, int> RoleConfiguration { get; }
+        public ConcurrentDictionary<Role, int> RoleConfiguration { get; }
 
         public bool DeadCanSeeAllRoles { get; set; } = false;
 
-        public GameRoom(int id, SocketUser leader)
+        public bool AutostartVotings { get; set; } = false;
+
+        public bool AutoFinishVotings { get; set; } = false;
+
+        public GameRoom(int id, GameUser leader)
         {
             Id = id;
-            Leader = leader.Id;
-            Participants = new Dictionary<ulong, Role?>();
-            UserCache = new Dictionary<ulong, SocketUser>
+            Leader = leader.DiscordId;
+            Participants = new ConcurrentDictionary<ulong, Role?>();
+            UserCache = new ConcurrentDictionary<ulong, GameUser>()
             {
-                [leader.Id] = leader
+                [leader.DiscordId] = leader
             };
-            RoleConfiguration = new Dictionary<Role, int>();
+            RoleConfiguration = new ConcurrentDictionary<Role, int>();
         }
 
-        public bool AddParticipant(SocketUser user)
+        public bool AddParticipant(GameUser user)
         {
-            if (Leader == user.Id || Participants.ContainsKey(user.Id))
+            if (Leader == user.DiscordId || Participants.ContainsKey(user.DiscordId))
                 return false;
 
-            Participants.Add(user.Id, null);
-            UserCache[user.Id] = user;
+            Participants.TryAdd(user.DiscordId, null);
+            UserCache[user.DiscordId] = user;
             return true;
         }
 
-        public void RemoveParticipant(SocketUser user)
+        public void RemoveParticipant(GameUser user)
         {
-            if (Participants.Remove(user.Id))
-                UserCache.Remove(user.Id);
+            if (Participants!.Remove(user.DiscordId, out _))
+                UserCache.Remove(user.DiscordId, out _);
         }
 
         public IEnumerable<Role> AliveRoles
@@ -59,7 +63,11 @@ namespace Mabron.DiscordBots.Games.Werwolf
         public static IEnumerable<Role> GetRoleTemplates()
         {
             yield return new Roles.Villager();
+            yield return new Roles.Hunter();
             yield return new Roles.Werwolf();
+            yield return new Roles.Oracle();
+            yield return new Roles.Girl();
+            yield return new Roles.Amor();
         }
 
         public bool FullConfiguration => RoleConfiguration.Values.Sum() == Participants.Count;
