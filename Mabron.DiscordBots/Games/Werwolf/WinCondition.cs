@@ -11,6 +11,10 @@ namespace Mabron.DiscordBots.Games.Werwolf
             foreach (var condition in GetConditions())
                 if (condition(game))
                     return true;
+            if (game.Theme != null)
+                foreach (var condition in game.Theme.GetWinConditions())
+                    if (condition(game))
+                        return true;
             return false;
         }
 
@@ -36,6 +40,5 @@ namespace Mabron.DiscordBots.Games.Werwolf
                         return false;
             return true;
         }
-
     }
 }

@@ -30,6 +30,7 @@ type Msg
     | FetchData
     | Noop
     | Init
+    | WrapUser Views.ViewUserList.Msg
     | WrapEditor Views.ViewRoomEditor.Msg
     | WrapPhase Views.ViewGamePhase.Msg
     | WrapError Int
@@ -91,12 +92,13 @@ tryViewGameFrame model =
 viewGameFrame : Model
     -> Dict String Data.RoleTemplate
     -> Data.Game
-    -> Int
+    -> String
     -> Html Msg
 viewGameFrame model roles game user =
     div [ class "frame-game-outer" ]
         [ div [ class "frame-game-left" ]
-            [ Views.ViewUserList.view game user roles
+            [ Html.map WrapUser
+                <| Views.ViewUserList.view model.token game user roles
             ]
         , div [ class "frame-game-body" ]
             [ Html.map WrapEditor
@@ -129,13 +131,14 @@ tryViewGamePhase model =
 viewGamePhase : String
     -> Dict String Data.RoleTemplate
     -> Data.Game
-    -> Int
+    -> String
     -> Data.GamePhase
     -> Html Msg
 viewGamePhase token roles game user phase =
     div [ class "frame-game-outer" ]
         [ div [ class "frame-game-left" ]
-            [ Views.ViewUserList.view game user roles
+            [ Html.map WrapUser
+                <| Views.ViewUserList.view token game user roles
             ]
         , div [ class "frame-game-body", class "top" ]
             [ Html.map WrapPhase
@@ -182,6 +185,12 @@ update msg model =
                 <| Cmd.map Response
                 <| Network.executeRequest
                 <| Network.GetGame model.token
+        WrapUser (Views.ViewUserList.Noop) ->
+            Tuple.pair model Cmd.none
+        WrapUser (Views.ViewUserList.Send req) ->
+            Tuple.pair model
+                <| Cmd.map Response
+                <| Network.executeRequest req
         WrapEditor (Views.ViewRoomEditor.SetBuffer buffer req) ->
             Tuple.pair
                 { model | editor = buffer }

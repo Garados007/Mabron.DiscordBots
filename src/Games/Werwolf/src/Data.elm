@@ -30,39 +30,17 @@ decodeRoleTemplates =
         |> required "description" JD.string
         |> JD.dict
 
-mapIntDicts : Decoder (Dict String a) -> Decoder (Dict Int a)
-mapIntDicts =
-    JD.andThen
-        (\dict ->
-            case Dict.foldl
-                (\key value result ->
-                    case result of
-                        Ok d ->
-                            case String.toInt key of
-                                Just k -> Ok <| Dict.insert k value d
-                                Nothing -> Err
-                                    <| "Cannot convert key to int: "
-                                    ++ key
-                        Err e -> Err e
-                )
-                (Ok Dict.empty)
-                dict
-            of
-                Ok d -> JD.succeed d
-                Err e -> JD.fail e
-        )
-
 type alias GameUserResult =
     { game: Maybe Game
-    , user: Maybe Int
+    , user: Maybe String
     }
 
 type alias Game =
-    { leader: Int
+    { leader: String
     , running: Bool
     , phase: Maybe GamePhase
-    , participants: Dict Int (Maybe GameParticipant)
-    , user: Dict Int GameUser
+    , participants: Dict String (Maybe GameParticipant)
+    , user: Dict String GameUser
     , config: Dict String Int
     , deadCanSeeAllRoles: Bool
     , autostartVotings: Bool
@@ -75,17 +53,17 @@ type alias GamePhase =
     }
 
 type alias GameVoting =
-    { id: Int
+    { id: String
     , name: String
     , started: Bool
     , canVote: Bool
     , maxVoter: Int
-    , options: Dict Int GameVotingOption
+    , options: Dict String GameVotingOption
     }
 
 type alias GameVotingOption =
     { name: String
-    , user: List Int
+    , user: List String
     }
 
 type alias GameParticipant =
@@ -105,14 +83,14 @@ decodeGameUserResult =
     JD.succeed GameUserResult
         |> required "game"
             (JD.succeed Game
-                |> required "leader" JD.int
+                |> required "leader" JD.string
                 |> required "running" JD.bool
                 |> required "phase"
                     (JD.succeed GamePhase
                         |> required "name" JD.string
                         |> required "voting"
                             (JD.succeed GameVoting
-                                |> required "id" JD.int
+                                |> required "id" JD.string
                                 |> required "name" JD.string
                                 |> required "started" JD.bool
                                 |> required "can-vote" JD.bool
@@ -120,9 +98,8 @@ decodeGameUserResult =
                                 |> required "options"
                                     (JD.succeed GameVotingOption
                                         |> required "name" JD.string
-                                        |> required "user" (JD.list JD.int)
+                                        |> required "user" (JD.list JD.string)
                                         |> JD.dict
-                                        |> mapIntDicts
                                     )
                                 |> JD.list
                             )
@@ -136,14 +113,12 @@ decodeGameUserResult =
                         |> required "role" (JD.nullable JD.string)
                         |> JD.nullable
                         |> JD.dict
-                        |> mapIntDicts
                     )
                 |> required "user"
                     (JD.succeed GameUser
                         |> required "name" JD.string
                         |> required "img" JD.string
                         |> JD.dict
-                        |> mapIntDicts
                     )
                 |> required "config" (JD.dict JD.int)
                 |> required "dead-can-see-all-roles" JD.bool
@@ -151,7 +126,7 @@ decodeGameUserResult =
                 |> required "autofinish-votings" JD.bool
                 |> JD.nullable
             )
-        |> required "user" (JD.nullable JD.int)
+        |> required "user" (JD.nullable JD.string)
 
 type alias Error = Maybe String
 

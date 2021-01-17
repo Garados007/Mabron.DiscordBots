@@ -1,16 +1,22 @@
-module Views.ViewUserList exposing (view)
+module Views.ViewUserList exposing (Msg (..), view)
 
 import Data
 import Model
+import Network exposing (NetworkRequest(..))
 
 import Html exposing (Html, div, text)
 import Html.Attributes as HA exposing (class)
+import Html.Events as HE
 import Dict exposing (Dict)
 
-view : Data.Game -> Int -> Dict String Data.RoleTemplate -> Html msg
-view game myId roles =
+type Msg
+    = Noop
+    | Send NetworkRequest
+
+view : String -> Data.Game -> String -> Dict String Data.RoleTemplate -> Html Msg
+view token game myId roles =
     let
-        getUserRole : Int -> String
+        getUserRole : String -> String
         getUserRole id =
             if id == game.leader
             then "Spielleiter"
@@ -41,7 +47,7 @@ view game myId roles =
                             else Nothing
                         ]
 
-        viewGameUser : Int -> Data.GameUser -> Html msg
+        viewGameUser : String -> Data.GameUser -> Html Msg
         viewGameUser id user =
             div [ HA.classList
                     [ ("user-frame", True)
@@ -61,7 +67,14 @@ view game myId roles =
                     , div [ class "user-role" ]
                         [ text <| getUserRole id ]
                     ]
-
+                , if myId == game.leader && myId /= id
+                    then div 
+                        [ class "kick" 
+                        , HA.title "Spieler kicken"
+                        , HE.onClick <| Send <| GetUserKick token id
+                        ]
+                        [ text "X" ]
+                    else text ""
                 ]
 
 

@@ -16,11 +16,12 @@ type NetworkRequest
     | GetGame String
     | PostGameConfig String EditGameConfig
     | GetGameStart String
-    | GetVotingStart String Int
-    | GetVote String Int Int
-    | GetVotingFinish String Int
+    | GetVotingStart String String
+    | GetVote String String String
+    | GetVotingFinish String String
     | GetGameNext String
     | GetGameStop String
+    | GetUserKick String String
 
 type NetworkResponse
     = RespRoles (Dict String Data.RoleTemplate)
@@ -73,6 +74,8 @@ executeRequest request =
             |> mapRespError
         GetGameStop token -> getGameStop token
             |> mapRespError
+        GetUserKick token user -> getUserKick token user
+            |> mapRespError
 
 type alias Response a = Result Http.Error a
 
@@ -100,7 +103,7 @@ editGameConfig =
     }
 
 type alias EditGameConfig =
-    { newLeader: Maybe Int
+    { newLeader: Maybe String
     , newConfig: Maybe (Dict String Int)
     , newDeadCanSeeAllRoles: Maybe Bool
     , autostartVotings: Maybe Bool
@@ -110,7 +113,7 @@ type alias EditGameConfig =
 convertEditGameConfig : EditGameConfig -> String
 convertEditGameConfig config =
     [ Maybe.map
-        (\leader -> "leader=" ++ String.fromInt leader
+        (\leader -> "leader=" ++ leader
         )
         config.newLeader
     , Maybe.map
@@ -166,23 +169,23 @@ getGameStart : String -> Cmd (Response Data.Error)
 getGameStart token =
     getErrorReq <| "/api/game/" ++ token ++ "/start"
 
-getVotingStart : String -> Int -> Cmd (Response Data.Error)
+getVotingStart : String -> String -> Cmd (Response Data.Error)
 getVotingStart token vid =
     getErrorReq 
         <| "/api/game/" ++ token ++ "/voting/" 
-        ++ String.fromInt vid ++ "/start"
+        ++ vid ++ "/start"
 
-getVote : String -> Int -> Int -> Cmd (Response Data.Error)
+getVote : String -> String -> String -> Cmd (Response Data.Error)
 getVote token vid id =
     getErrorReq
         <| "/api/game/" ++ token ++ "/voting/" 
-        ++ String.fromInt vid ++ "/vote/" ++ String.fromInt id
+        ++ vid ++ "/vote/" ++ id
 
-getVotingFinish : String -> Int -> Cmd (Response Data.Error)
+getVotingFinish : String -> String -> Cmd (Response Data.Error)
 getVotingFinish token vid =
     getErrorReq
         <| "/api/game/" ++ token ++ "/voting/" 
-        ++ String.fromInt vid ++ "/finish"
+        ++ vid ++ "/finish"
 
 getGameNext : String -> Cmd (Response Data.Error)
 getGameNext token =
@@ -191,3 +194,7 @@ getGameNext token =
 getGameStop : String -> Cmd (Response Data.Error)
 getGameStop token =
     getErrorReq <| "/api/game/" ++ token ++ "/stop"
+
+getUserKick : String -> String -> Cmd (Response Data.Error)
+getUserKick token uid =
+    getErrorReq <| "/api/game/" ++ token ++ "/kick/" ++ uid

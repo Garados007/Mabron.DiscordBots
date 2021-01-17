@@ -14,7 +14,7 @@ type Msg
     = Noop
     | Send NetworkRequest
 
-view : String -> Data.Game -> Data.GamePhase -> Bool -> Int -> Html Msg
+view : String -> Data.Game -> Data.GamePhase -> Bool -> String -> Html Msg
 view token game phase isLeader myId =
     let
         viewPhaseHeader : Html Msg
@@ -75,7 +75,7 @@ view token game phase isLeader myId =
                                             (\uid ->
                                                 case Dict.get uid game.user of
                                                     Just user -> user.name
-                                                    Nothing -> String.fromInt uid
+                                                    Nothing -> uid
                                             )
                                         <| option.user
                                 , HE.onClick

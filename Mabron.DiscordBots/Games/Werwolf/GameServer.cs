@@ -1,4 +1,5 @@
 ﻿using LiteDB;
+using Mabron.DiscordBots.Games.Werwolf.Themes.Default;
 using MaxLib.WebServer;
 using MaxLib.WebServer.Api.Rest;
 using MaxLib.WebServer.Post;
@@ -15,9 +16,6 @@ namespace Mabron.DiscordBots.Games.Werwolf
     public static class GameServer
     {
         private static Server? server;
-
-        private static LiteDatabase? database;
-        public static ILiteCollection<GameUser>? User { get; private set; }
 
         class PostRule : ApiRule
         {
@@ -39,9 +37,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
         public static void Start()
         {
-            database = new LiteDatabase("game.werwolf.litedb");
-            User = database.GetCollection<GameUser>("user");
-            User.EnsureIndex(x => x.DiscordId, true);
+            Theme.SetupDB();
 
             var port = Program.Config?[0]["game.werwolf.server.port"]?.Int16 ?? 6712;
             var config = new WebServerSettings(port, 5000);
@@ -130,6 +126,14 @@ namespace Mabron.DiscordBots.Games.Werwolf
                         fact.UrlConstant("stop"),
                         fact.MaxLength()
                     )),
+                RestActionEndpoint.Create<string, ulong>(KickUserAsync, "token", "user")
+                    .Add(fact.Location(
+                        fact.UrlConstant("game"),
+                        fact.UrlArgument("token"),
+                        fact.UrlConstant("kick"),
+                        fact.UrlArgument<ulong>("user", ulong.TryParse),
+                        fact.MaxLength()
+                    )),
             });
             server.AddWebService(api);
 
@@ -148,7 +152,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
             var writer = new Utf8JsonWriter(stream);
             writer.WriteStartObject();
 
-            foreach (var template in GameRoom.GetRoleTemplates())
+            foreach (var template in new DefaultTheme().GetRoleTemplates())
             {
                 writer.WriteStartObject(template.GetType().Name);
                 writer.WriteString("name", template.Name);
@@ -189,7 +193,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
                 writer.WriteStartObject("game");
 
-                writer.WriteNumber("leader", game.Leader);
+                writer.WriteString("leader", game.Leader.ToString());
 
                 writer.WriteBoolean("running", game.IsRunning);
 
@@ -205,7 +209,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                         if (!CanViewVoting(game, user, ownRole, voting))
                             continue;
                         writer.WriteStartObject(); // {}
-                        writer.WriteNumber("id", voting.Id);
+                        writer.WriteString("id", voting.Id.ToString());
                         writer.WriteString("name", voting.Name);
                         writer.WriteBoolean("started", voting.Started);
                         writer.WriteBoolean("can-vote", ownRole != null && voting.CanVote(ownRole));
@@ -217,7 +221,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                             writer.WriteString("name", option.Name);
                             writer.WriteStartArray("user");
                             foreach (var vuser in option.Users)
-                                writer.WriteNumberValue(vuser);
+                                writer.WriteStringValue(vuser.ToString());
                             writer.WriteEndArray();
                             writer.WriteEndObject(); // id
                         }
@@ -241,15 +245,12 @@ namespace Mabron.DiscordBots.Games.Werwolf
                             ownRole != null ?
                             participant.Value.ViewRole(ownRole) :
                             null;
-                        var loved = 
-                            (game.Leader == user.DiscordId || 
+                        var loved =
+                            (game.Leader == user.DiscordId ||
                                 participant.Key == user.DiscordId ||
                                 (ownRole != null && game.DeadCanSeeAllRoles && !ownRole.IsAlive)
-                            ) && 
-                            (ownRole != null ? 
-                                participant.Value.ViewLoved(ownRole) : 
-                                participant.Value.IsLoved
-                            );
+                            ) ? participant.Value is BaseRole participantRole && participantRole.IsLoved :
+                            (ownRole != null && participant.Value.ViewLoved(ownRole));
 
                         writer.WriteStartObject(participant.Key.ToString());
                         writer.WriteBoolean("alive", participant.Value.IsAlive);
@@ -283,7 +284,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                 writer.WriteBoolean("autofinish-votings", game.AutoFinishVotings);
 
                 writer.WriteEndObject();
-                writer.WriteNumber("user", user.DiscordId);
+                writer.WriteString("user", user.DiscordId.ToString());
             }
             else
             {
@@ -334,7 +335,8 @@ namespace Mabron.DiscordBots.Games.Werwolf
                         {
                             var roles = value.Split(',', StringSplitOptions.RemoveEmptyEntries);
                             newConfig = new Dictionary<Role, int>();
-                            var known = GameRoom.GetRoleTemplates().ToDictionary(x => x.GetType().Name);
+                            var known = (game.Theme?.GetRoleTemplates() ?? Enumerable.Empty<Role>())
+                                .ToDictionary(x => x.GetType().Name);
                             foreach (var role in roles)
                                 if (known.TryGetValue(role, out Role? entry))
                                 {
@@ -681,6 +683,41 @@ namespace Mabron.DiscordBots.Games.Werwolf
                 return null;
             }
             writer.WriteString("error", Do(token));
+
+            writer.WriteEndObject();
+            await writer.FlushAsync();
+            stream.Position = 0;
+            return new HttpStreamDataSource(stream)
+            {
+                MimeType = MimeType.ApplicationJson,
+            };
+        }
+
+        public static async Task<HttpDataSource> KickUserAsync(string token, ulong user)
+        {
+            var stream = new MemoryStream();
+            var writer = new Utf8JsonWriter(stream);
+            writer.WriteStartObject();
+
+            static string? Do(string token, ulong userId)
+            {
+                var result = GameController.Current.GetFromToken(token);
+                if (result == null)
+                    return "token not found";
+
+                var (game, user) = result.Value;
+                if (user.DiscordId != game.Leader)
+                    return "you are not the leader of the group";
+
+                if (!game.Participants.ContainsKey(userId))
+                    return "player is not a participant";
+
+                game.Participants!.Remove(userId, out _);
+                game.UserCache.Remove(userId, out _);
+
+                return null;
+            }
+            writer.WriteString("error", Do(token, user));
 
             writer.WriteEndObject();
             await writer.FlushAsync();
