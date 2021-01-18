@@ -13,6 +13,10 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
         public string Image { get; set; } = "";
 
+        public string ThemeColor { get; set; } = "#ffffff";
+
+        public string BackgroundImage { get; set; } = "";
+
         public static GameUser Create(IUser user)
         {
             var gameUser = Theme.User!.Query()

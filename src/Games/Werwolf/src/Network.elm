@@ -1,8 +1,10 @@
 module Network exposing
     ( EditGameConfig
+    , EditUserConfig
     , NetworkRequest (..)
     , NetworkResponse (..)
     , editGameConfig
+    , editUserConfig
     , executeRequest
     )
 
@@ -10,11 +12,13 @@ import Data
 import Http
 import Json.Decode as JD
 import Dict exposing (Dict)
+import Url
 
 type NetworkRequest
     = GetRoles
     | GetGame String
     | PostGameConfig String EditGameConfig
+    | PostUserConfig String EditUserConfig
     | GetGameStart String
     | GetVotingStart String String
     | GetVote String String String
@@ -61,6 +65,8 @@ executeRequest request =
         GetGame token -> getGame token
             |> Cmd.map (Result.map RespGame)
         PostGameConfig token config -> postGameConfig token config
+            |> mapRespError
+        PostUserConfig token config -> postUserConfig token config
             |> mapRespError
         GetGameStart token -> getGameStart token
             |> mapRespError
@@ -155,6 +161,39 @@ postGameConfig token config =
         { url = "/api/game/" ++ token ++ "/config"
         , body = Http.stringBody "application/x-www-form-urlencoded"
             <| convertEditGameConfig config
+        , expect = Http.expectJson identity Data.decodeError
+        }
+
+editUserConfig : EditUserConfig
+editUserConfig =
+    { newTheme = Nothing
+    , newBackground = Nothing
+    }
+
+type alias EditUserConfig =
+    { newTheme: Maybe String
+    , newBackground: Maybe String
+    }
+
+convertEditUserConfig : EditUserConfig -> String
+convertEditUserConfig config =
+    [ Maybe.map
+        (\theme -> "theme=" ++ theme)
+        config.newTheme
+    , Maybe.map
+        (\background -> "background=" ++ Url.percentEncode background)
+        config.newBackground
+    ]
+    |> List.filterMap identity
+    |> List.intersperse "&"
+    |> String.concat
+
+postUserConfig : String -> EditUserConfig -> Cmd (Response Data.Error)
+postUserConfig token config =
+    Http.post
+        { url = "/api/game/" ++ token ++ "/user/config"
+        , body = Http.stringBody "application/x-www-form-urlencoded"
+            <| convertEditUserConfig config
         , expect = Http.expectJson identity Data.decodeError
         }
 

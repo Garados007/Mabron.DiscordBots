@@ -1,4 +1,5 @@
-﻿using LiteDB;
+﻿using System.Text.RegularExpressions;
+using LiteDB;
 using Mabron.DiscordBots.Games.Werwolf.Themes.Default;
 using MaxLib.WebServer;
 using MaxLib.WebServer.Api.Rest;
@@ -73,6 +74,15 @@ namespace Mabron.DiscordBots.Games.Werwolf
                     .Add(fact.Location(
                         fact.UrlConstant("game"),
                         fact.UrlArgument("token"),
+                        fact.UrlConstant("config"),
+                        fact.MaxLength()
+                    ))
+                    .Add(new PostRule("post")),
+                RestActionEndpoint.Create<string, UrlEncodedData>(SetUserConfigAsync, "token", "post")
+                    .Add(fact.Location(
+                        fact.UrlConstant("game"),
+                        fact.UrlArgument("token"),
+                        fact.UrlConstant("user"),
                         fact.UrlConstant("config"),
                         fact.MaxLength()
                     ))
@@ -285,11 +295,24 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
                 writer.WriteEndObject();
                 writer.WriteString("user", user.DiscordId.ToString());
+
+                var userConfig = Theme.User!.Query()
+                    .Where(x => x.DiscordId == user.DiscordId)
+                    .FirstOrDefault();
+                if (userConfig != null)
+                {
+                    writer.WriteStartObject("user-config");
+                    writer.WriteString("theme", userConfig.ThemeColor);
+                    writer.WriteString("background", userConfig.BackgroundImage);
+                    writer.WriteEndObject();
+                }
+                else writer.WriteNull("user-config");
             }
             else
             {
                 writer.WriteNull("game");
                 writer.WriteNull("user");
+                writer.WriteNull("user-config");
             }
 
             writer.WriteEndObject();
@@ -395,6 +418,77 @@ namespace Mabron.DiscordBots.Games.Werwolf
                 {
                     writer.WriteString("error", "you are not the leader of the group");
                 }
+            }
+            else
+            {
+                writer.WriteString("error", "token not found");
+            }
+
+            writer.WriteEndObject();
+            await writer.FlushAsync();
+            stream.Position = 0;
+            return new HttpStreamDataSource(stream)
+            {
+                MimeType = MimeType.ApplicationJson,
+            };
+        }
+
+        private static async Task<HttpDataSource> SetUserConfigAsync(string token, UrlEncodedData post)
+        {
+            var stream = new MemoryStream();
+            var writer = new Utf8JsonWriter(stream);
+            writer.WriteStartObject();
+
+            var result = GameController.Current.GetFromToken(token);
+            if (result != null)
+            {
+                var (game, user) = result.Value;
+
+                static string? Set(GameRoom game, GameUser user, UrlEncodedData post)
+                {
+                    if (game.IsRunning)
+                        return "cannot change settings of running game";
+
+                    var userConfig = Theme.User!.Query()
+                        .Where(x => x.DiscordId == user.DiscordId)
+                        .FirstOrDefault();
+                    
+                    if (userConfig == null)
+                        return "user config not found";
+
+                    try
+                    {
+                        var newTheme = userConfig.ThemeColor;
+                        var newBackground = userConfig.BackgroundImage;
+
+                        if (post.Parameter.TryGetValue("theme", out string? value))
+                        {
+                            var check = new Regex("^#[0-9a-fA-F]{6}$");
+                            if (!check.IsMatch(value))
+                                return "invalid theme color";
+                            newTheme = value;
+                        }
+
+                        if (post.Parameter.TryGetValue("background", out value))
+                        {
+                            if (value != "" && !Uri.TryCreate(value, UriKind.Absolute, out _))
+                                return "invalid url";
+                            newBackground = value;
+                        }
+
+                        // input is valid use the new data
+                        userConfig.ThemeColor = newTheme;
+                        userConfig.BackgroundImage = newBackground;
+                        Theme.User.Update(userConfig);
+                    }
+                    catch (Exception e)
+                    {
+                        return e.ToString();
+                    }
+                    return null;
+                }
+
+                writer.WriteString("error", Set(game, user, post));
             }
             else
             {

@@ -8,6 +8,7 @@ module Data exposing
     , GameVoting
     , GameVotingOption
     , RoleTemplate
+    , UserConfig
     , decodeError
     , decodeGameUserResult
     , decodeRoleTemplates
@@ -33,6 +34,7 @@ decodeRoleTemplates =
 type alias GameUserResult =
     { game: Maybe Game
     , user: Maybe String
+    , userConfig: Maybe UserConfig
     }
 
 type alias Game =
@@ -76,6 +78,11 @@ type alias GameParticipant =
 type alias GameUser =
     { name: String
     , img: String
+    }
+
+type alias UserConfig =
+    { theme: String
+    , background: String
     }
 
 decodeGameUserResult : Decoder GameUserResult
@@ -127,6 +134,12 @@ decodeGameUserResult =
                 |> JD.nullable
             )
         |> required "user" (JD.nullable JD.string)
+        |> required "user-config"
+            ( JD.succeed UserConfig
+                |> required "theme" JD.string
+                |> required "background" JD.string
+                |> JD.nullable
+            )
 
 type alias Error = Maybe String
 
