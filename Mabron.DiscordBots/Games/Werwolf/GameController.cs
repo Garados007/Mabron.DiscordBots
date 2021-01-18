@@ -20,7 +20,10 @@ namespace Mabron.DiscordBots.Games.Werwolf
             int id;
             //while (rooms.ContainsKey(id = r.Next())) ;
             id = 1;
-            rooms.TryAdd(id, new GameRoom(id, leader));
+            rooms.TryAdd(id, new GameRoom(id, leader) 
+            { 
+                Theme = new Themes.Default.DefaultTheme(),
+            });
             return id;
         }
 

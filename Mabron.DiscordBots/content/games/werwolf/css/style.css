@@ -13,17 +13,38 @@
 
   /* a light color for some light backgrounds */
   --color-light: #ccc;
+  --color-light-transparent: #cccb;
   /* a medium color for active backgrounds */
   --color-medium: #aaa;
   /* a dark color for backgrounds, shadows and borders */
   --color-dark: #888;
+  --color-dark-transparent: #888b;
   /* a more darker color for some dark active backgrounds */
   --color-darker: #444;
+  --color-darker-transparent: #444b;
+
+  /* the url for the background image */
+  --bg-url: url("");
+}
+.elm-debug-extra-output {
+  position: relative;
+  z-index: 1;
 }
 body {
   font-family: sans-serif;
   background-color: var(--color-background);
   color: var(--text-color);
+}
+.styles .background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-image: var(--bg-url);
 }
 .error-box {
   position: fixed;
@@ -75,7 +96,7 @@ body {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
-  width: 100vw;
+  /*! width: 100vw; */
   height: 100vh;
 }
 .frame-game-left {
@@ -102,6 +123,7 @@ body {
   border: 0.3em solid var(--color-dark);
   padding: 0.5em 0.8em;
   border-radius: 0.8em;
+  position: relative;
 }
 .user-image-box {
   padding-right: 0.5em;
@@ -118,6 +140,20 @@ body {
 .user-frame .user-name {
   font-size: 1.2em;
 }
+.user-frame .kick {
+  display: none;
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 0.5em 0.8em;
+  cursor: pointer;
+}
+.user-frame:hover .kick {
+  display: block;
+}
+.user-frame:hover .kick:hover {
+  background-color: var(--color-dark);
+}
 
 .editor {
   width: 35em;
@@ -127,7 +163,7 @@ body {
   display: flex;
   flex-direction: row;
   align-items: center;
-  background-color: var(--color-light);
+  background-color: var(--color-light-transparent);
   margin: 0.5em 0;
   padding: 0.5em 0.8em;
 
@@ -153,12 +189,12 @@ body {
   margin: 2em 0;
   position: relative;
   height: 2em;
-  background-color: var(--color-dark);
+  background-color: var(--color-dark-transparent);
 }
 .editor-bar-fill-inner {
   position: absolute;
   height: 100%;
-  background-color: var(--color-darker);
+  background-color: var(--color-darker-transparent);
   transition: width 0.3s;
 }
 .editor-bar-player-box, .editor-bar-roles-box {
@@ -193,7 +229,7 @@ body {
 .editor .start-button {
   margin: 2em 0 0;
   padding: 0.5em 0.8em;
-  background-color: var(--color-light);
+  background-color: var(--color-light-transparent);
   cursor: pointer;
   text-align: center;
   font-size: 1.1em;
@@ -242,7 +278,7 @@ body {
 .voting-header .status > div {
   flex-grow: 1;
   padding: 0.2em;
-  background-color: var(--text-color);
+  background-color: var(--text-inv-color);
   color: red;
 }
 .voting-header .can-vote-state {
@@ -263,7 +299,7 @@ body {
 }
 .voting-box .voting-option .bar {
   position: absolute;
-  background-color: var(--color-light);
+  background-color: var(--color-light-transparent);
   top: 0;
   left: 0;
   height: 100%;
@@ -291,4 +327,92 @@ body {
 }
 .phase-controls .button:hover {
   background-color: var(--color-medium);
+}
+.settings-bar {
+  position: absolute;
+  top: 0.5em;
+  right: 0.5em;
+  z-index: 1;
+  display: flex;
+  flex-direction: row-reverse;
+}
+.settings-bar svg {
+  height: 2em;
+  width: 2em;
+  fill: var(--color-medium);
+  cursor: pointer;
+}
+.settings-bar svg:hover {
+  fill: var(--color-darker);
+}
+.modal-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%; 
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+.modal-window {
+  background-color: var(--color-base);
+  box-shadow: 0.6em 0.6em 2em var(--color-dark);
+  display: flex;
+  flex-direction: column;
+  max-width: 100%;
+  max-height: 100%;
+  /*! z-index: 10; */
+}
+.modal-title-box {
+  background-color: var(--color-darker);
+  color: var(--text-inv-color);
+  display: flex;
+  font-size: 1.5em;
+}
+.modal-title {
+  flex-grow: 1;
+  padding: 0.5em 0.8em;
+}
+.modal-close {
+  padding: 0.5em 0.8em;
+  cursor: pointer;
+}
+.modal-close:hover {
+  background-color: var(--color-dark);
+}
+.modal-content {
+  flex-grow: 1;
+  overflow: auto;
+  position: relative;
+}
+
+.theme-editor {
+  display: flex;
+  flex-direction: row;
+}
+.theme-editor .group {
+  flex-grow: 1;
+}
+.theme-editor .group:first-child {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1em;
+}
+.theme-editor .group:nth-child(2) {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1em;
+  justify-content: center;
+}
+.theme-editor .group:nth-child(2) input {
+  width: 100%;
+  box-sizing: border-box;
+}
+.theme-editor .group:nth-child(2) img {
+  max-width: 25em;
+  max-height: 15em;
 }

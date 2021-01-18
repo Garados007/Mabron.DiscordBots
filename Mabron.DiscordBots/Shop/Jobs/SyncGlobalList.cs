@@ -34,7 +34,7 @@ namespace Mabron.DiscordBots.Shop.Jobs
 
         public async Task Execute(IJobExecutionContext context)
         {
-            if (Program.DiscordClient == null || (Program.Config?[0]["shop.enable"]?.Bool ?? false))
+            if (Program.DiscordClient == null || (!Program.Config?[0]["shop.enable"]?.Bool ?? false))
                 return;
             await WaitForConnection();
             await RemoveOldMessages();

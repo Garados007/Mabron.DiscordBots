@@ -1,5 +1,6 @@
 module Model exposing
     ( Model
+    , Modal (..)
     , applyResponse
     , init
     )
@@ -10,6 +11,8 @@ import Network exposing (NetworkResponse(..))
 import Browser.Navigation exposing (Key)
 import Time exposing (Posix)
 
+import Views.ViewThemeEditor
+
 type alias Model =
     { game: Maybe Data.GameUserResult
     , roles: Maybe (Dict String Data.RoleTemplate)
@@ -17,11 +20,16 @@ type alias Model =
     , token: String
     , key: Key
     , now: Posix
+    , modal: Modal
     -- local editor
     , editor: Dict String Int
-    -- buufer
+    -- buffer
     , bufferedConfig: Data.UserConfig
     }
+
+type Modal
+    = NoModal
+    | SettingsModal Views.ViewThemeEditor.Model
 
 init : String -> Key -> Model
 init token key =
@@ -31,6 +39,7 @@ init token key =
     , token = token
     , key = key
     , now = Time.millisToPosix 0
+    , modal = NoModal
     , editor = Dict.empty
     , bufferedConfig =
         { theme = "#ffffff"

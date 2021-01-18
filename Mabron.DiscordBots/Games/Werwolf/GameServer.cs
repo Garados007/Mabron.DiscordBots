@@ -302,8 +302,8 @@ namespace Mabron.DiscordBots.Games.Werwolf
                 if (userConfig != null)
                 {
                     writer.WriteStartObject("user-config");
-                    writer.WriteString("theme", userConfig.ThemeColor);
-                    writer.WriteString("background", userConfig.BackgroundImage);
+                    writer.WriteString("theme", userConfig.ThemeColor ?? "#ffffff");
+                    writer.WriteString("background", userConfig.BackgroundImage ?? "");
                     writer.WriteEndObject();
                 }
                 else writer.WriteNull("user-config");
@@ -446,9 +446,6 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
                 static string? Set(GameRoom game, GameUser user, UrlEncodedData post)
                 {
-                    if (game.IsRunning)
-                        return "cannot change settings of running game";
-
                     var userConfig = Theme.User!.Query()
                         .Where(x => x.DiscordId == user.DiscordId)
                         .FirstOrDefault();
@@ -542,7 +539,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                 }
 
                 game.IsRunning = true;
-                game.NextPhase();
+                game.StartGame();
                 return null;
             }
             writer.WriteString("error", Do(writer, token));

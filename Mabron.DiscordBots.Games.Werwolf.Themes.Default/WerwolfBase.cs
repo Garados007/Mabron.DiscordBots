@@ -1,12 +1,12 @@
 ﻿namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default
 {
-    public abstract class WerwolfBase : Role
+    public abstract class WerwolfBase : BaseRole
     {
         protected WerwolfBase(Theme theme) : base(theme)
         {
         }
 
-        public override bool? IsSameFaction(Role other)
+        public override bool? IsSameFaction(Role other)      
         {
             if (other is WerwolfBase)
                 return true;

@@ -9,6 +9,9 @@ import Views.ViewRoomEditor
 import Views.ViewNoGame
 import Views.ViewGamePhase
 import Views.ViewErrors
+import Views.ViewSettingsBar
+import Views.ViewThemeEditor
+import Views.ViewModal
 
 import Browser
 import Html exposing (Html, div, text)
@@ -27,6 +30,7 @@ import Color exposing (Color)
 import Color.Accessibility as CA
 import Color.Convert as CC
 import Color.Manipulate as CM
+import Regex
 
 type Msg
     = Response NetworkResponse
@@ -39,6 +43,9 @@ type Msg
     | WrapEditor Views.ViewRoomEditor.Msg
     | WrapPhase Views.ViewGamePhase.Msg
     | WrapError Int
+    | WrapSelectModal Model.Modal
+    | WrapThemeEditor Views.ViewThemeEditor.Msg
+    | CloseModal
 
 main : Program () Model Msg
 main = Browser.application
@@ -59,8 +66,12 @@ main = Browser.application
                 ] []
             , viewStyles
                 <| Maybe.withDefault model.bufferedConfig
-                <| Maybe.andThen .userConfig
-                <| model.game
+                <| Maybe.Extra.orElse
+                    ( Maybe.andThen .userConfig model.game)
+                <| case model.modal of
+                    Model.SettingsModal conf ->
+                        Just conf.config
+                    _ -> Nothing
             , tryViewGamePhase model
                 |> Maybe.Extra.orElseLazy
                     (\() -> tryViewGameFrame model)
@@ -70,6 +81,13 @@ main = Browser.application
                         <| model.game == Nothing || model.roles == Nothing
                     )
                 |> Maybe.withDefault (text "")
+            , case model.modal of
+                Model.NoModal -> text ""
+                Model.SettingsModal conf ->
+                    Views.ViewModal.viewExtracted CloseModal WrapThemeEditor
+                        "Theme Einstellungen"
+                        <| List.singleton
+                        <| Views.ViewThemeEditor.view conf
             , Views.ViewErrors.view model.errors
                 |> Html.map WrapError
             , Debug.Extra.viewModel model
@@ -110,7 +128,9 @@ viewGameFrame model roles game user =
                 <| Views.ViewUserList.view model.token game user roles
             ]
         , div [ class "frame-game-body" ]
-            [ Html.map WrapEditor
+            [ Html.map WrapSelectModal
+                <| Views.ViewSettingsBar.view model
+            , Html.map WrapEditor
                 <| Views.ViewRoomEditor.view
                     roles
                     game
@@ -127,7 +147,7 @@ tryViewGamePhase model =
                 (\game user ->
                     Maybe.map
                         (\phase -> 
-                            viewGamePhase model.token roles game user phase
+                            viewGamePhase model roles game user phase
                         )
                         game.phase
                 )
@@ -137,22 +157,24 @@ tryViewGamePhase model =
         model.game
         model.roles
 
-viewGamePhase : String
+viewGamePhase : Model
     -> Dict String Data.RoleTemplate
     -> Data.Game
     -> String
     -> Data.GamePhase
     -> Html Msg
-viewGamePhase token roles game user phase =
+viewGamePhase model roles game user phase =
     div [ class "frame-game-outer" ]
         [ div [ class "frame-game-left" ]
             [ Html.map WrapUser
-                <| Views.ViewUserList.view token game user roles
+                <| Views.ViewUserList.view model.token game user roles
             ]
         , div [ class "frame-game-body", class "top" ]
-            [ Html.map WrapPhase
+            [ Html.map WrapSelectModal
+                <| Views.ViewSettingsBar.view model
+            , Html.map WrapPhase
                 <| Views.ViewGamePhase.view
-                    token
+                    model.token
                     game
                     phase
                     (user == game.leader)
@@ -190,37 +212,55 @@ viewStyles = HL.lazy <| \config ->
         textInvColor = if isDark then Color.black else Color.white
         
         colorLight : Color
-        colorLight = darken 0.25 colorBase
+        colorLight = darken 0.20 colorBase
 
         colorMedium : Color
-        colorMedium = darken 0.375 colorBase
+        colorMedium = darken 0.30 colorBase
 
         colorDark : Color
-        colorDark = darken 0.5 colorBase
+        colorDark = darken 0.40 colorBase
 
         colorDarker : Color
-        colorDarker = darken 0.75 colorBase
-    in Html.node "style"
-        [ HA.rel "stylesheet" ]
-        <| List.singleton
-        <| text
-        <| (\style -> ":root { " ++ style ++ "; }" )
-        <| String.concat
-        <| List.intersperse "; "
-        <| List.map
-            (\(rule, color) ->
-                "--" ++ rule ++ ": " ++ CC.colorToCssRgba color
-            )
-            [ ("color-base", colorBase)
-            , ("color-background", colorBackground)
-            , ("text-color", textColor)
-            , ("text-color-light", textColorLight)
-            , ("text-inv-color", textInvColor)
-            , ("color-light", colorLight)
-            , ("color-medium", colorMedium)
-            , ("color-dark", colorDark)
-            , ("color-darker", colorDarker)
-            ]
+        colorDarker = darken 0.50 colorBase
+
+        build : String -> Regex.Regex
+        build = Regex.fromString >> Maybe.withDefault Regex.never
+
+    in div [ class "styles" ]
+        [ Html.node "style"
+            [ HA.rel "stylesheet" ]
+            <| List.singleton
+            <| text
+            <| (\style -> 
+                    ":root { " ++ style ++ "; --bg-url: url(\"" ++
+                    (config.background 
+                        |> Regex.replace (build "\\s") (always "")
+                        |> Regex.replace (build "\\\\") (always "\\\\")
+                        |> Regex.replace (build "\"") (always "\\\"")
+                    )
+                    ++ "\"); }" 
+                )
+            <| String.concat
+            <| List.intersperse "; "
+            <| List.map
+                (\(rule, color) ->
+                    "--" ++ rule ++ ": " ++ CC.colorToCssRgba color
+                )
+                [ ("color-base", colorBase)
+                , ("color-background", colorBackground)
+                , ("text-color", textColor)
+                , ("text-color-light", textColorLight)
+                , ("text-inv-color", textInvColor)
+                , ("color-light", colorLight)
+                , ("color-light-transparent", CM.fadeOut 0.4 colorLight)
+                , ("color-medium", colorMedium)
+                , ("color-dark", colorDark)
+                , ("color-dark-transparent", CM.fadeOut 0.4 colorLight)
+                , ("color-darker", colorDarker)
+                , ("color-darker-transparent", CM.fadeOut 0.4 colorLight)
+                ]
+        , div [ class "background" ] []
+        ]
     
 
 update : Msg -> Model -> (Model, Cmd Msg)
@@ -301,6 +341,30 @@ update msg model =
                     <| model.errors
                 }
                 Cmd.none
+        WrapSelectModal modal ->
+            Tuple.pair { model | modal = modal } Cmd.none
+        WrapThemeEditor sub ->
+            case model.modal of
+                Model.SettingsModal editor ->
+                    let (newEditor, newEvent) = Views.ViewThemeEditor.update sub editor
+                        sendEvents = List.filterMap
+                            (\event ->
+                                case event of
+                                    Views.ViewThemeEditor.Send req -> Just req
+                            )
+                            newEvent
+                    in Tuple.pair
+                        { model | modal = Model.SettingsModal newEditor }
+                        <| Cmd.batch
+                        <| List.map
+                            ( Cmd.map Response
+                                << Network.executeRequest
+                                << Network.PostUserConfig model.token
+                            )
+                            sendEvents
+                _ -> (model, Cmd.none)
+        CloseModal ->
+            ({ model | modal = Model.NoModal }, Cmd.none)
 
 subscriptions : Model -> Sub Msg
 subscriptions model =

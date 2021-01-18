@@ -71,6 +71,13 @@ namespace Mabron.DiscordBots.Games.Werwolf
             else Phase = null;
         }
 
+        public void StartGame()
+        {
+            Phase = Theme?.GetPhases();
+            if (Phase != null && (!Phase.Current.IsGamePhase || !Phase.Current.CanExecute(this)))
+                NextPhase();
+        }
+
         public void StopGame()
         {
             IsRunning = false;
