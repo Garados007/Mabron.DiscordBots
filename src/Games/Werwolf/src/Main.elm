@@ -13,6 +13,7 @@ import Views.ViewErrors
 import Browser
 import Html exposing (Html, div, text)
 import Html.Attributes as HA exposing (class)
+import Html.Lazy as HL
 import Url exposing (Url)
 import Url.Parser exposing ((</>))
 import Task
@@ -22,6 +23,10 @@ import Maybe.Extra
 import Dict exposing (Dict)
 import Views.ViewGamePhase
 import Maybe.Extra
+import Color exposing (Color)
+import Color.Accessibility as CA
+import Color.Convert as CC
+import Color.Manipulate as CM
 
 type Msg
     = Response NetworkResponse
@@ -52,6 +57,10 @@ main = Browser.application
                 , HA.attribute "property" "stylesheet"
                 , HA.attribute "href" "/content/games/werwolf/css/style.css"
                 ] []
+            , viewStyles
+                <| Maybe.withDefault model.bufferedConfig
+                <| Maybe.andThen .userConfig
+                <| model.game
             , tryViewGamePhase model
                 |> Maybe.Extra.orElseLazy
                     (\() -> tryViewGameFrame model)
@@ -150,6 +159,69 @@ viewGamePhase token roles game user phase =
                     user
             ]
         ]
+
+viewStyles : Data.UserConfig -> Html msg
+viewStyles = HL.lazy <| \config ->
+    let
+        colorBase : Color
+        colorBase = CC.hexToColor config.theme
+            |> Result.toMaybe
+            |> Maybe.withDefault Color.white
+        
+        isDark : Bool
+        isDark = CA.luminance colorBase <= 0.5
+
+        darken : Float -> Color -> Color
+        darken = if isDark then CM.lighten else CM.darken
+
+        colorBackground : Color
+        colorBackground = colorBase
+
+        textColor : Color
+        textColor = if isDark then Color.white else Color.black
+        
+        textColorLight : Color
+        textColorLight = CM.weightedMix
+            colorBase
+            textColor
+            0.375
+        
+        textInvColor : Color
+        textInvColor = if isDark then Color.black else Color.white
+        
+        colorLight : Color
+        colorLight = darken 0.25 colorBase
+
+        colorMedium : Color
+        colorMedium = darken 0.375 colorBase
+
+        colorDark : Color
+        colorDark = darken 0.5 colorBase
+
+        colorDarker : Color
+        colorDarker = darken 0.75 colorBase
+    in Html.node "style"
+        [ HA.rel "stylesheet" ]
+        <| List.singleton
+        <| text
+        <| (\style -> ":root { " ++ style ++ "; }" )
+        <| String.concat
+        <| List.intersperse "; "
+        <| List.map
+            (\(rule, color) ->
+                "--" ++ rule ++ ": " ++ CC.colorToCssRgba color
+            )
+            [ ("color-base", colorBase)
+            , ("color-background", colorBackground)
+            , ("text-color", textColor)
+            , ("text-color-light", textColorLight)
+            , ("text-inv-color", textInvColor)
+            , ("color-light", colorLight)
+            , ("color-medium", colorMedium)
+            , ("color-dark", colorDark)
+            , ("color-darker", colorDarker)
+            ]
+    
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =

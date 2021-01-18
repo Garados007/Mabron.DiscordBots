@@ -19,6 +19,8 @@ type alias Model =
     , now: Posix
     -- local editor
     , editor: Dict String Int
+    -- buufer
+    , bufferedConfig: Data.UserConfig
     }
 
 init : String -> Key -> Model
@@ -30,6 +32,10 @@ init token key =
     , key = key
     , now = Time.millisToPosix 0
     , editor = Dict.empty
+    , bufferedConfig =
+        { theme = "#ffffff"
+        , background = ""
+        }
     }
 
 applyResponse : NetworkResponse -> Model -> Model
@@ -42,6 +48,8 @@ applyResponse response model =
         RespGame game ->
             { model
             | game = Just game
+            , bufferedConfig = game.userConfig
+                |> Maybe.withDefault model.bufferedConfig
             }
         RespError error ->
             { model
