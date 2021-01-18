@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace Mabron.DiscordBots.Games.Werwolf
 {
-    public abstract class Phase : IEquatable<Phase?>
+    public abstract class Phase
     {
         public abstract string Name { get; }
 
@@ -37,60 +37,6 @@ namespace Mabron.DiscordBots.Games.Werwolf
         {
 
         }
-
-        public override bool Equals(object? obj)
-        {
-            if (obj is Phase phase)
-                return Equals(phase);
-            else return false;
-        }
-
-        public static Phase? GetNextPhase(GameRoom game)
-        {
-            bool currentPhaseFound = false;
-            if (game.Theme == null)
-                return null;
-            for (int i = 0; i < 2; ++i)
-                foreach (var phase in game.Theme.GetPhases())
-                {
-                    if (phase == game.Phase)
-                    {
-                        currentPhaseFound = true;
-                        continue;
-                    }
-                    if (!phase.CanExecute(game))
-                        continue;
-                    if (game.Phase == null || currentPhaseFound)
-                    {
-                        if (!phase.IsGamePhase)
-                        {
-                            // this phase executes some stuff
-                            phase.Init(game); // execute their routine
-                        }
-                        else return phase;
-                    }
-                }
-            return null;
-        }
-
-        public bool Equals(Phase? other)
-        {
-            return GetType().FullName == other?.GetType().FullName;
-        }
-
-        public override int GetHashCode()
-        {
-            return GetType().FullName?.GetHashCode() ?? 0;
-        }
-
-        public static bool operator ==(Phase? left, Phase? right)
-        {
-            return EqualityComparer<Phase?>.Default.Equals(left, right);
-        }
-
-        public static bool operator !=(Phase? left, Phase? right)
-        {
-            return !(left == right);
-        }
+        
     }
 }

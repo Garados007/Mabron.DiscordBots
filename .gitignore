@@ -350,4 +350,5 @@ MigrationBackup/
 .ionide/
 
 # other files
+.vscode
 elm-stuff

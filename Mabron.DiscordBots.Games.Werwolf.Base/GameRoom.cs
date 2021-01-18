@@ -15,7 +15,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
         public bool IsRunning { get; set; } = false;
 
-        public Phase? Phase { get; private set; }
+        public PhaseFlow? Phase { get; private set; }
 
         public ConcurrentDictionary<ulong, Role?> Participants { get; }
 
@@ -66,8 +66,9 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
         public void NextPhase()
         {
-            Phase = Phase.GetNextPhase(this);
-            Phase?.Init(this);
+            if (Phase?.Next(this) ?? false)
+                Phase.Current.Init(this);
+            else Phase = null;
         }
 
         public void StopGame()

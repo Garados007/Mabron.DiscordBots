@@ -20,7 +20,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
         public abstract IEnumerable<Role> GetRoleTemplates();
 
-        public abstract IEnumerable<Phase> GetPhases();
+        public abstract PhaseFlow GetPhases();
 
         public abstract IEnumerable<Func<GameRoom, bool>> GetWinConditions();
     }

@@ -18,22 +18,43 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default
             yield return new Roles.Amor(this);
         }
 
-        public override IEnumerable<Phase> GetPhases()
+        public override PhaseFlow GetPhases()
         {
-            yield return new Phases.AmorPick();
+            var phases = new PhaseFlowBuilder();
 
-            yield return new Phases.OraclePick();
-            yield return new Phases.WerwolfPhase();
+            // add init phases
+            phases.Add(new Phases.AmorPick(), true);
 
-            yield return new Phases.KillWerwolfVictim();
-            yield return new Phases.HunterKill();
-            yield return new Phases.InheritMajor();
+            // add night phases
+            phases.Add(new Phase[]
+            {
+                new Phases.OraclePick(),
+                new Phases.WerwolfPhase(),
+            });
 
-            yield return new Phases.ElectMajor();
-            yield return new Phases.DailyVictimElection();
+            // add kill handling
+            phases.Add(new Phase[]
+            {
+                new Phases.KillWerwolfVictim(),
+                new Phases.HunterKill(),
+                new Phases.InheritMajor(),
+            });
 
-            yield return new Phases.HunterKill();
-            yield return new Phases.InheritMajor();
+            // add day phases
+            phases.Add(new Phase[]
+            {
+                new Phases.ElectMajor(),
+                new Phases.DailyVictimElection(),
+            });
+
+            // add kill handling
+            phases.Add(new Phase[]
+            {
+                new Phases.HunterKill(),
+                new Phases.InheritMajor(),
+            });
+
+            return phases.Build() ?? throw new InvalidOperationException();
         }
 
         public override IEnumerable<Func<GameRoom, bool>> GetWinConditions()

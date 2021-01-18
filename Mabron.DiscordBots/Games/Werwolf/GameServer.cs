@@ -202,9 +202,9 @@ namespace Mabron.DiscordBots.Games.Werwolf
                 else
                 {
                     writer.WriteStartObject("phase"); // phase
-                    writer.WriteString("name", game.Phase.Name);
+                    writer.WriteString("name", game.Phase.Current.Name);
                     writer.WriteStartArray("voting"); // voting
-                    foreach (var voting in game.Phase.Votings)
+                    foreach (var voting in game.Phase.Current.Votings)
                     {
                         if (!CanViewVoting(game, user, ownRole, voting))
                             continue;
@@ -479,7 +479,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                 if (user.DiscordId != game.Leader)
                     return "you are not the leader of the group";
 
-                var voting = game.Phase?.Votings.Where(x => x.Id == vid).FirstOrDefault();
+                var voting = game.Phase?.Current.Votings.Where(x => x.Id == vid).FirstOrDefault();
 
                 if (voting == null)
                     return "no voting exists";
@@ -516,7 +516,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                     return "token not found";
 
                 var (game, user) = result.Value;
-                var voting = game.Phase?.Votings.Where(x => x.Id == vid).FirstOrDefault();
+                var voting = game.Phase?.Current.Votings.Where(x => x.Id == vid).FirstOrDefault();
                 if (voting == null)
                     return "no voting exists";
 
@@ -547,7 +547,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                     if (vote != null)
                     {
                         voting.Execute(game, vote.Value);
-                        game.Phase!.RemoveVoting(voting);
+                        game.Phase!.Current.RemoveVoting(voting);
 
                         if (new WinCondition().Check(game))
                         {
@@ -556,7 +556,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                     }
                     else
                     {
-                        game.Phase!.ExecuteMultipleWinner(voting, game);
+                        game.Phase!.Current.ExecuteMultipleWinner(voting, game);
                     }
                 }
 
@@ -589,7 +589,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                 if (user.DiscordId != game.Leader)
                     return "you are not the leader of the group";
 
-                var voting = game.Phase?.Votings.Where(x => x.Id == vid).FirstOrDefault();
+                var voting = game.Phase?.Current.Votings.Where(x => x.Id == vid).FirstOrDefault();
                 if (voting == null)
                     return "no voting exists";
 
@@ -600,7 +600,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                 if (vote != null)
                 {
                     voting.Execute(game, vote.Value);
-                    game.Phase!.RemoveVoting(voting);
+                    game.Phase!.Current.RemoveVoting(voting);
 
                     if (new WinCondition().Check(game))
                     {
@@ -609,7 +609,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                 }
                 else
                 {
-                    game.Phase!.ExecuteMultipleWinner(voting, game);
+                    game.Phase!.Current.ExecuteMultipleWinner(voting, game);
                 }
 
                 return null;
