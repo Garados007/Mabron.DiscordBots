@@ -242,6 +242,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                     writer.WriteEndObject(); // phase
                 }
 
+                var winner = game.Winner;
                 writer.WriteStartObject("participants");
                 foreach (var participant in game.Participants.ToArray())
                 {
@@ -249,7 +250,9 @@ namespace Mabron.DiscordBots.Games.Werwolf
                         writer.WriteNull(participant.Key.ToString());
                     else
                     {
-                        var seenRole = game.Leader == user.DiscordId || participant.Key == user.DiscordId ||
+                        var seenRole = game.Leader == user.DiscordId || 
+                                participant.Key == user.DiscordId || 
+                                (winner != null && winner.Value.round == game.ExecutionRound) ||
                                 (ownRole != null && game.DeadCanSeeAllRoles && !ownRole.IsAlive)?
                             participant.Value :
                             ownRole != null ?
@@ -278,9 +281,24 @@ namespace Mabron.DiscordBots.Games.Werwolf
                     writer.WriteStartObject($"{id}");
                     writer.WriteString("name", entry.Username);
                     writer.WriteString("img", entry.Image);
+                    writer.WriteStartObject("stats");
+                    writer.WriteNumber("win-games", entry.StatsWinGames);
+                    writer.WriteNumber("killed", entry.StatsKilled);
+                    writer.WriteNumber("loose-games", entry.StatsLooseGames);
+                    writer.WriteNumber("leader", entry.StatsLeader);
+                    writer.WriteEndObject();
                     writer.WriteEndObject();
                 }
                 writer.WriteEndObject();
+
+                if (winner != null)
+                {
+                    writer.WriteStartArray("winner");
+                    foreach (var item in winner.Value.winner.ToArray())
+                        writer.WriteStringValue(item.ToString());
+                    writer.WriteEndArray();
+                }
+                else writer.WriteNull("winner");
 
                 writer.WriteStartObject("config");
                 foreach (var (role, amount) in game.RoleConfiguration.ToArray())
@@ -524,6 +542,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                     return "some roles are missing or there are to much roles defined";
 
                 
+                game.StartGame(); // this is to increase the execution round
                 var random = new Random();
                 var roles = game.RoleConfiguration
                     .SelectMany(x => Enumerable.Repeat(x.Key, x.Value))
@@ -539,7 +558,6 @@ namespace Mabron.DiscordBots.Games.Werwolf
                 }
 
                 game.IsRunning = true;
-                game.StartGame();
                 return null;
             }
             writer.WriteString("error", Do(writer, token));
@@ -642,7 +660,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
                         if (new WinCondition().Check(game))
                         {
-                            game.StopGame();
+                            game.StopGame(true);
                         }
                     }
                     else
@@ -695,7 +713,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
                     if (new WinCondition().Check(game))
                     {
-                        game.StopGame();
+                        game.StopGame(true);
                     }
                 }
                 else
@@ -769,7 +787,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                 if (!game.IsRunning)
                     return "the game is not running";
 
-                game.StopGame();
+                game.StopGame(false);
 
                 return null;
             }

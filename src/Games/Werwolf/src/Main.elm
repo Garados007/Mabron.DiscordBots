@@ -88,6 +88,11 @@ main = Browser.application
                         "Theme Einstellungen"
                         <| List.singleton
                         <| Views.ViewThemeEditor.view conf
+                Model.WinnerModal game list ->
+                    Html.map (always CloseModal)
+                        <| Views.ViewModal.viewOnlyClose "Sieger"
+                        <| List.singleton
+                        <| Debug.Extra.viewModel (game, list)
             , Views.ViewErrors.view model.errors
                 |> Html.map WrapError
             , Debug.Extra.viewModel model

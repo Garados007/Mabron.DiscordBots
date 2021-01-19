@@ -5,6 +5,7 @@ module Data exposing
     , GamePhase
     , GameUser
     , GameUserResult
+    , GameUserStats
     , GameVoting
     , GameVotingOption
     , RoleTemplate
@@ -43,6 +44,7 @@ type alias Game =
     , phase: Maybe GamePhase
     , participants: Dict String (Maybe GameParticipant)
     , user: Dict String GameUser
+    , winner: Maybe (List String)
     , config: Dict String Int
     , deadCanSeeAllRoles: Bool
     , autostartVotings: Bool
@@ -78,6 +80,14 @@ type alias GameParticipant =
 type alias GameUser =
     { name: String
     , img: String
+    , stats: GameUserStats
+    }
+
+type alias GameUserStats =
+    { winGames: Int
+    , killed: Int
+    , looseGames: Int
+    , leader: Int
     }
 
 type alias UserConfig =
@@ -125,8 +135,17 @@ decodeGameUserResult =
                     (JD.succeed GameUser
                         |> required "name" JD.string
                         |> required "img" JD.string
+                        |> required "stats"
+                            (JD.succeed GameUserStats
+                                |> required "win-games" JD.int
+                                |> required "killed" JD.int
+                                |> required "loose-games" JD.int
+                                |> required "leader" JD.int
+                            )
                         |> JD.dict
                     )
+                |> required "winner"
+                    (JD.nullable <| JD.list <| JD.string)
                 |> required "config" (JD.dict JD.int)
                 |> required "dead-can-see-all-roles" JD.bool
                 |> required "autostart-votings" JD.bool

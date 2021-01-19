@@ -30,6 +30,7 @@ type alias Model =
 type Modal
     = NoModal
     | SettingsModal Views.ViewThemeEditor.Model
+    | WinnerModal Data.Game (List String)
 
 init : String -> Key -> Model
 init token key =
@@ -59,6 +60,21 @@ applyResponse response model =
             | game = Just game
             , bufferedConfig = game.userConfig
                 |> Maybe.withDefault model.bufferedConfig
+            , modal =
+                let
+                    get : Maybe Data.GameUserResult -> Maybe (Data.Game, List String)
+                    get =
+                        Maybe.andThen .game
+                        >> Maybe.andThen
+                            (\game_ ->
+                                Maybe.map 
+                                    (Tuple.pair game_)
+                                    game_.winner
+                            )
+                in case (get model.game, get <| Just game) of
+                    (Nothing, Just (game_, list)) -> WinnerModal game_ list
+                    _ -> model.modal
+                
             }
         RespError error ->
             { model
