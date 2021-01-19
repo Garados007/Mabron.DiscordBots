@@ -20,8 +20,10 @@ namespace Mabron.DiscordBots.Games.Werwolf.Phases
             if (voting is T tvoting)
             {
                 var ids = tvoting.GetResultUserIds().ToArray();
-                if (ids.Length > 0)
+                if (ids.Length > 2)
                     AddVoting(Create(game, ids));
+                else if (ids.Length == 1 && game.Participants.TryGetValue(ids[0], out Role? role) && role != null)
+                    tvoting.Execute(game, ids[0], role);
                 RemoveVoting(tvoting);
             }
         }

@@ -113,6 +113,15 @@ namespace Mabron.DiscordBots.Games.Werwolf
                         fact.UrlArgument<int>("id", int.TryParse),
                         fact.MaxLength()
                     )),
+                RestActionEndpoint.Create<string, ulong>(VotingWaitAsync, "token", "vid")
+                    .Add(fact.Location(
+                        fact.UrlConstant("game"),
+                        fact.UrlArgument("token"),
+                        fact.UrlConstant("voting"),
+                        fact.UrlArgument<ulong>("vid", ulong.TryParse),
+                        fact.UrlConstant("wait"),
+                        fact.MaxLength()
+                    )),
                 RestActionEndpoint.Create<string, ulong>(FinishVotingAsync, "token", "vid")
                     .Add(fact.Location(
                         fact.UrlConstant("game"),
@@ -224,6 +233,9 @@ namespace Mabron.DiscordBots.Games.Werwolf
                         writer.WriteBoolean("started", voting.Started);
                         writer.WriteBoolean("can-vote", ownRole != null && voting.CanVote(ownRole));
                         writer.WriteNumber("max-voter", voting.GetVoter(game).Count());
+                        if (voting.Timeout != null)
+                            writer.WriteString("timeout", voting.Timeout.Value);
+                        else writer.WriteNull("timeout");
                         writer.WriteStartObject("options"); // options
                         foreach (var (id, option) in voting.Options)
                         {
@@ -310,6 +322,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                 writer.WriteBoolean("dead-can-see-all-roles", game.DeadCanSeeAllRoles);
                 writer.WriteBoolean("autostart-votings", game.AutostartVotings);
                 writer.WriteBoolean("autofinish-votings", game.AutoFinishVotings);
+                writer.WriteBoolean("voting-timeout", game.UseVotingTimeouts);
 
                 writer.WriteEndObject();
                 writer.WriteString("user", user.DiscordId.ToString());
@@ -364,6 +377,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                         var deadCanSeeRoles = game.DeadCanSeeAllRoles;
                         var autostartVotings = game.AutostartVotings;
                         var autoFinishVotings = game.AutoFinishVotings;
+                        var votingTimeout = game.UseVotingTimeouts;
 
                         if (post.Parameter.TryGetValue("leader", out string? value))
                         {
@@ -403,6 +417,14 @@ namespace Mabron.DiscordBots.Games.Werwolf
                             autoFinishVotings = bool.Parse(value);
                         }
 
+                        if (post.Parameter.TryGetValue("voting-timeout", out value))
+                        {
+                            votingTimeout = bool.Parse(value);
+                        }
+
+                        if (autoFinishVotings && votingTimeout)
+                            return "you cannot have 'auto finish votings' and 'voting timeout' activated at the same time.";
+
                         // input is valid use the new data
                         if (game.Leader != newLeader)
                         {
@@ -420,6 +442,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                         game.DeadCanSeeAllRoles = deadCanSeeRoles;
                         game.AutostartVotings = autostartVotings;
                         game.AutoFinishVotings = autoFinishVotings;
+                        game.UseVotingTimeouts = votingTimeout;
                     }
                     catch (Exception e)
                     {
@@ -541,8 +564,6 @@ namespace Mabron.DiscordBots.Games.Werwolf
                 if (!game.FullConfiguration)
                     return "some roles are missing or there are to much roles defined";
 
-                
-                game.StartGame(); // this is to increase the execution round
                 var random = new Random();
                 var roles = game.RoleConfiguration
                     .SelectMany(x => Enumerable.Repeat(x.Key, x.Value))
@@ -557,6 +578,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                     roles.RemoveAt(index);
                 }
 
+                game.StartGame();
                 game.IsRunning = true;
                 return null;
             }
@@ -597,6 +619,8 @@ namespace Mabron.DiscordBots.Games.Werwolf
                     return "voting already started";
 
                 voting.Started = true;
+                if (game.UseVotingTimeouts)
+                    voting.SetTimeout(game, true);
 
                 return null;
             }
@@ -649,29 +673,63 @@ namespace Mabron.DiscordBots.Games.Werwolf
                     return "option not found";
 
                 option.Users.Add(user.DiscordId);
+                if (game.UseVotingTimeouts)
+                    voting.SetTimeout(game, true);
 
-                if (game.AutoFinishVotings && voting.GetVoter(game).Count() == voting.Options.Sum(x => x.option.Users.Count))
+                if (game.AutoFinishVotings && 
+                    voting.GetVoter(game).Count() == voting.Options.Sum(x => x.option.Users.Count))
                 {
-                    var vote = voting.GetResult();
-                    if (vote != null)
-                    {
-                        voting.Execute(game, vote.Value);
-                        game.Phase!.Current.RemoveVoting(voting);
-
-                        if (new WinCondition().Check(game))
-                        {
-                            game.StopGame(true);
-                        }
-                    }
-                    else
-                    {
-                        game.Phase!.Current.ExecuteMultipleWinner(voting, game);
-                    }
+                    voting.FinishVoting(game);
                 }
 
                 return null;
             }
             writer.WriteString("error", Do(writer, token, id, vid));
+
+            writer.WriteEndObject();
+            await writer.FlushAsync();
+            stream.Position = 0;
+            return new HttpStreamDataSource(stream)
+            {
+                MimeType = MimeType.ApplicationJson,
+            };
+        }
+
+        private static async Task<HttpDataSource> VotingWaitAsync(string token,  ulong vid)
+        {
+
+            var stream = new MemoryStream();
+            var writer = new Utf8JsonWriter(stream);
+            writer.WriteStartObject();
+
+            static string? Do(Utf8JsonWriter writer, string token,  ulong vid)
+            {
+                var result = GameController.Current.GetFromToken(token);
+                if (result == null)
+                    return "token not found";
+
+                var (game, user) = result.Value;
+                var voting = game.Phase?.Current.Votings.Where(x => x.Id == vid).FirstOrDefault();
+                if (voting == null)
+                    return "no voting exists";
+
+                if (!game.Participants.TryGetValue(user.DiscordId, out Role? ownRole))
+                    ownRole = null;
+                if (user.DiscordId != game.Leader && (ownRole == null || !voting.CanVote(ownRole)))
+                    return "you are not allowed to vote";
+
+                if (!voting.Started)
+                    return "voting is not started";
+
+                if (!game.UseVotingTimeouts)
+                    return "there are no timeouts activated for this voting";
+
+                if (!voting.SetTimeout(game, false))
+                    return "timeout already reseted. Try later!";
+
+                return null;
+            }
+            writer.WriteString("error", Do(writer, token, vid));
 
             writer.WriteEndObject();
             await writer.FlushAsync();
@@ -705,21 +763,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                 if (!voting.Started)
                     return "voting is not started";
 
-                var vote = voting.GetResult();
-                if (vote != null)
-                {
-                    voting.Execute(game, vote.Value);
-                    game.Phase!.Current.RemoveVoting(voting);
-
-                    if (new WinCondition().Check(game))
-                    {
-                        game.StopGame(true);
-                    }
-                }
-                else
-                {
-                    game.Phase!.Current.ExecuteMultipleWinner(voting, game);
-                }
+                voting.FinishVoting(game);
 
                 return null;
             }

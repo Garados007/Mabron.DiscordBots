@@ -12,6 +12,7 @@ import Views.ViewErrors
 import Views.ViewSettingsBar
 import Views.ViewThemeEditor
 import Views.ViewModal
+import Views.ViewWinners
 
 import Browser
 import Html exposing (Html, div, text)
@@ -92,7 +93,13 @@ main = Browser.application
                     Html.map (always CloseModal)
                         <| Views.ViewModal.viewOnlyClose "Sieger"
                         <| List.singleton
-                        <| Debug.Extra.viewModel (game, list)
+                        <| Views.ViewWinners.view game list
+                        <| Maybe.withDefault Dict.empty
+                        <| Maybe.map 
+                            (Dict.map
+                                <| \_ -> .name
+                            )
+                        <| model.roles
             , Views.ViewErrors.view model.errors
                 |> Html.map WrapError
             , Debug.Extra.viewModel model
@@ -179,6 +186,7 @@ viewGamePhase model roles game user phase =
                 <| Views.ViewSettingsBar.view model
             , Html.map WrapPhase
                 <| Views.ViewGamePhase.view
+                    model.now
                     model.token
                     game
                     phase
@@ -374,8 +382,8 @@ update msg model =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        -- [ Time.every 1000 SetTime
-        [ Sub.none
+        [ Time.every 1000 SetTime
+        -- [ Sub.none
         , if model.game 
                 |> Maybe.map 
                     (\result -> result.game /= Nothing &&

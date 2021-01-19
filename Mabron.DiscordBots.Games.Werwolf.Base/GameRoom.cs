@@ -32,6 +32,8 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
         public bool AutoFinishVotings { get; set; } = false;
 
+        public bool UseVotingTimeouts { get; set; } = false;
+
         public Theme? Theme { get; set; }
 
         public (uint round, ReadOnlyMemory<ulong> winner)? Winner { get; set; }

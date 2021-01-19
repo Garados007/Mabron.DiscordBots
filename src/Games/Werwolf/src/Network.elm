@@ -22,6 +22,7 @@ type NetworkRequest
     | GetGameStart String
     | GetVotingStart String String
     | GetVote String String String
+    | GetVotingWait String String
     | GetVotingFinish String String
     | GetGameNext String
     | GetGameStop String
@@ -74,6 +75,8 @@ executeRequest request =
             |> mapRespError
         GetVote token vid id -> getVote token vid id
             |> mapRespError
+        GetVotingWait token vid -> getVotingWait token vid
+            |> mapRespError
         GetVotingFinish token vid -> getVotingFinish token vid
             |> mapRespError
         GetGameNext token -> getGameNext token
@@ -106,6 +109,7 @@ editGameConfig =
     , newDeadCanSeeAllRoles = Nothing
     , autostartVotings = Nothing
     , autofinishVotings = Nothing
+    , votingTimeout = Nothing
     }
 
 type alias EditGameConfig =
@@ -114,6 +118,7 @@ type alias EditGameConfig =
     , newDeadCanSeeAllRoles: Maybe Bool
     , autostartVotings: Maybe Bool
     , autofinishVotings: Maybe Bool
+    , votingTimeout: Maybe Bool
     }
 
 convertEditGameConfig : EditGameConfig -> String
@@ -150,6 +155,11 @@ convertEditGameConfig config =
             if new then "true" else "false"
         )
         config.autofinishVotings
+    , Maybe.map
+        (\new -> "voting-timeout=" ++
+            if new then "true" else "false"
+        )
+        config.votingTimeout
     ]
     |> List.filterMap identity
     |> List.intersperse "&"
@@ -219,6 +229,12 @@ getVote token vid id =
     getErrorReq
         <| "/api/game/" ++ token ++ "/voting/" 
         ++ vid ++ "/vote/" ++ id
+        
+getVotingWait : String -> String -> Cmd (Response Data.Error)
+getVotingWait token vid =
+    getErrorReq
+        <| "/api/game/" ++ token ++ "/voting/" 
+        ++ vid ++ "/wait"
 
 getVotingFinish : String -> String -> Cmd (Response Data.Error)
 getVotingFinish token vid =

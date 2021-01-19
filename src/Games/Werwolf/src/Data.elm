@@ -19,6 +19,8 @@ import Dict exposing (Dict)
 import Json.Decode as JD exposing (Decoder)
 import Json.Decode.Pipeline exposing (required)
 import Json.Decode exposing (succeed)
+import Time exposing (Posix)
+import Iso8601
 
 type alias RoleTemplate =
     { name: String
@@ -49,6 +51,7 @@ type alias Game =
     , deadCanSeeAllRoles: Bool
     , autostartVotings: Bool
     , autofinishVotings: Bool
+    , votingTimeout: Bool
     }
 
 type alias GamePhase =
@@ -62,6 +65,7 @@ type alias GameVoting =
     , started: Bool
     , canVote: Bool
     , maxVoter: Int
+    , timeout: Maybe Posix
     , options: Dict String GameVotingOption
     }
 
@@ -112,6 +116,8 @@ decodeGameUserResult =
                                 |> required "started" JD.bool
                                 |> required "can-vote" JD.bool
                                 |> required "max-voter" JD.int
+                                |> required "timeout" 
+                                    (JD.nullable Iso8601.decoder)
                                 |> required "options"
                                     (JD.succeed GameVotingOption
                                         |> required "name" JD.string
@@ -150,6 +156,7 @@ decodeGameUserResult =
                 |> required "dead-can-see-all-roles" JD.bool
                 |> required "autostart-votings" JD.bool
                 |> required "autofinish-votings" JD.bool
+                |> required "voting-timeout" JD.bool
                 |> JD.nullable
             )
         |> required "user" (JD.nullable JD.string)

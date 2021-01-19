@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
@@ -84,8 +85,6 @@ namespace Mabron.DiscordBots.Games.Werwolf
             await message.AddReactionAsync(new Emoji("\u2705"));
             await message.AddReactionAsync(new Emoji("\u274C"));
             await SendInvite(game, GameUser.Create(Context.Message.Author));
-            //if (!Context.Guild.HasAllMembers)
-            //    _ = Context.Guild.DownloadUsersAsync();
         }
 
         [Command("join")]
@@ -117,6 +116,73 @@ namespace Mabron.DiscordBots.Games.Werwolf
                         properties.Embed = GetGameEmbed(game);
                     }
                 );
+        }
+
+        static readonly Regex readUserId = new Regex("^<@!(?<id>\\d+)>$", RegexOptions.Compiled);
+
+        [Command("join")]
+        [Summary("Let a user join an existing game")]
+        public async Task JoinAsync(string id, string user)
+        {
+            _ = Task.Run(async () =>
+            {
+                IUser? realUser = null;
+                var match = readUserId.Match(user);
+                if (match.Success)
+                {
+                    var userId = ulong.Parse(match.Groups["id"].Value);
+                    realUser = await Context.Channel.GetUserAsync(userId);
+                    if (realUser == null)
+                        realUser = await Program.DiscordRestClient!.GetUserAsync(userId);
+                }
+
+                if (realUser == null)
+                {
+                    await ReplyAsync($"Sorry cannot find the user. Insert the name with \"\\@user\" so I can find it.");
+                    return;
+                }
+
+                var decodedId = GetLocalId(id);
+                GameRoom? game = decodedId != null ? GameController.Current.GetGame(decodedId.Value) : null;
+                using var typing = Context.Channel.EnterTypingState();
+                if (game == null)
+                {
+                    await ReplyAsync($"Game with ID {id} not found.");
+                    return;
+                }
+                if (Context.User.IsBot)
+                    return;
+                if (realUser.IsBot)
+                {
+                    await ReplyAsync($"Sorry but the bot <@!{realUser.Id}> is not allowed to enter.");
+                    return;
+                }
+                if (game.Participants.Count >= 500)
+                {
+                    await ReplyAsync("Game is full");
+                    return;
+                }
+                var gameUser = GameUser.Create(realUser);
+                if (game.AddParticipant(gameUser))
+                    try { await SendInvite(game, gameUser); }
+                    catch (Discord.Net.HttpException exception)
+                    {
+                        game.RemoveParticipant(gameUser);
+                        await ReplyAsync(
+                            $"Unfortunately I cannot send <@!{realUser.Id}> a private message. Is (s)he on this server?\n" +
+                            $"```\n{exception.GetType()}: {exception.Message}\n```"
+                        );
+                        return;
+                    }
+                if (game.Message != null)
+                    await game.Message.ModifyAsync(
+                        properties =>
+                        {
+                            properties.Embed = GetGameEmbed(game);
+                        }
+                    );
+            });
+            await Task.CompletedTask;
         }
 
         private static string GetPublicId(int id)

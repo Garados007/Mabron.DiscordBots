@@ -120,9 +120,13 @@ view roles game editable buffer =
                     ]
                 ]
 
-        viewCheckbox : String -> Bool -> (Bool -> Msg) -> Html Msg
-        viewCheckbox title checked onChange =
-            Html.label []
+        viewCheckbox : String -> Bool -> Bool -> (Bool -> Msg) -> Html Msg
+        viewCheckbox title enabled checked onChange =
+            Html.label 
+                [ HA.classList
+                    [ ("disabled", not enabled)
+                    ]
+                ]
                 [ Html.input
                     [ HA.type_ "checkbox" 
                     , HA.checked checked
@@ -130,7 +134,7 @@ view roles game editable buffer =
                         <| if editable
                             then onChange
                             else always Noop
-                    , HA.disabled <| not editable
+                    , HA.disabled <| not <| editable && enabled
                     ] []
                 , Html.span [] [ text title ]
                 ]
@@ -142,22 +146,32 @@ view roles game editable buffer =
         , viewRoleBar
         , div [ class "editor-checks" ]
             [ viewCheckbox "Tote können alle Rollen sehen"
+                True
                 game.deadCanSeeAllRoles
                 <| \new -> SendConf
                     { editGameConfig
                     | newDeadCanSeeAllRoles = Just new
                     }
             , viewCheckbox "Votings automatisch starten"
+                True
                 game.autostartVotings
                 <| \new -> SendConf
                     { editGameConfig
                     | autostartVotings = Just new
                     }
             , viewCheckbox "Votings automatisch beenden"
+                (not game.votingTimeout)
                 game.autofinishVotings
                 <| \new -> SendConf
                     { editGameConfig
                     | autofinishVotings = Just new
+                    }
+            , viewCheckbox "Votings automatisch nach einen Timeout beenden"
+                (not game.autofinishVotings)
+                game.votingTimeout
+                <| \new -> SendConf
+                    { editGameConfig
+                    | votingTimeout = Just new
                     }
             ]
         , if editable

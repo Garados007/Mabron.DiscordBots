@@ -9,13 +9,14 @@ import Html.Attributes as HA exposing (class)
 import Html.Events as HE
 import Dict exposing (Dict)
 import Html exposing (option)
+import Time exposing (Posix)
 
 type Msg
     = Noop
     | Send NetworkRequest
 
-view : String -> Data.Game -> Data.GamePhase -> Bool -> String -> Html Msg
-view token game phase isLeader myId =
+view : Posix -> String -> Data.Game -> Data.GamePhase -> Bool -> String -> Html Msg
+view now token game phase isLeader myId =
     let
         viewPhaseHeader : Html Msg
         viewPhaseHeader =
@@ -98,10 +99,15 @@ view token game phase isLeader myId =
                                 ]
                         )
                     <| Dict.toList voting.options
-                , if isLeader
-                    then div [ class "voting-controls" ]
-                        <| List.singleton
-                        <| if voting.started
+                ,   (\list -> 
+                        if List.isEmpty list
+                        then text ""
+                        else div [ class "voting-controls" ] list
+                    )
+                    <| List.filterMap identity
+                    [ if isLeader
+                        then Just <|
+                            if voting.started
                             then div 
                                 [ class "button" 
                                 , HE.onClick 
@@ -116,7 +122,41 @@ view token game phase isLeader myId =
                                     <| GetVotingStart token voting.id
                                 ]
                                 [ text "Starten" ]
-                    else text ""
+                        else Nothing
+                    , if voting.started && (isLeader || voting.canVote)
+                        then Maybe.andThen
+                            (\time ->
+                                let
+                                    seconds : Int
+                                    seconds = max 0
+                                        <| (\t -> t // 1000)
+                                        <| (Time.posixToMillis time) - (Time.posixToMillis now)
+
+                                    missingPlayer : Int
+                                    missingPlayer = (-) voting.maxVoter
+                                        <| List.sum
+                                        <| List.map (.user >> List.length)
+                                        <| Dict.values voting.options
+
+                                in  if seconds <= 30
+                                    then Just <| div
+                                        [ class "button"
+                                        , HE.onClick
+                                            <| Send
+                                            <| GetVotingWait token voting.id
+                                        , HA.title <|
+                                            "In " ++ String.fromInt seconds ++ " Sekunden wird das Voting " ++
+                                            "automatisch beendet. Hier klicken um auf " ++
+                                            String.fromInt (missingPlayer * 45) ++ " Sekunden zurückzusetzen."
+                                        ]
+                                        [ text <| 
+                                            "Zeitzugabe (" ++ String.fromInt seconds ++ ")"
+                                        ]
+                                    else Nothing
+                            )
+                            voting.timeout
+                        else Nothing
+                    ]
                 ]
 
         viewPhaseControls : () -> Html Msg

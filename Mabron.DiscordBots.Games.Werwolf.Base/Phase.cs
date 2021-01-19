@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 
 namespace Mabron.DiscordBots.Games.Werwolf
 {
@@ -12,7 +10,8 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
         public virtual void Init(GameRoom game)
         {
-            autostart = game.AutostartVotings;
+            votings.Clear();
+            this.game = game;
         }
 
         public virtual bool IsGamePhase => true;
@@ -20,12 +19,14 @@ namespace Mabron.DiscordBots.Games.Werwolf
         readonly List<Voting> votings = new List<Voting>();
         public IEnumerable<Voting> Votings => votings;
 
-        private bool autostart;
+        private GameRoom? game;
 
         protected virtual void AddVoting(Voting voting)
         {
             votings.Add(voting);
-            voting.Started = autostart;
+            voting.Started = game?.AutostartVotings ?? false;
+            if (game?.UseVotingTimeouts ?? false)
+                voting.SetTimeout(game, true);
         }
 
         public virtual void RemoveVoting(Voting voting)
