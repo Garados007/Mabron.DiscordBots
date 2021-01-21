@@ -10,6 +10,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Votings
         {
         }
 
+
         public override bool CanView(Role viewer)
         {
             return true;

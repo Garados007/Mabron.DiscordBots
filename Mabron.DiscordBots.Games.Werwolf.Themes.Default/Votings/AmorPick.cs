@@ -31,15 +31,5 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Votings
                 pick.VotingFinished(this);
             }
         }
-
-        public void RemoveOption(ulong user)
-        {
-            var key = options
-                .Where(x => x.Value.id == user)
-                .Select(x => (int?)x.Key)
-                .FirstOrDefault();
-            if (key != null)
-                options.Remove(key.Value, out _);
-        }
     }
 }

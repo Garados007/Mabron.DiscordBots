@@ -1,8 +1,5 @@
 ﻿using Mabron.DiscordBots.Games.Werwolf.Votings;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Votings
 {
@@ -24,6 +21,8 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Votings
 
         public override string Name => "Todestrank nutzen";
 
+        protected override bool AllowDoNothingOption => true;
+
         public override bool CanView(Role viewer)
         {
             return viewer is Roles.Witch;
@@ -34,25 +33,12 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Votings
             return voter == Witch && !Witch.UsedLivePotion;
         }
 
-        public void RemoveUserOption(ulong user)
-        {
-            var key = options.Where(x => x.Value.id == user)
-                .Select(x => (int?)x.Key)
-                .FirstOrDefault();
-            if (key != null)
-                options.Remove(key.Value, out _);
-        }
-
         public override void Execute(GameRoom game, ulong id, Role role)
         {
             if (role is BaseRole baseRole)
             {
                 baseRole.IsAlive = false;
                 Witch.UsedDeathPotion = true;
-                if (game.Phase?.Current is Phases.WitchPhase phase)
-                {
-                    phase.VotingFinished(this, id);
-                }
             }
         }
     }
