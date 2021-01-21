@@ -52,6 +52,7 @@ type alias Game =
     , autostartVotings: Bool
     , autofinishVotings: Bool
     , votingTimeout: Bool
+    , autofinishRound: Bool
     }
 
 type alias GamePhase =
@@ -157,6 +158,7 @@ decodeGameUserResult =
                 |> required "autostart-votings" JD.bool
                 |> required "autofinish-votings" JD.bool
                 |> required "voting-timeout" JD.bool
+                |> required "autofinish-rounds" JD.bool
                 |> JD.nullable
             )
         |> required "user" (JD.nullable JD.string)

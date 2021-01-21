@@ -17,7 +17,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
         public virtual bool IsGamePhase => true;
 
         readonly List<Voting> votings = new List<Voting>();
-        public IEnumerable<Voting> Votings => votings;
+        public virtual IEnumerable<Voting> Votings => votings;
 
         private GameRoom? game;
 

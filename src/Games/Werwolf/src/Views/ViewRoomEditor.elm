@@ -1,7 +1,6 @@
 module Views.ViewRoomEditor exposing (..)
 
 import Data
-import Model exposing (Model)
 import Network exposing (NetworkRequest(..), EditGameConfig, editGameConfig)
 
 import Html exposing (Html, div, text)
@@ -172,6 +171,13 @@ view roles game editable buffer =
                 <| \new -> SendConf
                     { editGameConfig
                     | votingTimeout = Just new
+                    }
+            , viewCheckbox "Runden automatisch beenden wenn kein Voting mehr existiert"
+                True
+                game.autofinishRound
+                <| \new -> SendConf
+                    { editGameConfig
+                    | autofinishRound = Just new
                     }
             ]
         , if editable

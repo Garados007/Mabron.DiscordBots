@@ -10,7 +10,6 @@ module Network exposing
 
 import Data
 import Http
-import Json.Decode as JD
 import Dict exposing (Dict)
 import Url
 
@@ -110,6 +109,7 @@ editGameConfig =
     , autostartVotings = Nothing
     , autofinishVotings = Nothing
     , votingTimeout = Nothing
+    , autofinishRound = Nothing
     }
 
 type alias EditGameConfig =
@@ -119,6 +119,7 @@ type alias EditGameConfig =
     , autostartVotings: Maybe Bool
     , autofinishVotings: Maybe Bool
     , votingTimeout: Maybe Bool
+    , autofinishRound: Maybe Bool
     }
 
 convertEditGameConfig : EditGameConfig -> String
@@ -160,6 +161,11 @@ convertEditGameConfig config =
             if new then "true" else "false"
         )
         config.votingTimeout
+    , Maybe.map
+        (\new -> "autofinish-rounds=" ++
+            if new then "true" else "false"
+        )
+        config.autofinishRound
     ]
     |> List.filterMap identity
     |> List.intersperse "&"

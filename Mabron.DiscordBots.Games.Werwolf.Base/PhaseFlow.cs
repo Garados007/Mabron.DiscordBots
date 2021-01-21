@@ -1,3 +1,5 @@
+using System.Linq;
+
 namespace Mabron.DiscordBots.Games.Werwolf
 {
     public sealed class PhaseFlow
@@ -44,12 +46,16 @@ namespace Mabron.DiscordBots.Games.Werwolf
                     return false;
                 if (!Current.CanExecute(game))
                     continue;
-                
+
+                Current.Init(game);
+
                 if (!Current.IsGamePhase)
-                {
-                    Current.Init(game);
-                }
-                else return true;
+                    continue;
+
+                if (game.AutoFinishRounds && !Current.Votings.Any())
+                    continue;
+
+                return true;
             }
             return false;
         }

@@ -323,6 +323,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                 writer.WriteBoolean("autostart-votings", game.AutostartVotings);
                 writer.WriteBoolean("autofinish-votings", game.AutoFinishVotings);
                 writer.WriteBoolean("voting-timeout", game.UseVotingTimeouts);
+                writer.WriteBoolean("autofinish-rounds", game.AutoFinishRounds);
 
                 writer.WriteEndObject();
                 writer.WriteString("user", user.DiscordId.ToString());
@@ -378,6 +379,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                         var autostartVotings = game.AutostartVotings;
                         var autoFinishVotings = game.AutoFinishVotings;
                         var votingTimeout = game.UseVotingTimeouts;
+                        var autoFinishRounds = game.AutoFinishRounds;
 
                         if (post.Parameter.TryGetValue("leader", out string? value))
                         {
@@ -422,6 +424,11 @@ namespace Mabron.DiscordBots.Games.Werwolf
                             votingTimeout = bool.Parse(value);
                         }
 
+                        if (post.Parameter.TryGetValue("autofinish-rounds", out value))
+                        {
+                            autoFinishRounds = bool.Parse(value);
+                        }
+
                         if (autoFinishVotings && votingTimeout)
                             return "you cannot have 'auto finish votings' and 'voting timeout' activated at the same time.";
 
@@ -443,6 +450,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                         game.AutostartVotings = autostartVotings;
                         game.AutoFinishVotings = autoFinishVotings;
                         game.UseVotingTimeouts = votingTimeout;
+                        game.AutoFinishRounds = autoFinishRounds;
                     }
                     catch (Exception e)
                     {

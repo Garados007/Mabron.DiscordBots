@@ -34,6 +34,8 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
         public bool UseVotingTimeouts { get; set; } = false;
 
+        public bool AutoFinishRounds { get; set; } = false;
+
         public Theme? Theme { get; set; }
 
         public (uint round, ReadOnlyMemory<ulong> winner)? Winner { get; set; }
@@ -73,9 +75,8 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
         public void NextPhase()
         {
-            if (Phase?.Next(this) ?? false)
-                Phase.Current.Init(this);
-            else Phase = null;
+            if (!Phase?.Next(this) ?? true)
+                Phase = null;
         }
 
         public void StartGame()
@@ -128,7 +129,11 @@ namespace Mabron.DiscordBots.Games.Werwolf
                             user.StatsKilled++;
                             if (winRoles.Any(x => !SameFaction(x, role)))
                                 user.StatsLooseGames++;
-                            else winner.Add(id);
+                            else
+                            {
+                                user.StatsWinGames++;
+                                winner.Add(id);
+                            }
                         }
                     }
                     Theme.User!.Update(user);

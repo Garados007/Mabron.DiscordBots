@@ -75,6 +75,10 @@ namespace Mabron.DiscordBots.Games.Werwolf
             {
                 game.Phase!.Current.ExecuteMultipleWinner(this, game);
             }
+            if (game.AutoFinishRounds && (!game.Phase?.Current.Votings.Any() ?? false))
+            {
+                game.NextPhase();
+            }
         }
 
         public IEnumerable<Role> GetVoter(GameRoom game)
