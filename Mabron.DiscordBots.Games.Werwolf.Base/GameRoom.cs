@@ -111,11 +111,14 @@ namespace Mabron.DiscordBots.Games.Werwolf
             {
                 var winRoles  = AliveRoles.ToArray();
                 var winner = new List<ulong>(UserCache.Count);
+                // -0.15 is for the leader
+                var xpMultiplier = Participants.Values.Where(x => x != null).Count() * 0.15; 
                 foreach (var (id, user) in UserCache)
                 {
                     if (id == Leader)
                     {
                         user.StatsLeader++;
+                        user.CurrentXP += (ulong)Math.Round(xpMultiplier * 100);
                     }
                     if (Participants.TryGetValue(id, out Role? role) && role != null)
                     {
@@ -123,6 +126,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                         {
                             user.StatsWinGames++;
                             winner.Add(id);
+                            user.CurrentXP += (ulong)Math.Round(xpMultiplier * 280);
                         }
                         else
                         {
@@ -133,8 +137,15 @@ namespace Mabron.DiscordBots.Games.Werwolf
                             {
                                 user.StatsWinGames++;
                                 winner.Add(id);
+                                user.CurrentXP += (ulong)Math.Round(xpMultiplier * 120);
                             }
                         }
+                    }
+                    ulong maxXP;
+                    while (user.CurrentXP >= (maxXP = user.LevelMaxXP))
+                    {
+                        user.CurrentXP -= maxXP;
+                        user.Level++;
                     }
                     Theme.User!.Update(user);
                 }

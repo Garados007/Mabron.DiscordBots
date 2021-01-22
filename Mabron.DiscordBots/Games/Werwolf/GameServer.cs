@@ -298,6 +298,9 @@ namespace Mabron.DiscordBots.Games.Werwolf
                     writer.WriteNumber("killed", entry.StatsKilled);
                     writer.WriteNumber("loose-games", entry.StatsLooseGames);
                     writer.WriteNumber("leader", entry.StatsLeader);
+                    writer.WriteNumber("level", entry.Level);
+                    writer.WriteNumber("current-xp", entry.CurrentXP);
+                    writer.WriteNumber("max-xp", entry.LevelMaxXP);
                     writer.WriteEndObject();
                     writer.WriteEndObject();
                 }

@@ -1,4 +1,5 @@
-﻿using Discord;
+﻿using System;
+using Discord;
 using LiteDB;
 
 namespace Mabron.DiscordBots.Games.Werwolf
@@ -26,6 +27,13 @@ namespace Mabron.DiscordBots.Games.Werwolf
         public uint StatsLooseGames { get; set; } = 0;
 
         public uint StatsLeader { get; set; } = 0;
+
+        public uint Level { get; set; } = 0;
+
+        public ulong CurrentXP { get; set; } = 0;
+
+        public ulong LevelMaxXP 
+            => (ulong)(40 * (Math.Pow(Level, 1.2) + Math.Pow(1.1, Math.Pow(Level, 0.5))));
 
         public static GameUser Create(IUser user)
         {
