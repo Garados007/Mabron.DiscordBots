@@ -17,6 +17,8 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default
             yield return new Roles.Girl(this);
             yield return new Roles.Amor(this);
             yield return new Roles.Witch(this);
+            yield return new Roles.Healer(this);
+            yield return new Roles.Idiot(this);
         }
 
         public override PhaseFlow GetPhases()
@@ -29,6 +31,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default
             // add night phases
             phases.Add(new Phase[]
             {
+                new Phases.HealerVote(),
                 new Phases.OraclePick(),
                 new Phases.WerwolfPhase(),
                 new Phases.WitchPhase(),

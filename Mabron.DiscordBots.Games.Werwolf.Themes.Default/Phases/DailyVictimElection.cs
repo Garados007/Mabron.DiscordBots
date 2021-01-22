@@ -22,9 +22,14 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
         {
             if (voting is Votings.DailyVote dv)
             {
+                var hasMajor = game.AliveRoles.Any(x => x is BaseRole baserRole && x.IsMajor);
                 var ids = dv.GetResultUserIds().ToArray();
                 if (ids.Length > 0)
-                    AddVoting(new Votings.MajorPick(game, ids));
+                {
+                    if (hasMajor)
+                        AddVoting(new Votings.MajorPick(game, ids));
+                    else AddVoting(new Votings.DailyVote(game, ids));
+                }
                 RemoveVoting(voting);
             }
             if (voting is Votings.MajorPick mp)

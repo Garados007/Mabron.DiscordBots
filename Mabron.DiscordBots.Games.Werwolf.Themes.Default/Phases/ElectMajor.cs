@@ -9,7 +9,12 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
 
         public override bool CanExecute(GameRoom game)
         {
-            return !game.AliveRoles.Where(x => x.IsMajor).Any();
+            var isMajorRemoved = game.Participants.Values
+                .Where(x => x is Roles.Idiot)
+                .Cast<Roles.Idiot>()
+                .Where(x => x.WasMajor)
+                .Any();
+            return !isMajorRemoved && !game.AliveRoles.Where(x => x.IsMajor).Any();
         }
 
         public override void Init(GameRoom game)

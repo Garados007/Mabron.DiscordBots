@@ -12,6 +12,8 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default
 
         public bool IsSelectedByWerewolves { get; set; } = false;
 
+        public bool IsSelectedByHealer { get; set; } = false;
+
         public bool IsViewedByOracle { get; set; } = false;
 
         public bool IsLoved { get; set; } = false;
@@ -22,6 +24,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default
         {
             base.Reset();
             IsSelectedByWerewolves = false;
+            IsSelectedByHealer = false;
             IsViewedByOracle = false;
             IsLoved = false;
             HasSeenLoved = false;
