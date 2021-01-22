@@ -18,9 +18,10 @@ module Data exposing
 import Dict exposing (Dict)
 import Json.Decode as JD exposing (Decoder)
 import Json.Decode.Pipeline exposing (required)
-import Json.Decode exposing (succeed)
+import Json.Decode
 import Time exposing (Posix)
 import Iso8601
+import Level exposing (LevelData)
 
 type alias RoleTemplate =
     { name: String
@@ -86,6 +87,7 @@ type alias GameUser =
     { name: String
     , img: String
     , stats: GameUserStats
+    , level: LevelData
     }
 
 type alias GameUserStats =
@@ -148,6 +150,13 @@ decodeGameUserResult =
                                 |> required "killed" JD.int
                                 |> required "loose-games" JD.int
                                 |> required "leader" JD.int
+                            )
+                        -- level
+                        |> required "stats"
+                            (JD.succeed LevelData
+                                |> required "level" JD.int
+                                |> required "current-xp" JD.int
+                                |> required "max-xp" JD.int
                             )
                         |> JD.dict
                     )

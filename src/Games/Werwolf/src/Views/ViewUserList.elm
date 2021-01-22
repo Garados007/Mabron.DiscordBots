@@ -10,13 +10,15 @@ import Html.Events as HE
 import Dict exposing (Dict)
 import Svg
 import Svg.Attributes as SA
+import Level exposing (Level, LevelData)
+import Time exposing (Posix)
 
 type Msg
     = Noop
     | Send NetworkRequest
 
-view : String -> Data.Game -> String -> Dict String Data.RoleTemplate -> Html Msg
-view token game myId roles =
+view : Posix -> Dict String Level -> String -> Data.Game -> String -> Dict String Data.RoleTemplate -> Html Msg
+view now levels token game myId roles =
     let
         getUserRole : String -> String
         getUserRole id =
@@ -87,6 +89,34 @@ view token game myId roles =
                         , Html.span [] [ text <| String.fromInt user.stats.leader ]
                         ]
                     ]
+                ,   let
+                        level : LevelData
+                        level = Dict.get id levels
+                            |> Maybe.map (Level.getData now)
+                            |> Maybe.withDefault
+                                { level = 0
+                                , xp = 0
+                                , maxXp = 0
+                                }
+
+                    in div 
+                        [ class "user-info-level" ]
+                        [ div [ class "text" ]
+                            [ div [] [ text "Level" ]
+                            , div [] [ text <| String.fromInt level.level ]
+                            ]
+                        , div [ class "outer" ]
+                            [ div
+                                [ HA.style "width"
+                                    <| (\x -> String.fromFloat x ++ "%")
+                                    <|
+                                        if level.xp == level.maxXp
+                                        then 100
+                                        else 100 * (toFloat level.xp) / (toFloat level.maxXp)
+                                ]
+                                []
+                            ]
+                        ]
                 , if myId == game.leader && myId /= id
                     then div 
                         [ class "kick" 

@@ -32,6 +32,7 @@ import Color.Accessibility as CA
 import Color.Convert as CC
 import Color.Manipulate as CM
 import Regex
+import Level
 
 type Msg
     = Response NetworkResponse
@@ -93,7 +94,9 @@ main = Browser.application
                     Html.map (always CloseModal)
                         <| Views.ViewModal.viewOnlyClose "Sieger"
                         <| List.singleton
-                        <| Views.ViewWinners.view game list
+                        <| Views.ViewWinners.view 
+                            model.now model.levels
+                            game list
                         <| Maybe.withDefault Dict.empty
                         <| Maybe.map 
                             (Dict.map
@@ -137,7 +140,9 @@ viewGameFrame model roles game user =
     div [ class "frame-game-outer" ]
         [ div [ class "frame-game-left" ]
             [ Html.map WrapUser
-                <| Views.ViewUserList.view model.token game user roles
+                <| Views.ViewUserList.view
+                    model.now model.levels
+                    model.token game user roles
             ]
         , div [ class "frame-game-body" ]
             [ Html.map WrapSelectModal
@@ -179,7 +184,9 @@ viewGamePhase model roles game user phase =
     div [ class "frame-game-outer" ]
         [ div [ class "frame-game-left" ]
             [ Html.map WrapUser
-                <| Views.ViewUserList.view model.token game user roles
+                <| Views.ViewUserList.view
+                    model.now model.levels
+                    model.token game user roles
             ]
         , div [ class "frame-game-body", class "top" ]
             [ Html.map WrapSelectModal
@@ -382,7 +389,14 @@ update msg model =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ Time.every 1000 SetTime
+        [ Time.every
+            (   if Dict.values model.levels
+                    |> List.any Level.isAnimating
+                then 50
+                else 1000
+            )
+            SetTime  
+        -- , Time.every 1000 SetTime
         -- [ Sub.none
         , if model.game 
                 |> Maybe.map 

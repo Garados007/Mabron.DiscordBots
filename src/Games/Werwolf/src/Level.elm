@@ -3,6 +3,7 @@ module Level exposing
     , LevelData
     , getData
     , init
+    , isAnimating
     , updateData
     )
 
@@ -55,6 +56,14 @@ getData time (Level level) =
                 else if showLevel == level.old.level
                 then level.old.maxXp
                 else 1000
+
+            realMaxXP : Int
+            realMaxXP =
+                if showLevel == level.data.level
+                then level.data.maxXp
+                else if showLevel == level.old.level
+                then level.old.maxXp
+                else 1000
             
             currentTime : Int
             currentTime = timeDiff - 1000 * (showLevel - level.old.level)
@@ -68,7 +77,7 @@ getData time (Level level) =
         in
             { level = showLevel
             , xp = xp
-            , maxXp = maxXP
+            , maxXp = realMaxXP
             }
 
 updateData : Posix -> LevelData -> Level -> Level

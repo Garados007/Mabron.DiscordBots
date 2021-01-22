@@ -1,13 +1,16 @@
 module Views.ViewWinners exposing (..)
 
 import Data
+import Level exposing (Level, LevelData)
 
 import Html exposing (Html, div, text)
 import Html.Attributes as HA exposing (class)
 import Dict exposing (Dict)
+import Time exposing (Posix)
 
-view : Data.Game -> List String -> Dict String String -> Html Never
-view game winners roles =
+view : Posix -> Dict String Level -> Data.Game -> List String 
+    -> Dict String String -> Html Never
+view now levels game winners roles =
     div [ class "winner-box" ]
         <| List.map
             (\winner ->
@@ -28,6 +31,16 @@ view game winners roles =
                         |> Maybe.andThen .role
                         |> Maybe.andThen (\key -> Dict.get key roles)
                         |> Maybe.withDefault "???"
+
+                    level : LevelData
+                    level = Dict.get winner levels
+                        |> Maybe.map (Level.getData now)
+                        |> Maybe.withDefault
+                            { level = 0
+                            , xp = 0
+                            , maxXp = 0
+                            }
+                    
                 in div [ class "winner" ]
                     [ Html.img
                         [ HA.src img ]
@@ -36,6 +49,24 @@ view game winners roles =
                         [ text name ]
                     , div [ class "role" ]
                         [ text role ]
+                    , div 
+                        [ class "user-info-level" ]
+                        [ div [ class "text" ]
+                            [ div [] [ text "Level" ]
+                            , div [] [ text <| String.fromInt level.level ]
+                            ]
+                        , div [ class "outer" ]
+                            [ div
+                                [ HA.style "width"
+                                    <| (\x -> String.fromFloat x ++ "%")
+                                    <|
+                                        if level.xp == level.maxXp
+                                        then 100
+                                        else 100 * (toFloat level.xp) / (toFloat level.maxXp)
+                                ]
+                                []
+                            ]
+                        ]
                     ]
             )
         <| winners
