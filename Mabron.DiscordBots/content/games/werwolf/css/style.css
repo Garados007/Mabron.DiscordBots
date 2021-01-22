@@ -45,6 +45,7 @@ body {
   background-repeat: no-repeat;
   background-size: cover;
   background-image: var(--bg-url);
+  z-index: -1;
 }
 .error-box {
   position: fixed;
@@ -124,6 +125,14 @@ body {
   padding: 0.5em 0.8em;
   border-radius: 0.8em;
   position: relative;
+}
+.user-frame.dead img {
+  filter: gray; /* IE6-9 */
+  -webkit-filter: grayscale(1); /* Google Chrome, Safari 6+ & Opera 15+ */
+  filter: grayscale(1); /* Microsoft Edge and Firefox 35+ */
+}
+.user-frame.dead .user-name {
+  color: var(--text-color-light);
 }
 .user-frame svg {
   height: 1em;

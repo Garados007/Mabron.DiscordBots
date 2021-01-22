@@ -56,6 +56,11 @@ view now levels token game myId roles =
             div [ HA.classList
                     [ ("user-frame", True)
                     , ("me", myId == id)
+                    , Tuple.pair "dead"
+                        <| not
+                        <| case Dict.get id game.participants of
+                            Just (Just player) -> player.alive
+                            _ -> True
                     ]
                 ]
                 [ div [ class "user-image-box" ]
