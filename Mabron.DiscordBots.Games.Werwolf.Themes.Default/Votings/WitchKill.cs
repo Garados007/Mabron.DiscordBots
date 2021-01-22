@@ -39,6 +39,10 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Votings
             {
                 baseRole.IsAlive = false;
                 Witch.UsedDeathPotion = true;
+                if (baseRole.IsLoved)
+                    foreach (var other in game.AliveRoles)
+                        if (other is BaseRole otherBase && otherBase.IsLoved)
+                            other.IsAlive = false;
             }
         }
     }
