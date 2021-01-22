@@ -30,7 +30,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Votings
 
         public override bool CanVote(Role voter)
         {
-            return voter == Witch && !Witch.UsedLivePotion;
+            return voter == Witch && !Witch.UsedDeathPotion;
         }
 
         public override void Execute(GameRoom game, ulong id, Role role)

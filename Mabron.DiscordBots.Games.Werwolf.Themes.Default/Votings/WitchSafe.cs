@@ -13,6 +13,11 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Votings
             Witch = witch;
         }
 
+        protected override bool DefaultParticipantSelector(Role role)
+        {
+            return role is BaseRole baseRole && baseRole.IsSelectedByWerewolves;
+        }
+
         protected override bool AllowDoNothingOption => true;
 
         protected override string GetUserString(ulong id, GameUser? user)

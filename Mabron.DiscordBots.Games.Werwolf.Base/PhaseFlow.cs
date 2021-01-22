@@ -4,6 +4,21 @@ namespace Mabron.DiscordBots.Games.Werwolf
 {
     public sealed class PhaseFlow
     {
+        /// <summary>
+        /// this phase is meant to be skipped durring startup
+        /// </summary>
+        private sealed class InitialPhase : Phase
+        {
+            public override string Name => "Init";
+
+            public override bool IsGamePhase => false;
+
+            public override bool CanExecute(GameRoom game)
+            {
+                return true;
+            }
+        }
+
         public sealed class Step
         {
             public Phase Phase { get; }
@@ -23,7 +38,10 @@ namespace Mabron.DiscordBots.Games.Werwolf
         public Phase Current => CurrentStep.Phase;
 
         internal PhaseFlow(Step step)
-            => InitialStep = CurrentStep = step;
+            => InitialStep = CurrentStep = new Step(new InitialPhase(), false)
+            {
+                Next = step
+            };
 
         private bool Next()
         {

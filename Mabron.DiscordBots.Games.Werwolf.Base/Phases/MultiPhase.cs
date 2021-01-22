@@ -16,7 +16,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Phases
         readonly TPhase2 phase2 = new TPhase2();
 
         public override bool CanExecute(GameRoom game)
-            => phase1.CanExecute(game) && phase2.CanExecute(game);
+            => phase1.CanExecute(game) || phase2.CanExecute(game);
 
         public override void Init(GameRoom game)
         {
