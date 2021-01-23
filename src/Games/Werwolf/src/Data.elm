@@ -79,7 +79,7 @@ type alias GameVotingOption =
 type alias GameParticipant =
     { alive: Bool
     , major: Bool
-    , loved: Bool
+    , tags: List String
     , role: Maybe String
     }
 
@@ -135,7 +135,7 @@ decodeGameUserResult =
                     (JD.succeed GameParticipant
                         |> required "alive" JD.bool
                         |> required "major" JD.bool
-                        |> required "loved" JD.bool
+                        |> required "tags" (JD.list JD.string)
                         |> required "role" (JD.nullable JD.string)
                         |> JD.nullable
                         |> JD.dict

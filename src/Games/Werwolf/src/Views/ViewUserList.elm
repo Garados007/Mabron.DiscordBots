@@ -43,7 +43,7 @@ view now levels token game myId roles =
                         , if player.alive
                             then Nothing
                             else Just "(tot)"
-                        , if player.loved
+                        , if List.member "loved" player.tags
                             then Just "(verliebt)"
                             else Nothing
                         , if player.major
