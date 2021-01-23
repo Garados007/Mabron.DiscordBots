@@ -674,29 +674,8 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
                 if (!voting.Started)
                     return "voting is not started";
-
-                if (voting.Options.Any(x => x.option.Users.Contains(user.DiscordId)))
-                    return "already voted";
-
-                var option = voting.Options
-                    .Where(x => x.id == id)
-                    .Select(x => x.option)
-                    .FirstOrDefault();
-
-                if (option == null)
-                    return "option not found";
-
-                option.Users.Add(user.DiscordId);
-                if (game.UseVotingTimeouts)
-                    voting.SetTimeout(game, true);
-
-                if (game.AutoFinishVotings && 
-                    voting.GetVoter(game).Count() == voting.Options.Sum(x => x.option.Users.Count))
-                {
-                    voting.FinishVoting(game);
-                }
-
-                return null;
+                
+                return voting.Vote(game, user.DiscordId, id);
             }
             writer.WriteString("error", Do(writer, token, id, vid));
 

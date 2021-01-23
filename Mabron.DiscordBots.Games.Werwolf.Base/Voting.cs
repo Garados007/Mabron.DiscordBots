@@ -107,5 +107,43 @@ namespace Mabron.DiscordBots.Games.Werwolf
         }
 
         public abstract void Execute(GameRoom game, int id);
+
+        public virtual string? Vote(GameRoom game, ulong voter, int id)
+        {
+            if (Options.Any(x => x.option.Users.Contains(voter)))
+                return "already voted";
+            
+            var option = Options
+                .Where(x => x.id == id)
+                .Select(x => x.option)
+                .FirstOrDefault();
+            
+            if (option == null)
+                return "option not found";
+            
+            string? error;
+            if ((error = Vote(game, voter, option)) != null)
+                return error;
+            
+            CheckVotingFinished(game);
+
+            return null;
+        }
+
+        protected virtual string? Vote(GameRoom game, ulong voter, VoteOption option)
+        {
+            option.Users.Add(voter);
+            return null;
+        }
+
+        public virtual void CheckVotingFinished(GameRoom game)
+        {
+            if (game.UseVotingTimeouts)
+                SetTimeout(game, true);
+            
+            if (game.AutoFinishVotings && 
+                GetVoter(game).Count() == Options.Sum(x => x.option.Users.Count))
+                FinishVoting(game);
+        }
     }
 }
