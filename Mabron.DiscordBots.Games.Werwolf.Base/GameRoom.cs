@@ -95,22 +95,14 @@ namespace Mabron.DiscordBots.Games.Werwolf
                     .First();
         }
 
-        public void StopGame(bool updateStats)
+        public void StopGame(ReadOnlyMemory<Role>? winner)
         {
-            static bool SameFaction(Role role1, Role role2)
-            {
-                var same = role1.IsSameFaction(role2);
-                if (same == null)
-                    same = role2.IsSameFaction(role1);
-                return same ?? false;
-            }
-
             ExecutionRound++;
 
-            if (updateStats)
+            if (winner != null)
             {
-                var winRoles  = AliveRoles.ToArray();
-                var winner = new List<ulong>(UserCache.Count);
+                var winnerSpan = winner.Value.Span;
+                var winIds = new List<ulong>(winner.Value.Length);
                 // -0.15 is for the leader
                 var xpMultiplier = Participants.Values.Where(x => x != null).Count() * 0.15; 
                 foreach (var (id, user) in UserCache)
@@ -124,21 +116,29 @@ namespace Mabron.DiscordBots.Games.Werwolf
                     {
                         if (role.IsAlive)
                         {
-                            user.StatsWinGames++;
-                            winner.Add(id);
-                            user.CurrentXP += (ulong)Math.Round(xpMultiplier * 280);
+                            user.CurrentXP += (ulong)Math.Round(xpMultiplier * 160);
                         }
                         else
                         {
                             user.StatsKilled++;
-                            if (winRoles.Any(x => !SameFaction(x, role)))
-                                user.StatsLooseGames++;
-                            else
+                        }
+
+                        bool won = false;
+                        foreach (var other in winnerSpan)
+                            if (other == role)
                             {
-                                user.StatsWinGames++;
-                                winner.Add(id);
-                                user.CurrentXP += (ulong)Math.Round(xpMultiplier * 120);
+                                won = true;
+                                break;
                             }
+                        if (won)
+                        {
+                            user.StatsWinGames++;
+                            user.CurrentXP += (ulong)Math.Round(xpMultiplier * 120);
+                            winIds.Add(id);
+                        }
+                        else
+                        {
+                            user.StatsLooseGames++;
                         }
                     }
                     ulong maxXP;
@@ -149,7 +149,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                     }
                     Theme.User!.Update(user);
                 }
-                Winner = (ExecutionRound, winner.ToArray());
+                Winner = (ExecutionRound, winIds.ToArray());
             }
             IsRunning = false;
             Phase = null;

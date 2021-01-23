@@ -1,5 +1,7 @@
-﻿using System;
+﻿using System.Linq;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default
 {
@@ -62,17 +64,21 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default
             return phases.Build() ?? throw new InvalidOperationException();
         }
 
-        public override IEnumerable<Func<GameRoom, bool>> GetWinConditions()
+        public override IEnumerable<WinConditionCheck> GetWinConditions()
         {
-            static bool OnlyLovedOnes(GameRoom game)
-            {
-                foreach (var player in game.AliveRoles)
-                    if (player is BaseRole baseRole && !baseRole.IsLoved)
-                        return false;
-                return true;
-            }
-
             yield return OnlyLovedOnes;
+        }
+
+        static bool OnlyLovedOnes(GameRoom game, [NotNullWhen(true)] out ReadOnlyMemory<Role>? winner)
+        {
+            foreach (var player in game.AliveRoles)
+                if (player is BaseRole baseRole && !baseRole.IsLoved)
+                {
+                    winner = null;
+                    return false;
+                }
+            winner = game.AliveRoles.ToArray();
+            return true;
         }
     }
 }

@@ -66,9 +66,9 @@ namespace Mabron.DiscordBots.Games.Werwolf
                 Execute(game, vote.Value);
                 game.Phase!.Current.RemoveVoting(this);
 
-                if (new WinCondition().Check(game))
+                if (new WinCondition().Check(game, out ReadOnlyMemory<Role>? winner))
                 {
-                    game.StopGame(true);
+                    game.StopGame(winner);
                 }
             }
             else

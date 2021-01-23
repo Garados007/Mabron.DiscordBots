@@ -824,7 +824,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                 if (!game.IsRunning)
                     return "the game is not running";
 
-                game.StopGame(false);
+                game.StopGame(null);
 
                 return null;
             }
