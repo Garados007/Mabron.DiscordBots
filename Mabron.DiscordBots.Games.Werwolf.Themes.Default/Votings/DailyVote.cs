@@ -29,11 +29,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Votings
                 idiot.IsMajor = false;
                 return;
             }
-            role.IsAlive = false;
-            if (role is BaseRole baseRole && baseRole.IsLoved)
-                foreach (var other in game.AliveRoles)
-                    if (other is BaseRole otherBase && otherBase.IsLoved)
-                        otherBase.IsAlive = false;
+            role.Kill(game);
         }
     }
 }

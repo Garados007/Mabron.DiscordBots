@@ -15,11 +15,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
                     baseRole.IsSelectedByWerewolves = false;
                     if (baseRole.IsSelectedByHealer)
                         continue;
-                    baseRole.IsAlive = false;
-                    if (baseRole.IsLoved)
-                        foreach (var other in game.AliveRoles)
-                            if (other is BaseRole otherBase && otherBase.IsLoved)
-                                other.IsAlive = false;
+                    baseRole.Kill(game);
                 }
             }
         }

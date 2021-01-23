@@ -8,7 +8,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
     /// </summary>
     public abstract class Role
     {
-        public bool IsAlive { get; set; }
+        public bool IsAlive { get; private set; }
 
         public bool IsMajor { get; set; }
 
@@ -52,5 +52,10 @@ namespace Mabron.DiscordBots.Games.Werwolf
         public abstract string Name { get; }
 
         public abstract string Description { get; }
+
+        public virtual void Kill(GameRoom game)
+        {
+            IsAlive = false;
+        }
     }
 }
