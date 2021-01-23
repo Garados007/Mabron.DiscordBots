@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 
 namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default
 {
@@ -18,7 +16,15 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default
 
         public bool IsLoved { get; set; } = false;
 
-        public bool HasSeenLoved { get; set; } = false;
+        public override IEnumerable<string> GetTags(GameRoom game, Role? viewer)
+        {
+            foreach (var tag in base.GetTags(game, viewer))
+                yield return tag;
+            if (IsLoved && (viewer == this || viewer == null || ViewLoved(viewer)))
+                yield return "loved";
+            if (IsSelectedByWerewolves && (viewer == null || viewer is Roles.Witch))
+                yield return "werwolf-select";
+        }
 
         public override void Reset()
         {
@@ -27,7 +33,6 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default
             IsSelectedByHealer = false;
             IsViewedByOracle = false;
             IsLoved = false;
-            HasSeenLoved = false;
         }
 
         public override Role ViewRole(Role viewer)
@@ -37,13 +42,13 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default
             return base.ViewRole(viewer);
         }
 
-        public override bool ViewLoved(Role viewer)
+        public virtual bool ViewLoved(Role viewer)
         {
             if (!(viewer is BaseRole viewer_))
-                return base.ViewLoved(viewer);
+                return false;
             if (viewer_.IsLoved || viewer is Roles.Amor)
                 return IsLoved;
-            return base.ViewLoved(viewer);
+            return false;
         }
     }
 }

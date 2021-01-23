@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Mabron.DiscordBots.Games.Werwolf
 {
@@ -11,6 +12,19 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
         public bool IsMajor { get; set; }
 
+        /// <summary>
+        /// Get a list of special tags that are defined for this role. 
+        /// </summary>
+        /// <param name="game">The current game</param>
+        /// <param name="viewer">The viewer of this role. null for the leader</param>
+        /// <returns>a list of defined tags</returns>
+        public virtual IEnumerable<string> GetTags(GameRoom game, Role? viewer)
+        {
+            if (IsAlive)
+                yield return "alive";
+            if (IsMajor)
+                yield return "major";
+        }
 
         public virtual void Reset()
         {
@@ -31,11 +45,6 @@ namespace Mabron.DiscordBots.Games.Werwolf
         public virtual Role ViewRole(Role viewer)
         {
             return Theme.GetBasicRole();
-        }
-
-        public virtual bool ViewLoved(Role viewer)
-        {
-            return false;
         }
 
         public abstract Role CreateNew();

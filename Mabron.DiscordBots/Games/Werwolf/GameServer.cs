@@ -270,17 +270,20 @@ namespace Mabron.DiscordBots.Games.Werwolf
                             ownRole != null ?
                             participant.Value.ViewRole(ownRole) :
                             null;
-                        var loved =
-                            (game.Leader == user.DiscordId ||
-                                participant.Key == user.DiscordId ||
-                                (ownRole != null && game.DeadCanSeeAllRoles && !ownRole.IsAlive)
-                            ) ? participant.Value is BaseRole participantRole && participantRole.IsLoved :
-                            (ownRole != null && participant.Value.ViewLoved(ownRole));
 
                         writer.WriteStartObject(participant.Key.ToString());
                         writer.WriteBoolean("alive", participant.Value.IsAlive);
                         writer.WriteBoolean("major", participant.Value.IsMajor);
-                        writer.WriteBoolean("loved", loved);
+                        writer.WriteStartArray("tags");
+                        foreach (var tag in participant.Value.GetTags(
+                            game,
+                            game.Leader == user.DiscordId ||
+                            (ownRole != null && game.DeadCanSeeAllRoles && !ownRole.IsAlive)
+                            ? null
+                            : ownRole
+                        ))
+                            writer.WriteStringValue(tag);
+                        writer.WriteEndArray();
                         writer.WriteString("role", seenRole?.GetType().Name);
                         writer.WriteEndObject();
                     }
