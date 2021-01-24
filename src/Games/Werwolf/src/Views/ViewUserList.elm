@@ -46,6 +46,12 @@ view now levels token game myId roles =
                         , if List.member "loved" player.tags
                             then Just "(verliebt)"
                             else Nothing
+                        , if List.member "werwolf-select" player.tags
+                            then Just "(Werwolfopfer)"
+                            else Nothing
+                        , if List.member "enchant-flutist" player.tags
+                            then Just "(verzaubert)"
+                            else Nothing
                         , if player.major
                             then Just "(Bürgermeister)"
                             else Nothing
