@@ -11,7 +11,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Roles
         public override void Reset()
         {
             base.Reset();
-            WasKilledByWolvesOneTime = false;
+            WasKilledByWolvesOneTime = false; 
             WasKilledByVillager = false;
         }
 

@@ -91,7 +91,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default
         static bool OnlyEnchanted(GameRoom game, [NotNullWhen(true)] out ReadOnlyMemory<Role>? winner)
         {
             foreach (var player in game.AliveRoles)
-                if (!(player is BaseRole baseRole) || !baseRole.IsEnchantedByFlutist || !(player is Roles.Flutist))
+                if (player is BaseRole baseRole && !(baseRole.IsEnchantedByFlutist || player is Roles.Flutist))
                 {
                     winner = null;
                     return false;

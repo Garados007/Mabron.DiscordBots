@@ -52,7 +52,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
             public override string? Vote(GameRoom game, ulong voter, int id)
             {
                 if (CanFinishVoting)
-                    return "You already selected to be finished";
+                    return "You already select finish";
 
                 var option = Options
                     .Where(x => x.id == id)
@@ -99,6 +99,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
                 foreach (var id in select.GetResultUserIds())
                     if (game.Participants.TryGetValue(id, out Role? role) && role != null)
                         select.Execute(game, id, role);
+                RemoveVoting(voting);
             }
         }
     }

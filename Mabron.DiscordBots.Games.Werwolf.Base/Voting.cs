@@ -43,6 +43,12 @@ namespace Mabron.DiscordBots.Games.Werwolf
         {
             var count = GetMissingVotes(game);
 
+            if (count <= 0)
+            {
+                FinishVoting(game);
+                return true;
+            }
+
             var timeout = DateTime.UtcNow + TimeSpan.FromSeconds(45 * count);
             if (!force && Timeout != null && timeout - Timeout.Value < TimeSpan.FromSeconds(5))
                 return false;
@@ -70,15 +76,14 @@ namespace Mabron.DiscordBots.Games.Werwolf
             {
                 Execute(game, vote.Value);
                 game.Phase!.Current.RemoveVoting(this);
-
-                if (new WinCondition().Check(game, out ReadOnlyMemory<Role>? winner))
-                {
-                    game.StopGame(winner);
-                }
             }
             else
             {
                 game.Phase!.Current.ExecuteMultipleWinner(this, game);
+            }
+            if (new WinCondition().Check(game, out ReadOnlyMemory<Role>? winner))
+            {
+                game.StopGame(winner);
             }
             if (game.AutoFinishRounds && (!game.Phase?.Current.Votings.Any() ?? false))
             {

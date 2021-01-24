@@ -27,7 +27,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Votings
             if (AllowDoNothingOption)
             {
                 NoOptionId = index++;
-                options.TryAdd(NoOptionId.Value, (0, new VoteOption("nichts tun")));
+                options.TryAdd(NoOptionId.Value, (0, new VoteOption(DoNothingOptionText)));
             }
             else NoOptionId = null;
 
