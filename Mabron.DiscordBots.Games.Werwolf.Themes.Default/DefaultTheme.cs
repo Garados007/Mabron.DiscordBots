@@ -22,6 +22,8 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default
             yield return new Roles.Healer(this);
             yield return new Roles.Idiot(this);
             yield return new Roles.OldMan(this);
+            yield return new Roles.ScapeGoat(this);
+            yield return new Roles.Flutist(this);
         }
 
         public override PhaseFlow GetPhases()
@@ -38,6 +40,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default
                 new Phases.OraclePhase(),
                 new Phases.WerwolfPhase(),
                 new Phases.WitchPhase(),
+                new Phases.FlutistPhase(),
             });
 
             // add kill handling
@@ -70,6 +73,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default
         public override IEnumerable<WinConditionCheck> GetWinConditions()
         {
             yield return OnlyLovedOnes;
+            yield return OnlyEnchanted;
         }
 
         static bool OnlyLovedOnes(GameRoom game, [NotNullWhen(true)] out ReadOnlyMemory<Role>? winner)
@@ -81,6 +85,19 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default
                     return false;
                 }
             winner = game.AliveRoles.ToArray();
+            return true;
+        }
+
+        static bool OnlyEnchanted(GameRoom game, [NotNullWhen(true)] out ReadOnlyMemory<Role>? winner)
+        {
+            foreach (var player in game.AliveRoles)
+                if (!(player is BaseRole baseRole) || !baseRole.IsEnchantedByFlutist || !(player is Roles.Flutist))
+                {
+                    winner = null;
+                    return false;
+                }
+            winner = game.Participants.Values
+                .Where(x => x is Roles.Flutist).Cast<Role>().ToArray();
             return true;
         }
     }

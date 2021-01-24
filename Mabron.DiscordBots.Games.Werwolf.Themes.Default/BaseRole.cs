@@ -18,6 +18,8 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default
 
         public bool HasVotePermitFromScapeGoat { get; set; } = false;
 
+        public bool IsEnchantedByFlutist { get; set; } = false;
+
         public override IEnumerable<string> GetTags(GameRoom game, Role? viewer)
         {
             foreach (var tag in base.GetTags(game, viewer))
@@ -26,6 +28,8 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default
                 yield return "loved";
             if (IsSelectedByWerewolves && (viewer == null || viewer is Roles.Witch))
                 yield return "werwolf-select";
+            if (IsEnchantedByFlutist && (viewer == null || viewer is Roles.Flutist || (viewer is BaseRole baseRole && baseRole.IsEnchantedByFlutist)))
+                yield return "enchant-flutist";
         }
 
         public override void Reset()
@@ -36,6 +40,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default
             IsViewedByOracle = false;
             IsLoved = false;
             HasVotePermitFromScapeGoat = false;
+            IsEnchantedByFlutist = false;
         }
 
         public override Role ViewRole(Role viewer)
