@@ -28,13 +28,13 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default
             var phases = new PhaseFlowBuilder();
 
             // add init phases
-            phases.Add(new Phases.AmorPick(), true);
+            phases.Add(new Phases.AmorPhase(), true);
 
             // add night phases
             phases.Add(new Phase[]
             {
-                new Phases.HealerVote(),
-                new Phases.OraclePick(),
+                new Phases.HealerPhase(),
+                new Phases.OraclePhase(),
                 new Phases.WerwolfPhase(),
                 new Phases.WitchPhase(),
             });
@@ -42,23 +42,23 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default
             // add kill handling
             phases.Add(new Phase[]
             {
-                new Phases.KillWerwolfVictim(),
-                new Phases.HunterKill(),
-                new Phases.InheritMajor(),
+                new Phases.KillWerwolfVictimAction(),
+                new Phases.HunterPhase(),
+                new Phases.InheritMajorPhase(),
             });
 
             // add day phases
             phases.Add(new Phase[]
             {
-                new Phases.ElectMajor(),
-                new Phases.DailyVictimElection(),
+                new Phases.ElectMajorPhase(),
+                new Phases.DailyVictimElectionPhase(),
             });
 
             // add kill handling
             phases.Add(new Phase[]
             {
-                new Phases.HunterKill(),
-                new Phases.InheritMajor(),
+                new Phases.HunterPhase(),
+                new Phases.InheritMajorPhase(),
             });
 
             return phases.Build() ?? throw new InvalidOperationException();

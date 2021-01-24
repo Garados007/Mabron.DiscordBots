@@ -1,10 +1,36 @@
 ﻿using Mabron.DiscordBots.Games.Werwolf.Phases;
+using Mabron.DiscordBots.Games.Werwolf.Votings;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
 {
-    public class ElectMajor : Phase, IDayPhase<ElectMajor>
+    public class ElectMajorPhase : Phase, IDayPhase<ElectMajorPhase>
     {
+        public class ElectMajor : PlayerVotingBase
+        {
+            public ElectMajor(GameRoom game, IEnumerable<ulong>? participants = null)
+                : base(game, participants)
+            {
+            }
+
+
+            public override bool CanView(Role viewer)
+            {
+                return true;
+            }
+
+            public override bool CanVote(Role voter)
+            {
+                return voter.IsAlive;
+            }
+
+            public override void Execute(GameRoom game, ulong id, Role role)
+            {
+                role.IsMajor = true;
+            }
+        }
+
         public override string Name => "Bürgermeisterwahl";
 
         public override bool CanExecute(GameRoom game)
@@ -20,16 +46,16 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
         public override void Init(GameRoom game)
         {
             base.Init(game);
-            AddVoting(new Votings.ElectMajor(game));
+            AddVoting(new ElectMajor(game));
         }
 
         public override void ExecuteMultipleWinner(Voting voting, GameRoom game)
         {
-            if (voting is Votings.ElectMajor em)
+            if (voting is ElectMajor em)
             {
                 var ids = em.GetResultUserIds().ToArray();
                 if (ids.Length > 0)
-                    AddVoting(new Votings.ElectMajor(game, ids));
+                    AddVoting(new ElectMajor(game, ids));
                 RemoveVoting(voting);
             }
         }

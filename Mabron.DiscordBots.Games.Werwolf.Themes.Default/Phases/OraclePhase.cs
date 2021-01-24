@@ -5,45 +5,46 @@ using System.Linq;
 
 namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
 {
-    public class WerwolfPhase : SingleVotingPhase<WerwolfPhase.WerwolfVote>, INightPhase<WerwolfPhase>
+    public class OraclePhase : SingleVotingPhase<OraclePhase.OraclePick>, INightPhase<OraclePhase>
     {
-        public class WerwolfVote : PlayerVotingBase
+        public class OraclePick : PlayerVotingBase
         {
-            public WerwolfVote(GameRoom game, IEnumerable<ulong>? participants = null) 
+            public OraclePick(GameRoom game, IEnumerable<ulong>? participants = null)
                 : base(game, participants)
             {
             }
 
             protected override bool DefaultParticipantSelector(Role role)
             {
-                return !(role is WerwolfBase) && role.IsAlive;
+                return role is BaseRole baseRole &&
+                    role.IsAlive && !(role is Roles.Oracle) && !baseRole.IsViewedByOracle;
             }
 
             public override bool CanView(Role viewer)
             {
-                return viewer is WerwolfBase;
+                return viewer is Roles.Oracle;
             }
 
             public override bool CanVote(Role voter)
             {
-                return voter is WerwolfBase && voter.IsAlive;
+                return voter is Roles.Oracle && voter.IsAlive;
             }
 
             public override void Execute(GameRoom game, ulong id, Role role)
             {
                 if (role is BaseRole baseRole)
-                    baseRole.IsSelectedByWerewolves = true;
+                    baseRole.IsViewedByOracle = true;
             }
         }
 
-        public override string Name => "Nacht: Werwölfe";
+        public override string Name => "Alte Seherin";
 
         public override bool CanExecute(GameRoom game)
         {
-            return game.AliveRoles.Where(x => x is WerwolfBase).Any();
+            return game.AliveRoles.Where(x => x is Roles.Oracle).Any();
         }
 
-        protected override WerwolfVote Create(GameRoom game, IEnumerable<ulong>? ids = null)
-            => new WerwolfVote(game, ids);
+        protected override OraclePick Create(GameRoom game, IEnumerable<ulong>? ids = null)
+            => new OraclePick(game, ids);
     }
 }

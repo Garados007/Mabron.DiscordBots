@@ -2,7 +2,7 @@
 
 namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
 {
-    public class KillWerwolfVictim : ActionPhaseBase
+    public class KillWerwolfVictimAction : ActionPhaseBase
     {
         public override void Execute(GameRoom game)
         {
