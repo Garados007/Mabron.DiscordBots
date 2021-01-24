@@ -1,5 +1,6 @@
 ﻿using Mabron.DiscordBots.Games.Werwolf.Phases;
 using Mabron.DiscordBots.Games.Werwolf.Votings;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -9,9 +10,23 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
     {
         public class DailyVote : PlayerVotingBase
         {
+            readonly HashSet<Role>? allowedVoter = null;
+
             public DailyVote(GameRoom game, IEnumerable<ulong>? participants = null) 
                 : base(game, participants)
             {
+                // check if scape goat phase
+                var isScapeGoatRevenge = game.Participants.Values
+                    .Where(x => x is Roles.ScapeGoat)
+                    .Cast<Roles.ScapeGoat>()
+                    .Where(x => x.HasDecided && !x.HasRevenge)
+                    .Any();
+                if (isScapeGoatRevenge)
+                    allowedVoter = new HashSet<Role>(game.Participants.Values
+                        .Where(x => x != null && x.IsAlive)
+                        .Where(x => x is BaseRole baseRole && baseRole.HasVotePermitFromScapeGoat)
+                        .Cast<Role>()
+                    );
             }
 
             public override bool CanView(Role viewer)
@@ -21,6 +36,10 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
 
             public override bool CanVote(Role voter)
             {
+                // special voting condition
+                if (allowedVoter != null)
+                    return allowedVoter.Contains(voter);
+                // normal vote
                 return voter.IsAlive && (!(voter is Roles.Idiot idiot) || !idiot.IsRevealed);
             }
 
@@ -32,6 +51,10 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
                     idiot.WasMajor = idiot.IsMajor;
                     idiot.IsMajor = false;
                     return;
+                }
+                if (role is Roles.OldMan oldMan)
+                {
+                    oldMan.WasKilledByVillager = true;
                 }
                 role.Kill(game);
             }
@@ -78,10 +101,21 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
             if (voting is DailyVote dv)
             {
                 var hasMajor = game.AliveRoles.Any(x => x is BaseRole baserRole && x.IsMajor);
+                var hasScapeGoat = game.AliveRoles.Any(x => x is Roles.ScapeGoat);
                 var ids = dv.GetResultUserIds().ToArray();
                 if (ids.Length > 0)
                 {
-                    if (hasMajor)
+                    if (hasScapeGoat)
+                    {
+                        foreach (var role in game.AliveRoles)
+                            if (role is Roles.ScapeGoat scapeGoat)
+                            {
+                                // kill the scape goat and end the voting
+                                scapeGoat.WasKilledByVillage = true;
+                                scapeGoat.Kill(game);
+                            }
+                    }
+                    else if (hasMajor)
                         AddVoting(new MajorPick(game, ids));
                     else AddVoting(new DailyVote(game, ids));
                 }

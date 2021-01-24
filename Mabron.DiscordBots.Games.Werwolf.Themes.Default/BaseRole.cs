@@ -16,6 +16,8 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default
 
         public bool IsLoved { get; set; } = false;
 
+        public bool HasVotePermitFromScapeGoat { get; set; } = false;
+
         public override IEnumerable<string> GetTags(GameRoom game, Role? viewer)
         {
             foreach (var tag in base.GetTags(game, viewer))
@@ -33,6 +35,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default
             IsSelectedByHealer = false;
             IsViewedByOracle = false;
             IsLoved = false;
+            HasVotePermitFromScapeGoat = false;
         }
 
         public override Role ViewRole(Role viewer)

@@ -2,6 +2,7 @@
 using Mabron.DiscordBots.Games.Werwolf.Themes.Default.Roles;
 using Mabron.DiscordBots.Games.Werwolf.Votings;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
 {
@@ -32,6 +33,12 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
                 role.Kill(game);
                 Hunter.HasKilled = true;
             }
+        }
+
+        public override bool CanExecute(GameRoom game)
+        {
+            return base.CanExecute(game) &&
+                !game.Participants.Values.Where(x => x is OldMan oldMan && oldMan.WasKilledByVillager).Any();
         }
 
         public override string Name => "Rache des Jägers";

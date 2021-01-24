@@ -37,7 +37,8 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
 
         public override bool CanExecute(GameRoom game)
         {
-            return game.AliveRoles.Where(x => x is Roles.Healer).Any();
+            return game.AliveRoles.Where(x => x is Roles.Healer).Any() &&
+                !game.Participants.Values.Where(x => x is Roles.OldMan oldMan && oldMan.WasKilledByVillager).Any();
         }
 
         protected override HealerVote Create(GameRoom game, IEnumerable<ulong>? ids = null)

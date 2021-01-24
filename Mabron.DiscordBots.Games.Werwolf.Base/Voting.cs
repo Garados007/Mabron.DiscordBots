@@ -31,12 +31,17 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
         public abstract bool CanVote(Role voter);
 
-        public bool SetTimeout(GameRoom game, bool force)
+        protected virtual int GetMissingVotes(GameRoom game)
         {
-            var count = game.Participants
+            return game.Participants
                 .Where(x => x.Value != null && CanVote(x.Value))
                 .Where(x => !Options.Any(y => y.option.Users.Contains(x.Key)))
                 .Count();
+        }
+
+        public bool SetTimeout(GameRoom game, bool force)
+        {
+            var count = GetMissingVotes(game);
 
             var timeout = DateTime.UtcNow + TimeSpan.FromSeconds(45 * count);
             if (!force && Timeout != null && timeout - Timeout.Value < TimeSpan.FromSeconds(5))
@@ -141,8 +146,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
             if (game.UseVotingTimeouts)
                 SetTimeout(game, true);
             
-            if (game.AutoFinishVotings && 
-                GetVoter(game).Count() == Options.Sum(x => x.option.Users.Count))
+            if (game.AutoFinishVotings && GetMissingVotes(game) == 0)
                 FinishVoting(game);
         }
     }

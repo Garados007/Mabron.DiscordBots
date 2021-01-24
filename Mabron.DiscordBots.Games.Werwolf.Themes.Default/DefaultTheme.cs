@@ -21,6 +21,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default
             yield return new Roles.Witch(this);
             yield return new Roles.Healer(this);
             yield return new Roles.Idiot(this);
+            yield return new Roles.OldMan(this);
         }
 
         public override PhaseFlow GetPhases()
@@ -57,6 +58,8 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default
             // add kill handling
             phases.Add(new Phase[]
             {
+                new Phases.ScapeGoatResetAction(),
+                new Phases.ScapeGoatPhase(),
                 new Phases.HunterPhase(),
                 new Phases.InheritMajorPhase(),
             });

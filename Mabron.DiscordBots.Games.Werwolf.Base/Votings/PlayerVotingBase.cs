@@ -18,6 +18,8 @@ namespace Mabron.DiscordBots.Games.Werwolf.Votings
 
         protected int? NoOptionId { get; }
 
+        protected virtual string DoNothingOptionText { get; } = "nichts tun";
+
         public PlayerVotingBase(GameRoom game, IEnumerable<ulong>? participants = null)
         {
             int index = 0;

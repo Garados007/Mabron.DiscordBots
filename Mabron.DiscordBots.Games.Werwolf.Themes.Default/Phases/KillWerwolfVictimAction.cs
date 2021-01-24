@@ -15,6 +15,11 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
                     baseRole.IsSelectedByWerewolves = false;
                     if (baseRole.IsSelectedByHealer)
                         continue;
+                    if (baseRole is Roles.OldMan oldMan && !oldMan.WasKilledByWolvesOneTime)
+                    {
+                        oldMan.WasKilledByWolvesOneTime = true;
+                        continue;
+                    }
                     baseRole.Kill(game);
                 }
             }
