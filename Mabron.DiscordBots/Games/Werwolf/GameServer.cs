@@ -408,6 +408,17 @@ namespace Mabron.DiscordBots.Games.Werwolf
                                     else newConfig.Add(entry, 1);
                                 }
                                 else return $"unknown role '{role}'";
+                            foreach (var (role, newCount) in newConfig)
+                            {
+                                var count = newCount;
+                                if (!game.Theme!.CheckRoleUsage(role, ref count, 
+                                    game.RoleConfiguration.TryGetValue(role, out int oldValue)
+                                    ? oldValue : 0, out string? error
+                                ))
+                                    return error;
+                                if (newCount != count)
+                                    newConfig[role] = count;
+                            }
                         }
 
                         if (post.Parameter.TryGetValue("dead-can-see-all-roles", out value))

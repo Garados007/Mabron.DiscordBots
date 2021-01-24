@@ -1,6 +1,7 @@
 ﻿using LiteDB;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Mabron.DiscordBots.Games.Werwolf
 {
@@ -23,5 +24,25 @@ namespace Mabron.DiscordBots.Games.Werwolf
         public abstract PhaseFlow GetPhases();
 
         public abstract IEnumerable<WinConditionCheck> GetWinConditions();
+
+        public virtual bool CheckRoleUsage(Role role, ref int count, int oldCount, 
+            [NotNullWhen(false)] out string? error
+        )
+        {
+            if (count < 0)
+            {
+                error = "invalid number of roles (require >= 0)";
+                count = oldCount;
+                return false;
+            }
+            if (count > 500)
+            {
+                error = "invalid number of roles (require <= 500)";
+                count = oldCount;
+                return false;
+            }
+            error = null;
+            return true;
+        }
     }
 }
