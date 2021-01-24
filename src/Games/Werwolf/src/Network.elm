@@ -130,12 +130,11 @@ convertEditGameConfig config =
         config.newLeader
     , Maybe.map
         (\conf -> 
-            Dict.foldl
-                (\key value list ->
-                    list ++ List.repeat value key
+            Dict.toList conf
+            |> List.map
+                (\(key, value) ->
+                    key ++ ":" ++ String.fromInt value
                 )
-                []
-                conf
             |> List.intersperse ","
             |> (::) "config="
             |> String.concat

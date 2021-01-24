@@ -396,16 +396,20 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
                         if (post.Parameter.TryGetValue("config", out value))
                         {
-                            var roles = value.Split(',', StringSplitOptions.RemoveEmptyEntries);
+                            var roles = value.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                                .Select(x => x.Split(':', StringSplitOptions.RemoveEmptyEntries))
+                                .Where(x => x.Length == 2)
+                                .Select(x => (name: x[0], count: int.Parse(x[1])))
+                                .ToDictionary(x => x.name, x => x.count);
                             newConfig = new Dictionary<Role, int>();
                             var known = (game.Theme?.GetRoleTemplates() ?? Enumerable.Empty<Role>())
                                 .ToDictionary(x => x.GetType().Name);
-                            foreach (var role in roles)
+                            foreach (var (role, count) in roles)
                                 if (known.TryGetValue(role, out Role? entry))
                                 {
                                     if (newConfig.ContainsKey(entry))
-                                        newConfig[entry]++;
-                                    else newConfig.Add(entry, 1);
+                                        newConfig[entry] += count;
+                                    else newConfig.Add(entry, count);
                                 }
                                 else return $"unknown role '{role}'";
                             foreach (var (role, newCount) in newConfig)
