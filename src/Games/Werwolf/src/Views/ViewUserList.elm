@@ -141,6 +141,17 @@ view now levels token game myId roles =
 
 
     in Dict.toList game.user
+        |> List.sortBy
+            (\(id, _) ->
+                ( case Dict.get id game.participants of
+                    Just (Just player) ->
+                        if player.alive
+                        then 0
+                        else 1
+                    _ -> 2
+                , id
+                )
+            )
         |> List.map
             (\(id, user) -> viewGameUser id user)
         |> div [ class "user-container" ]
