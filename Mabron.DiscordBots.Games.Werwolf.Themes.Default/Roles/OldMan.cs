@@ -1,4 +1,6 @@
-﻿namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Roles
+﻿using System.Linq;
+
+namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Roles
 {
     public class OldMan : VillagerBase
     {
@@ -23,5 +25,14 @@
 
         public override Role CreateNew()
             => new OldMan(Theme);
+
+        public override void Kill(GameRoom game)
+        {
+            base.Kill(game);
+            var idiots = game.AliveRoles
+                .Where(x => x is Idiot idiot && idiot.IsRevealed);
+            foreach (var idiot in idiots)
+                idiot.Kill(game);
+        }
     }
 }

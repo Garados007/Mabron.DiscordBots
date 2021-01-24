@@ -50,6 +50,14 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
                     idiot.IsRevealed = true;
                     idiot.WasMajor = idiot.IsMajor;
                     idiot.IsMajor = false;
+                    var oldManKilled = game.Participants.Values
+                        .Where(x => x is Roles.OldMan oldMan && !oldMan.IsAlive)
+                        .Any();
+                    if (oldManKilled)
+                    {
+                        idiot.IsRevealed = false;
+                        idiot.Kill(game);
+                    }
                     return;
                 }
                 if (role is Roles.OldMan oldMan)
