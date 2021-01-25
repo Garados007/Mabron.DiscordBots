@@ -1,7 +1,7 @@
 module Views.ViewNoGame exposing (..)
 
 import Html exposing (Html, div, text)
-import Html.Attributes as HA exposing (class)
+import Html.Attributes exposing (class)
 
 view : Bool -> Html msg
 view isLoading =

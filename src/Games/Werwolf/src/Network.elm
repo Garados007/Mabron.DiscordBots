@@ -105,6 +105,7 @@ editGameConfig : EditGameConfig
 editGameConfig =
     { newLeader = Nothing
     , newConfig = Nothing
+    , leaderIsPlayer = Nothing
     , newDeadCanSeeAllRoles = Nothing
     , autostartVotings = Nothing
     , autofinishVotings = Nothing
@@ -115,6 +116,7 @@ editGameConfig =
 type alias EditGameConfig =
     { newLeader: Maybe String
     , newConfig: Maybe (Dict String Int)
+    , leaderIsPlayer: Maybe Bool
     , newDeadCanSeeAllRoles: Maybe Bool
     , autostartVotings: Maybe Bool
     , autofinishVotings: Maybe Bool
@@ -140,6 +142,11 @@ convertEditGameConfig config =
             |> String.concat
         )
         config.newConfig
+    , Maybe.map
+        (\new -> "leader-is-player=" ++
+            if new then "true" else "false"
+        )
+        config.leaderIsPlayer
     , Maybe.map
         (\new -> "dead-can-see-all-roles=" ++
             if new then "true" else "false"

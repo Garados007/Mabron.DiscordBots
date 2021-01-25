@@ -1,10 +1,9 @@
 module Views.ViewSettingsBar exposing (..)
 
-import Data
 import Model exposing (Model, Modal (..))
 
 import Html exposing (Html, div)
-import Html.Attributes as HA exposing (class)
+import Html.Attributes exposing (class)
 import Svg
 import Svg.Attributes as SA
 import Svg.Events as SE

@@ -244,7 +244,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                     IsInline = true,
                     Name = GetName(game.Leader),
                     //Name = $"<@{game.Leader}>",
-                    Value = "Leiter",
+                    Value = game.LeaderIsPlayer ? "Leiter/ Spieler" : "Leiter",
                 }
             };
             foreach (var user in game.Participants.Keys)

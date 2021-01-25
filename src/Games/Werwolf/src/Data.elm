@@ -49,6 +49,7 @@ type alias Game =
     , user: Dict String GameUser
     , winner: Maybe (List String)
     , config: Dict String Int
+    , leaderIsPlayer: Bool
     , deadCanSeeAllRoles: Bool
     , autostartVotings: Bool
     , autofinishVotings: Bool
@@ -163,6 +164,7 @@ decodeGameUserResult =
                 |> required "winner"
                     (JD.nullable <| JD.list <| JD.string)
                 |> required "config" (JD.dict JD.int)
+                |> required "leader-is-player" JD.bool
                 |> required "dead-can-see-all-roles" JD.bool
                 |> required "autostart-votings" JD.bool
                 |> required "autofinish-votings" JD.bool

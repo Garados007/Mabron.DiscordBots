@@ -1,13 +1,12 @@
 module Views.ViewGamePhase exposing (..)
 
 import Data
-import Model exposing (Model)
 import Network exposing (NetworkRequest(..))
 
 import Html exposing (Html, div, text)
 import Html.Attributes as HA exposing (class)
 import Html.Events as HE
-import Dict exposing (Dict)
+import Dict
 import Html exposing (option)
 import Time exposing (Posix)
 

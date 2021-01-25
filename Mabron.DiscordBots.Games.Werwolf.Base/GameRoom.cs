@@ -26,6 +26,21 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
         public ConcurrentDictionary<Role, int> RoleConfiguration { get; }
 
+        bool leaderIsPlayer = false;
+        public bool LeaderIsPlayer
+        {
+            get => leaderIsPlayer;
+            set
+            {
+                if (leaderIsPlayer == value)
+                    return;
+                if (value)
+                    Participants.TryAdd(Leader, null);
+                else Participants.TryRemove(Leader, out _);
+                leaderIsPlayer = value;
+            }
+        }
+
         public bool DeadCanSeeAllRoles { get; set; } = false;
 
         public bool AutostartVotings { get; set; } = false;
@@ -104,10 +119,12 @@ namespace Mabron.DiscordBots.Games.Werwolf
                 var winnerSpan = winner.Value.Span;
                 var winIds = new List<ulong>(winner.Value.Length);
                 // -0.15 is for the leader
-                var xpMultiplier = Participants.Values.Where(x => x != null).Count() * 0.15; 
+                var xpMultiplier = Participants.Values.Where(x => x != null).Count() * 0.15;
+                if (leaderIsPlayer) // we have one more player
+                    xpMultiplier -= 0.15;
                 foreach (var (id, user) in UserCache)
                 {
-                    if (id == Leader)
+                    if (id == Leader && !LeaderIsPlayer)
                     {
                         user.StatsLeader++;
                         user.CurrentXP += (ulong)Math.Round(xpMultiplier * 100);

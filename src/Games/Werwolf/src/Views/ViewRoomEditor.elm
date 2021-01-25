@@ -73,7 +73,7 @@ view roles game editable buffer =
                         ]
                 ]
     
-        maxPlayer = (+) 1 <| Dict.size game.participants
+        maxPlayer = (+) (if game.leaderIsPlayer then 2 else 1) <| Dict.size game.participants
         maxRoles = (+) 1 <| List.sum <| Dict.values 
             <| Dict.union buffer game.config
 
@@ -144,7 +144,14 @@ view roles game editable buffer =
             <| Dict.keys roles
         , viewRoleBar
         , div [ class "editor-checks" ]
-            [ viewCheckbox "Tote können alle Rollen sehen"
+            [ viewCheckbox "Spielleiter ist auch ein Mitspieler"
+                True
+                game.leaderIsPlayer
+                <| \new -> SendConf
+                    { editGameConfig
+                    | leaderIsPlayer = Just new
+                    }
+            , viewCheckbox "Tote können alle Rollen sehen"
                 True
                 game.deadCanSeeAllRoles
                 <| \new -> SendConf

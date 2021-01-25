@@ -1,7 +1,6 @@
 module Views.ViewUserList exposing (Msg (..), view)
 
 import Data
-import Model
 import Network exposing (NetworkRequest(..))
 
 import Html exposing (Html, div, text)
@@ -14,17 +13,23 @@ import Level exposing (Level, LevelData)
 import Time exposing (Posix)
 
 type Msg
-    = Noop
-    | Send NetworkRequest
+    = Send NetworkRequest
 
 view : Posix -> Dict String Level -> String -> Data.Game -> String -> Dict String Data.RoleTemplate -> Html Msg
 view now levels token game myId roles =
     let
-        getUserRole : String -> String
-        getUserRole id =
+        getLeaderSpecText : String -> (() -> String) -> String
+        getLeaderSpecText id func =
             if id == game.leader
-            then "Spielleiter"
-            else case Dict.get id game.participants of
+            then
+                if game.leaderIsPlayer
+                then "Spielleiter, " ++ func ()
+                else "Spielleiter"
+            else func ()
+
+        getUserRole : String -> String
+        getUserRole id = getLeaderSpecText id <| \() ->
+            case Dict.get id game.participants of
                 Just Nothing -> "Mitspieler"
                 Nothing -> "Spieler"
                 Just (Just player) ->

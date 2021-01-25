@@ -203,7 +203,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
                 static bool CanViewVoting(GameRoom game, GameUser user, Role? ownRole, Voting voting)
                 {
-                    if (game.Leader == user.DiscordId)
+                    if (game.Leader == user.DiscordId && !game.LeaderIsPlayer)
                         return true;
                     if (ownRole == null)
                         return false;
@@ -262,7 +262,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                         writer.WriteNull(participant.Key.ToString());
                     else
                     {
-                        var seenRole = game.Leader == user.DiscordId || 
+                        var seenRole = (game.Leader == user.DiscordId && !game.LeaderIsPlayer) || 
                                 participant.Key == user.DiscordId || 
                                 (winner != null && winner.Value.round == game.ExecutionRound) ||
                                 (ownRole != null && game.DeadCanSeeAllRoles && !ownRole.IsAlive)?
@@ -277,7 +277,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                         writer.WriteStartArray("tags");
                         foreach (var tag in participant.Value.GetTags(
                             game,
-                            game.Leader == user.DiscordId ||
+                            (game.Leader == user.DiscordId && !game.LeaderIsPlayer) ||
                             (ownRole != null && game.DeadCanSeeAllRoles && !ownRole.IsAlive)
                             ? null
                             : ownRole
@@ -325,6 +325,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                 }
                 writer.WriteEndObject();
 
+                writer.WriteBoolean("leader-is-player", game.LeaderIsPlayer);
                 writer.WriteBoolean("dead-can-see-all-roles", game.DeadCanSeeAllRoles);
                 writer.WriteBoolean("autostart-votings", game.AutostartVotings);
                 writer.WriteBoolean("autofinish-votings", game.AutoFinishVotings);
@@ -381,6 +382,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                     {
                         var newLeader = game.Leader;
                         Dictionary<Role, int>? newConfig = null;
+                        var leaderIsPlayer = game.LeaderIsPlayer;
                         var deadCanSeeRoles = game.DeadCanSeeAllRoles;
                         var autostartVotings = game.AutostartVotings;
                         var autoFinishVotings = game.AutoFinishVotings;
@@ -425,6 +427,11 @@ namespace Mabron.DiscordBots.Games.Werwolf
                             }
                         }
 
+                        if (post.Parameter.TryGetValue("leader-is-player", out value))
+                        {
+                            leaderIsPlayer = bool.Parse(value);
+                        }
+
                         if (post.Parameter.TryGetValue("dead-can-see-all-roles", out value))
                         {
                             deadCanSeeRoles = bool.Parse(value);
@@ -453,11 +460,22 @@ namespace Mabron.DiscordBots.Games.Werwolf
                         if (autoFinishVotings && votingTimeout)
                             return "you cannot have 'auto finish votings' and 'voting timeout' activated at the same time.";
 
+                        if (leaderIsPlayer)
+                        {
+                            autostartVotings = true;
+                            votingTimeout = true;
+                            autoFinishVotings = false;
+                            autoFinishRounds = true;
+                        }
+
                         // input is valid use the new data
                         if (game.Leader != newLeader)
                         {
-                            game.Participants.TryAdd(game.Leader, null);
-                            game.Participants!.Remove(newLeader, out _);
+                            if (!game.LeaderIsPlayer)
+                            {
+                                game.Participants.TryAdd(game.Leader, null);
+                                game.Participants!.Remove(newLeader, out _);
+                            }
                             game.Leader = newLeader;
                             _ = game.Message?.ModifyAsync(x => x.Embed = GameCommand.GetGameEmbed(game));
                         }
@@ -467,6 +485,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                             foreach (var (k, p) in newConfig)
                                 game.RoleConfiguration.TryAdd(k, p);
                         }
+                        game.LeaderIsPlayer = leaderIsPlayer;
                         game.DeadCanSeeAllRoles = deadCanSeeRoles;
                         game.AutostartVotings = autostartVotings;
                         game.AutoFinishVotings = autoFinishVotings;
@@ -639,6 +658,9 @@ namespace Mabron.DiscordBots.Games.Werwolf
                 if (user.DiscordId != game.Leader)
                     return "you are not the leader of the group";
 
+                if (game.LeaderIsPlayer)
+                    return "as a player you cannot start a voting";
+
                 var voting = game.Phase?.Current.Votings.Where(x => x.Id == vid).FirstOrDefault();
 
                 if (voting == null)
@@ -723,7 +745,8 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
                 if (!game.Participants.TryGetValue(user.DiscordId, out Role? ownRole))
                     ownRole = null;
-                if (user.DiscordId != game.Leader && (ownRole == null || !voting.CanVote(ownRole)))
+                if ((user.DiscordId != game.Leader || game.LeaderIsPlayer) 
+                    && (ownRole == null || !voting.CanVote(ownRole)))
                     return "you are not allowed to vote";
 
                 if (!voting.Started)
@@ -763,6 +786,9 @@ namespace Mabron.DiscordBots.Games.Werwolf
                 var (game, user) = result.Value;
                 if (user.DiscordId != game.Leader)
                     return "you are not the leader of the group";
+
+                if (game.LeaderIsPlayer)
+                    return "as a player you cannot finish a voting";
 
                 var voting = game.Phase?.Current.Votings.Where(x => x.Id == vid).FirstOrDefault();
                 if (voting == null)

@@ -114,7 +114,7 @@ main = Browser.application
         case rurl of
             Browser.Internal url ->
                 SetUrl url
-            Browser.External url ->
+            Browser.External _ ->
                 Noop
     , onUrlChange = SetUrl
     }
@@ -317,8 +317,6 @@ update msg model =
                 <| Cmd.map Response
                 <| Network.executeRequest
                 <| Network.GetGame model.token
-        WrapUser (Views.ViewUserList.Noop) ->
-            Tuple.pair model Cmd.none
         WrapUser (Views.ViewUserList.Send req) ->
             Tuple.pair model
                 <| Cmd.map Response
@@ -366,7 +364,8 @@ update msg model =
         WrapThemeEditor sub ->
             case model.modal of
                 Model.SettingsModal editor ->
-                    let (newEditor, newEvent) = Views.ViewThemeEditor.update sub editor
+                    let 
+                        (newEditor, newEvent) = Views.ViewThemeEditor.update sub editor
                         sendEvents = List.filterMap
                             (\event ->
                                 case event of

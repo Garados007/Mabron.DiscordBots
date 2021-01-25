@@ -6,7 +6,7 @@ module Views.ViewModal exposing
     )
 
 import Html exposing (Html, div, text)
-import Html.Attributes as HA exposing (class)
+import Html.Attributes exposing (class)
 import Html.Events as HE
 
 type Msg msg
