@@ -16,6 +16,19 @@ getLanguage dict =
         (\k -> Dict.get k dict)
     >> Maybe.withDefault LanguageUnknown
 
+getTextFormat : Language -> List String -> Dict String String -> Maybe String
+getTextFormat language path vars =
+    Maybe.map
+        (\text ->
+            Dict.foldl
+                (\key ->
+                    String.replace <| "{" ++ key ++ "}"
+                )
+                text
+                vars
+        )
+    <| getText language path
+
 getText : Language -> List String -> Maybe String
 getText language path =
     case (language, path) of
@@ -25,6 +38,20 @@ getText language path =
                 |> Maybe.andThen
                     (\x -> getText x other)
         _ -> Nothing
+
+getTextFormatOrPath : Language -> List String -> Dict String String -> String
+getTextFormatOrPath language path vars =
+    case getTextFormat language path vars of
+        Just x -> x
+        Nothing -> String.concat
+            <| List.concat
+            [ List.intersperse "." path
+            , [ "(" ]
+            , List.intersperse ", "
+                <| List.map (\(key, value) -> key ++ ": " ++ value)
+                <| Dict.toList vars
+            , [ ")" ]
+            ]
 
 getTextOrPath : Language -> List String -> String
 getTextOrPath language path =

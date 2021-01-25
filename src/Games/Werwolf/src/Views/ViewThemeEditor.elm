@@ -2,6 +2,7 @@ module Views.ViewThemeEditor exposing (..)
 
 import Data
 import Network exposing (EditUserConfig, editUserConfig)
+import Language exposing (Language)
 
 import Html exposing (Html, div)
 import Html.Attributes as HA exposing (class)
@@ -45,7 +46,10 @@ view model =
             [ Html.input
                 [ HA.type_ "url"
                 , HA.value model.config.background
-                , HA.placeholder "Hintergrundbild (URL)"
+                , HA.placeholder
+                    <| Language.getTextOrPath
+                        (Language.getLanguage model.langs model.theme)
+                        [ "modals", "theme-editor", "background-url" ]
                 , HE.onInput UpdateBgUrl
                 ] []
             , Html.img

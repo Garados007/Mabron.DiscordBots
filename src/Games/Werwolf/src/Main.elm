@@ -217,6 +217,7 @@ viewGamePhase model roles game user phase =
                 <| Views.ViewSettingsBar.view model
             , Html.map WrapPhase
                 <| Views.ViewGamePhase.view
+                    (Language.getLanguage model.langs model.theme)
                     model.now
                     model.token
                     game

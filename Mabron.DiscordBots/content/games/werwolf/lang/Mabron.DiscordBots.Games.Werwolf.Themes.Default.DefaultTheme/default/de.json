@@ -48,6 +48,26 @@
             "start": "Start"
         }
     },
+    "game": {
+        "voting": {
+            "started": "Gestarted",
+            "not-started": "Nicht gestarted",
+            "can-vote": "Darf abstimmen",
+            "cannot-vote": "Darf nicht abstimmen",
+            "nobody-has-voted": "Niemand hat bisher so abgestimmt",
+            "has-voted-list": "Bisher so abgestimmt haben: {list}",
+            "button": {
+                "start": "Starten",
+                "end": "Beenden",
+                "add-time-hint": "In {time-left} Sekunden wird das Voting automatisch beendet. Hier klicken um auf {max-time} Sekunden zurückzusetzen.",
+                "add-time": "Zeitzugabe ({time-left})"
+            }
+        },
+        "phase": {
+            "end": "Spiel beenden",
+            "next": "Nächste Runde"
+        }
+    },
     "modals": {
         "theme-editor": {
             "background-url": "Hintergrundbild (URL)"

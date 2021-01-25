@@ -9,13 +9,14 @@ import Html.Events as HE
 import Dict
 import Html exposing (option)
 import Time exposing (Posix)
+import Language exposing (Language)
 
 type Msg
     = Noop
     | Send NetworkRequest
 
-view : Posix -> String -> Data.Game -> Data.GamePhase -> Bool -> String -> Html Msg
-view now token game phase isLeader myId =
+view : Language -> Posix -> String -> Data.Game -> Data.GamePhase -> Bool -> String -> Html Msg
+view lang now token game phase isLeader myId =
     let
         viewPhaseHeader : Html Msg
         viewPhaseHeader =
@@ -39,9 +40,13 @@ view now token game phase isLeader myId =
                             ]
                             <| List.singleton
                             <| text
-                            <| if voting.started
-                                then "Gestarted"
-                                else "Nicht gestarted"
+                            <| Language.getTextOrPath lang 
+                                [ "game"
+                                , "voting"
+                                , if voting.started
+                                    then "started"
+                                    else "not-started"
+                                ]
                         , div 
                             [ HA.classList
                                 [ ("can-vote-state", True)
@@ -50,9 +55,13 @@ view now token game phase isLeader myId =
                             ]
                             <| List.singleton
                             <| text
-                            <| if voting.canVote
-                                then "Darf abstimmen"
-                                else "Darf nicht abstimmen"
+                            <| Language.getTextOrPath lang
+                                [ "game"
+                                , "voting"
+                                , if voting.canVote
+                                    then "can-vote"
+                                    else "cannot-vote"
+                                ]
                         ]
                     ]
                 , div [ class "voting-options" ]
@@ -67,9 +76,14 @@ view now token game phase isLeader myId =
                                     ]
                                 , HA.title <|
                                     if List.isEmpty option.user
-                                    then "Niemand hat bisher so abgestimmt"
-                                    else String.concat
-                                        <| (::) "Bisher so abgestimmt haben: "
+                                    then Language.getTextOrPath lang
+                                        [ "game", "voting", "nobody-has-voted" ]
+                                    else Language.getTextFormatOrPath lang
+                                        [ "game", "voting", "has-voted-list" ]
+                                        <| Dict.fromList
+                                        <| List.singleton
+                                        <| Tuple.pair "list"
+                                        <| String.concat
                                         <| List.intersperse ", "
                                         <| List.map
                                             (\uid ->
@@ -113,14 +127,20 @@ view now token game phase isLeader myId =
                                     <| Send
                                     <| GetVotingFinish token voting.id
                                 ]
-                                [ text "Beenden" ]
+                                [ text
+                                    <| Language.getTextOrPath lang
+                                        [ "game", "voting", "button", "end" ]
+                                ]
                             else div 
                                 [ class "button" 
                                 , HE.onClick 
                                     <| Send
                                     <| GetVotingStart token voting.id
                                 ]
-                                [ text "Starten" ]
+                                [ text
+                                    <| Language.getTextOrPath lang
+                                        [ "game", "voting", "button", "start" ]
+                                ]
                         else Nothing
                     , if voting.started && (isLeader || voting.canVote)
                         then Maybe.andThen
@@ -143,13 +163,22 @@ view now token game phase isLeader myId =
                                         , HE.onClick
                                             <| Send
                                             <| GetVotingWait token voting.id
-                                        , HA.title <|
-                                            "In " ++ String.fromInt seconds ++ " Sekunden wird das Voting " ++
-                                            "automatisch beendet. Hier klicken um auf " ++
-                                            String.fromInt (missingPlayer * 45) ++ " Sekunden zurückzusetzen."
+                                        , HA.title <| Language.getTextFormatOrPath lang
+                                            [ "game", "voting", "button", "add-time-hint" ]
+                                            <| Dict.fromList
+                                            [ Tuple.pair "time-left"
+                                                <| String.fromInt seconds
+                                            , Tuple.pair "max-time"
+                                                <| String.fromInt
+                                                <| missingPlayer * 45
+                                            ]
                                         ]
-                                        [ text <| 
-                                            "Zeitzugabe (" ++ String.fromInt seconds ++ ")"
+                                        [ text <| Language.getTextFormatOrPath lang
+                                            [ "game", "voting", "button", "add-time" ]
+                                            <| Dict.fromList
+                                            <| List.singleton
+                                            <| Tuple.pair "time-left"
+                                            <| String.fromInt seconds
                                         ]
                                     else Nothing
                             )
@@ -165,12 +194,16 @@ view now token game phase isLeader myId =
                     [ class "button" 
                     , HE.onClick <| Send <| GetGameStop token
                     ]
-                    [ text "Spiel beenden" ]
+                    [ text <| Language.getTextOrPath lang
+                        [ "game", "phase", "end" ]
+                    ]
                 , div
                     [ class "button"
                     , HE.onClick <| Send <| GetGameNext token
                     ]
-                    [ text "Nächste Runde" ]
+                    [ text <| Language.getTextOrPath lang
+                        [ "game", "phase", "next" ]
+                    ]
                 ]
 
     in div [ class "phase-container" ]
