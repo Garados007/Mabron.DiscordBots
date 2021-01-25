@@ -1,0 +1,56 @@
+{
+    "theme": {
+        "roles": {
+            "Amor": "Amor",
+            "Flutist": "Flötenspieler",
+            "Girl": "Kleines Mädchen",
+            "Healer": "Heiler",
+            "Hunter": "Jäger",
+            "Idiot": "Dorfdepp",
+            "OldMan": "Alte Mann",
+            "Oracle": "Seherin",
+            "ScapeGoat": "Sündenbock",
+            "Villager": "Dorfbewohner",
+            "Werwolf": "Werwolf",
+            "Witch": "Hexe",
+            "unknown": "???"
+        },
+        "phases": {
+            "AmorPhase": "Amor sucht das Liebespaar",
+            "DailyVictimElectionPhase": "Tag: Dorfwahl",
+            "ElectMajorPhase": "Bürgermeisterwahl",
+            "FlutistPhase": "Flötenspieler sammelt Jünger",
+            "HealerPhase": "Heiler wendet Praktiken an",
+            "HunterPhase": "Rache des Jägers",
+            "InheritMajorPhase": "Vererbung des Bürgermeisters",
+            "OraclePhase": "Alte Seherin",
+            "ScapeGoatPhase": "Auswahl der Stimmberechtigten",
+            "WerwolfPhase": "Nacht: Werwölfe",
+            "WitchPhase": "Braustunde der Hexe"
+        },
+        "tags": {
+            "not-alive": "(tot)",
+            "loved": "(verliebt)",
+            "werwolf-select": "(Werwolfopfer)",
+            "enchant-flutist": "(verzaubert)",
+            "major": "(Bürgermeister)"
+        }
+    },
+    "settings": {
+        "game-room": {
+            "editor-role-count": "Der aktuelle Anzahl auf dem Spielserver. Unter bestimmten Umständen dauert es kurz bis sich diese Zahl aktualisiert.",
+            "leader-is-player": "Spielleiter ist auch ein Mitspieler",
+            "dead-can-see-all-roles": "Tote können alle Rollen sehen",
+            "auto-start-votings": "Votings automatisch starten",
+            "auto-finish-votings": "Votings automatisch beenden",
+            "votings-timeout": "Votings automatisch nach einen Timeout beenden",
+            "auto-finish-rounds": "Runden automatisch beenden wenn kein Voting mehr existiert",
+            "start": "Start"
+        }
+    },
+    "modals": {
+        "theme-editor": {
+            "background-url": "Hintergrundbild (URL)"
+        }
+    }
+}

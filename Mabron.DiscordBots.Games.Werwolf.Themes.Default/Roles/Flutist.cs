@@ -9,8 +9,6 @@
 
         public override string Name => "Der Flötenspieler";
 
-        public override string Description => "Der Flötenspieler verzaubert das ganze Dorf zu seinen gunsten";
-
         public override Role CreateNew()
             => new Flutist(Theme);
 

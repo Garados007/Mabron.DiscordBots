@@ -185,6 +185,47 @@ namespace Mabron.DiscordBots.Games.Werwolf
             await Task.CompletedTask;
         }
 
+        [Command("show")]
+        [Summary("show the own user link for 30 seconds")]
+        public async Task ShowAsync(string id)
+        {
+            _ = Task.Run(async () =>
+            {
+                var decodedId = GetLocalId(id);
+                GameRoom? game = decodedId != null ? GameController.Current.GetGame(decodedId.Value) : null;
+                using var typing = Context.Channel.EnterTypingState();
+                if (game == null)
+                {
+                    await ReplyAsync($"Game with ID {id} not found.");
+                    return;
+                }
+                if (Context.User.IsBot)
+                    return;
+                var gameUser = GameUser.Create(Context.User);
+                if (gameUser.DiscordId != game.Leader && !game.Participants.TryGetValue(gameUser.DiscordId, out _))
+                {
+                    await ReplyAsync($"<@!{gameUser.DiscordId}> is not a member of this game. Try to join it.");
+                    return;
+                }
+
+                var urlBase = Program.Config?[0]["game.werwolf.urlbase"].String ?? "http://localhost/";
+                var url = $"{urlBase}game/{GameController.Current.GetUserToken(game, gameUser)}";
+
+                var message = await ReplyAsync(
+                    embed: new EmbedBuilder
+                    {
+                        Title = "Willkommen bei Werwölfe von Düsterwald",
+                        Description = $"Tritt der Lobby hier schnell bei: <{url}>. Nach 30 Sekunden wird " +
+                            $"die Nachricht gelöscht.",
+                        Url = url,
+                    }.Build()
+                );
+                await Task.Delay(TimeSpan.FromSeconds(30));
+                await message.DeleteAsync();
+            });
+            await Task.CompletedTask;
+        }
+
         private static string GetPublicId(int id)
         {
             var bytes = BitConverter.GetBytes(id);

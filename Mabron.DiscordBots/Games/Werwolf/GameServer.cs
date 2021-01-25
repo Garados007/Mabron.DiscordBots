@@ -171,13 +171,13 @@ namespace Mabron.DiscordBots.Games.Werwolf
             var writer = new Utf8JsonWriter(stream);
             writer.WriteStartObject();
 
-            foreach (var template in new DefaultTheme().GetRoleTemplates())
+            var theme = new DefaultTheme();
+            writer.WriteStartArray(theme.GetType().FullName ?? "");
+            foreach (var template in theme.GetRoleTemplates())
             {
-                writer.WriteStartObject(template.GetType().Name);
-                writer.WriteString("name", template.Name);
-                writer.WriteString("description", template.Description);
-                writer.WriteEndObject();
+                writer.WriteStringValue(template.GetType().Name);
             }
+            writer.WriteEndArray();
 
             writer.WriteEndObject();
             await writer.FlushAsync();

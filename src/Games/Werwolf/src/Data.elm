@@ -8,7 +8,7 @@ module Data exposing
     , GameUserStats
     , GameVoting
     , GameVotingOption
-    , RoleTemplate
+    , RoleTemplates
     , UserConfig
     , decodeError
     , decodeGameUserResult
@@ -23,17 +23,11 @@ import Time exposing (Posix)
 import Iso8601
 import Level exposing (LevelData)
 
-type alias RoleTemplate =
-    { name: String
-    , description: String
-    }
+type alias RoleTemplates = Dict String (List String)
 
-decodeRoleTemplates : Decoder (Dict String RoleTemplate)
+decodeRoleTemplates : Decoder RoleTemplates
 decodeRoleTemplates =
-    JD.succeed RoleTemplate
-        |> required "name" JD.string
-        |> required "description" JD.string
-        |> JD.dict
+    JD.dict <| JD.list JD.string
 
 type alias GameUserResult =
     { game: Maybe Game

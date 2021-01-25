@@ -10,8 +10,6 @@
 
         public override string Name => "Jäger";
 
-        public override string Description => "Zieht bei seinen Tod einen beliebigen anderen Mitspieler auch in den Tod.";
-
         public override Role CreateNew()
         {
             return new Hunter(Theme);

@@ -8,8 +8,6 @@
 
         public override string Name => "Dorfbewohner";
 
-        public override string Description => "Einfacher Dorfbewohner ohne besondere Rolle";
-
         public override Role CreateNew()
         {
             return new Villager(Theme);

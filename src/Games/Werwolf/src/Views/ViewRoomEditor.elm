@@ -8,6 +8,7 @@ import Html.Attributes as HA exposing (class)
 import Html.Events as HE
 import Dict exposing (Dict)
 import Maybe.Extra
+import Language exposing (Language)
 
 type Msg
     = SetBuffer (Dict String Int) EditGameConfig
@@ -15,9 +16,9 @@ type Msg
     | StartGame
     | Noop
 
-view : Dict String Data.RoleTemplate -> Data.Game -> Bool 
+view : Language -> Data.RoleTemplates -> Maybe Language.ThemeKey -> Data.Game -> Bool 
     -> Dict String Int -> Html Msg
-view roles game editable buffer =
+view lang roles theme game editable buffer =
     let
 
         handleInput : String -> String -> Msg
@@ -38,9 +39,9 @@ view roles game editable buffer =
                 [ div [ class "editor-role-name" ]
                     <| List.singleton
                     <| text
-                    <| Maybe.withDefault id
-                    <| Maybe.map .name
-                    <| Dict.get id roles
+                    <| Language.getTextOrPath
+                        lang
+                        [ "theme", "roles", id ]
                 , if editable
                     then Html.input
                         [ HA.type_ "number"
@@ -57,10 +58,9 @@ view roles game editable buffer =
                         ] []
                     else text ""
                 , div 
-                    [ class "editor-role-count" 
-                    , HA.title <| "Der aktuelle Anzahl auf dem Spielserver. Unter "
-                        ++ "bestimmten Umständen dauert es kurz bis sich diese Zahl "
-                        ++ "aktualisiert."
+                    [ class "editor-role-count"
+                    , HA.title <| Language.getTextOrPath lang
+                        [ "settings", "game-room", "editor-role-count" ]
                     ]
                     <| List.singleton
                     <| text
@@ -73,7 +73,7 @@ view roles game editable buffer =
                         ]
                 ]
     
-        maxPlayer = (+) (if game.leaderIsPlayer then 2 else 1) <| Dict.size game.participants
+        maxPlayer = (+) 1 <| Dict.size game.participants
         maxRoles = (+) 1 <| List.sum <| Dict.values 
             <| Dict.union buffer game.config
 
@@ -141,46 +141,67 @@ view roles game editable buffer =
     in div [ class "editor" ]
         [ div [ class "editor-roles" ]
             <| List.map viewSingleRole
-            <| Dict.keys roles
+            <| Maybe.withDefault []
+            <| case theme of
+                Just (k, _, _) -> Dict.get k roles
+                Nothing -> Nothing
         , viewRoleBar
         , div [ class "editor-checks" ]
-            [ viewCheckbox "Spielleiter ist auch ein Mitspieler"
+            [ viewCheckbox 
+                (Language.getTextOrPath lang 
+                    [ "settings", "game-room", "leader-is-player" ]
+                )
                 True
                 game.leaderIsPlayer
                 <| \new -> SendConf
                     { editGameConfig
                     | leaderIsPlayer = Just new
                     }
-            , viewCheckbox "Tote können alle Rollen sehen"
+            , viewCheckbox 
+                (Language.getTextOrPath lang 
+                    [ "settings", "game-room", "dead-can-see-all-roles" ]
+                )
                 True
                 game.deadCanSeeAllRoles
                 <| \new -> SendConf
                     { editGameConfig
                     | newDeadCanSeeAllRoles = Just new
                     }
-            , viewCheckbox "Votings automatisch starten"
-                True
+            , viewCheckbox 
+                (Language.getTextOrPath lang 
+                    [ "settings", "game-room", "auto-start-votings" ]
+                )
+                (not game.leaderIsPlayer)
                 game.autostartVotings
                 <| \new -> SendConf
                     { editGameConfig
                     | autostartVotings = Just new
                     }
-            , viewCheckbox "Votings automatisch beenden"
-                (not game.votingTimeout)
+            , viewCheckbox 
+                (Language.getTextOrPath lang 
+                    [ "settings", "game-room", "auto-finish-votings" ]
+                )
+                (not game.votingTimeout && not game.leaderIsPlayer)
                 game.autofinishVotings
                 <| \new -> SendConf
                     { editGameConfig
                     | autofinishVotings = Just new
                     }
-            , viewCheckbox "Votings automatisch nach einen Timeout beenden"
-                (not game.autofinishVotings)
+            , viewCheckbox
+                (Language.getTextOrPath lang 
+                    [ "settings", "game-room", "votings-timeout" ]
+                )
+                (not game.autofinishVotings && not game.leaderIsPlayer)
                 game.votingTimeout
                 <| \new -> SendConf
                     { editGameConfig
                     | votingTimeout = Just new
                     }
-            , viewCheckbox "Runden automatisch beenden wenn kein Voting mehr existiert"
-                True
+            , viewCheckbox
+                (Language.getTextOrPath lang 
+                    [ "settings", "game-room", "auto-finish-rounds" ]
+                )
+                (not game.leaderIsPlayer)
                 game.autofinishRound
                 <| \new -> SendConf
                     { editGameConfig
@@ -198,7 +219,10 @@ view roles game editable buffer =
                     then Noop 
                     else StartGame
                 ]
-                [ text "Start" ]
+                [ text
+                    <| Language.getTextOrPath lang
+                    [ "settings", "game-room", "start" ]
+                ]
             else text ""
         ]
 

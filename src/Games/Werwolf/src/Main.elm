@@ -3,6 +3,7 @@ module Main exposing (..)
 import Data
 import Model exposing (Model)
 import Network exposing (NetworkResponse)
+import Language exposing (Language)
 
 import Views.ViewUserList
 import Views.ViewRoomEditor
@@ -98,9 +99,28 @@ main = Browser.application
                             model.now model.levels
                             game list
                         <| Maybe.withDefault Dict.empty
-                        <| Maybe.map 
-                            (Dict.map
-                                <| \_ -> .name
+                        <| Maybe.map
+                            (
+                                let 
+                                    lang : Language
+                                    lang = Language.getLanguage
+                                        model.langs
+                                        model.theme
+                                
+                                in List.foldl
+                                    (\r ->
+                                        Dict.insert r
+                                            <| Language.getTextOrPath lang
+                                                [ "theme", "roles", r ]
+                                    )
+                                    Dict.empty
+                            )
+                        <| Maybe.andThen
+                            (\dict ->
+                                case model.theme of
+                                    Just (key, _, _) ->
+                                        Dict.get key dict
+                                    Nothing ->  Nothing
                             )
                         <| model.roles
             , Views.ViewErrors.view model.errors
@@ -132,7 +152,7 @@ tryViewGameFrame model =
         model.roles
 
 viewGameFrame : Model
-    -> Dict String Data.RoleTemplate
+    -> Data.RoleTemplates
     -> Data.Game
     -> String
     -> Html Msg
@@ -141,6 +161,7 @@ viewGameFrame model roles game user =
         [ div [ class "frame-game-left" ]
             [ Html.map WrapUser
                 <| Views.ViewUserList.view
+                    (Language.getLanguage model.langs model.theme)
                     model.now model.levels
                     model.token game user roles
             ]
@@ -149,7 +170,9 @@ viewGameFrame model roles game user =
                 <| Views.ViewSettingsBar.view model
             , Html.map WrapEditor
                 <| Views.ViewRoomEditor.view
+                    (Language.getLanguage model.langs model.theme)
                     roles
+                    model.theme
                     game
                     (user == game.leader)
                     model.editor
@@ -175,7 +198,7 @@ tryViewGamePhase model =
         model.roles
 
 viewGamePhase : Model
-    -> Dict String Data.RoleTemplate
+    -> Data.RoleTemplates
     -> Data.Game
     -> String
     -> Data.GamePhase
@@ -185,6 +208,7 @@ viewGamePhase model roles game user phase =
         [ div [ class "frame-game-left" ]
             [ Html.map WrapUser
                 <| Views.ViewUserList.view
+                    (Language.getLanguage model.langs model.theme)
                     model.now model.levels
                     model.token game user roles
             ]
@@ -287,9 +311,14 @@ update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
     case msg of
         Response resp ->
-            Tuple.pair
-                (Model.applyResponse resp model)
-                Cmd.none
+            Tuple.mapSecond
+                (Maybe.map
+                    (Network.executeRequest
+                        >> Cmd.map Response
+                    )
+                    >> Maybe.withDefault Cmd.none
+                )
+            <| Model.applyResponse resp model
         SetUrl url ->
             Tuple.pair
                 { model
@@ -307,6 +336,8 @@ update msg model =
                         <| Network.GetGame model.token
                     , Network.executeRequest
                         <| Network.GetRoles
+                    , Network.executeRequest
+                        <| Network.GetLangInfo
                     ]
         SetTime now ->
             Tuple.pair

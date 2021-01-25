@@ -2,6 +2,7 @@ module Views.ViewUserList exposing (Msg (..), view)
 
 import Data
 import Network exposing (NetworkRequest(..))
+import Language exposing (Language)
 
 import Html exposing (Html, div, text)
 import Html.Attributes as HA exposing (class)
@@ -15,8 +16,9 @@ import Time exposing (Posix)
 type Msg
     = Send NetworkRequest
 
-view : Posix -> Dict String Level -> String -> Data.Game -> String -> Dict String Data.RoleTemplate -> Html Msg
-view now levels token game myId roles =
+view : Language -> Posix -> Dict String Level -> String -> Data.Game -> String 
+    -> Data.RoleTemplates -> Html Msg
+view lang now levels token game myId roles =
     let
         getLeaderSpecText : String -> (() -> String) -> String
         getLeaderSpecText id func =
@@ -39,9 +41,8 @@ view now levels token game myId roles =
                         [ player.role
                             |> Maybe.map
                                 (\rid ->
-                                    Dict.get rid roles
-                                        |> Maybe.map .name
-                                        |> Maybe.withDefault rid
+                                    Language.getTextOrPath lang
+                                        [ "theme", "roles", rid ]
                                 )
                             |> Maybe.withDefault "???"
                             |> Just

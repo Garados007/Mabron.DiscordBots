@@ -22,8 +22,6 @@
 
         public override string Name => "Sündenbock";
 
-        public override string Description => "Wird dieser durch die Dorfwahl getötet, darf er entscheiden, wer die darauf folgende Runde wählen darf.";
-
         public override Role CreateNew()
         {
             return new ScapeGoat(Theme);

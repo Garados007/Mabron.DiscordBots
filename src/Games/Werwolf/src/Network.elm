@@ -12,9 +12,12 @@ import Data
 import Http
 import Dict exposing (Dict)
 import Url
+import Language exposing (Language, LanguageInfo)
 
 type NetworkRequest
     = GetRoles
+    | GetLangInfo
+    | GetLang Language.ThemeKey
     | GetGame String
     | PostGameConfig String EditGameConfig
     | PostUserConfig String EditUserConfig
@@ -28,10 +31,12 @@ type NetworkRequest
     | GetUserKick String String
 
 type NetworkResponse
-    = RespRoles (Dict String Data.RoleTemplate)
+    = RespRoles Data.RoleTemplates
     | RespGame Data.GameUserResult
     | RespError String
     | RespNoError
+    | RespLangInfo LanguageInfo
+    | RespLang Language.ThemeKey Language
 
 mapRespError : Cmd (Response Data.Error) -> Cmd (Response NetworkResponse)
 mapRespError =
@@ -62,6 +67,10 @@ executeRequest request =
     <| case request of
         GetRoles -> getRoles
             |> Cmd.map (Result.map RespRoles)
+        GetLangInfo -> getLangInfo
+            |> Cmd.map (Result.map RespLangInfo)
+        GetLang key -> getLang key
+            |> Cmd.map (Result.map <| RespLang key)
         GetGame token -> getGame token
             |> Cmd.map (Result.map RespGame)
         PostGameConfig token config -> postGameConfig token config
@@ -87,7 +96,7 @@ executeRequest request =
 
 type alias Response a = Result Http.Error a
 
-getRoles : Cmd (Response (Dict String Data.RoleTemplate))
+getRoles : Cmd (Response Data.RoleTemplates)
 getRoles =
     Http.get
         { url = "/api/roles"
@@ -265,3 +274,18 @@ getGameStop token =
 getUserKick : String -> String -> Cmd (Response Data.Error)
 getUserKick token uid =
     getErrorReq <| "/api/game/" ++ token ++ "/kick/" ++ uid
+
+getLangInfo : Cmd (Response LanguageInfo)
+getLangInfo =
+    Http.get
+        { url = "/content/games/werwolf/lang/index.json"
+        , expect = Http.expectJson identity Language.decodeLanguageInfo
+        }
+
+getLang : Language.ThemeKey -> Cmd (Response Language)
+getLang (k1, k2, k3) =
+    Http.get
+        { url = "/content/games/werwolf/lang/" ++ k1 ++ "/" ++ k2 ++
+            "/" ++ k3 ++ ".json"
+        , expect = Http.expectJson identity Language.decodeLanguage
+        }

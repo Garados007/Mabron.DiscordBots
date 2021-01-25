@@ -8,8 +8,6 @@
 
         public override string Name => "alte Seherin";
 
-        public override string Description => "Ihr ist es erlaubt die wahre Indentität eines Spieler zu entdecken.";
-
         public override Role CreateNew()
         {
             return new Oracle(Theme);

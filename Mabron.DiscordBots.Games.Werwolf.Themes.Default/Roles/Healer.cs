@@ -8,8 +8,6 @@
 
         public override string Name => "Heiler";
 
-        public override string Description => "Der Heiler kann eine Person vor den Werwölfen schützen";
-
         public override Role CreateNew()
         {
             return new Healer(Theme);

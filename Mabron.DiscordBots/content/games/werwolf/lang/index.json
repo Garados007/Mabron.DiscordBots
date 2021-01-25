@@ -1,0 +1,12 @@
+{
+    "languages": {
+        "de": "Deutsch"
+    },
+    "themes": {
+        "Mabron.DiscordBots.Games.Werwolf.Themes.Default.DefaultTheme": {
+            "default": {
+                "de": "Standard-Theme"
+            }
+        }
+    }
+}

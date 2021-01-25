@@ -21,8 +21,6 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Roles
 
         public override string Name => "Der Alte";
 
-        public override string Description => "Der Alte muss zweimal von den Werwölfen gerissen werden";
-
         public override Role CreateNew()
             => new OldMan(Theme);
 

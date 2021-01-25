@@ -104,7 +104,7 @@ view now token game phase isLeader myId =
                         else div [ class "voting-controls" ] list
                     )
                     <| List.filterMap identity
-                    [ if isLeader
+                    [ if isLeader && not game.leaderIsPlayer
                         then Just <|
                             if voting.started
                             then div 

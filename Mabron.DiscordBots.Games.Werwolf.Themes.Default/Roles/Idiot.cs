@@ -19,8 +19,6 @@
 
         public override string Name => "Dorfdepp";
 
-        public override string Description => "Ein Dorfdepp verliert sein Stimmrecht, wenn er vom Dorf getöted werden soll";
-
         public override Role CreateNew()
         {
             return new Idiot(Theme);

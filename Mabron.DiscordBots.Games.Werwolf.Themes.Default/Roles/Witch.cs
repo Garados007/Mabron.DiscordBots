@@ -19,10 +19,6 @@
 
         public override string Name => "Hexe";
 
-        public override string Description => "Die Hexe hat zwei Tränke. Mit einen kann sie " +
-            "einmal das Opfer der Werwölfe retten und mit den anderen kann sie jemand anderen " +
-            "einmalig vergiften.";
-
         public override Role CreateNew()
         {
             return new Witch(Theme);

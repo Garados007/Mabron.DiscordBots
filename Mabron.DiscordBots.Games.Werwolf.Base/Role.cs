@@ -51,8 +51,6 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
         public abstract string Name { get; }
 
-        public abstract string Description { get; }
-
         public virtual void Kill(GameRoom game)
         {
             IsAlive = false;
