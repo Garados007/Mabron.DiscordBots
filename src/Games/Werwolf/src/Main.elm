@@ -25,7 +25,7 @@ import Task
 import Debug.Extra
 import Time exposing (Posix)
 import Maybe.Extra
-import Dict exposing (Dict)
+import Dict
 import Views.ViewGamePhase
 import Maybe.Extra
 import Color exposing (Color)
@@ -61,72 +61,8 @@ main = Browser.application
         )
     , view = \model ->
         { title = "Werwolf"
-        , body = 
-            [ Html.node "link"
-                [ HA.attribute "rel" "stylesheet"
-                , HA.attribute "property" "stylesheet"
-                , HA.attribute "href" "/content/games/werwolf/css/style.css"
-                ] []
-            , viewStyles
-                <| Maybe.withDefault model.bufferedConfig
-                <| Maybe.Extra.orElse
-                    ( Maybe.andThen .userConfig model.game)
-                <| case model.modal of
-                    Model.SettingsModal conf ->
-                        Just conf.config
-                    _ -> Nothing
-            , tryViewGamePhase model
-                |> Maybe.Extra.orElseLazy
-                    (\() -> tryViewGameFrame model)
-                |> Maybe.Extra.orElseLazy
-                    (\() -> Just
-                        <| Views.ViewNoGame.view
-                        <| model.game == Nothing || model.roles == Nothing
-                    )
-                |> Maybe.withDefault (text "")
-            , case model.modal of
-                Model.NoModal -> text ""
-                Model.SettingsModal conf ->
-                    Views.ViewModal.viewExtracted CloseModal WrapThemeEditor
-                        "Theme Einstellungen"
-                        <| List.singleton
-                        <| Views.ViewThemeEditor.view conf
-                Model.WinnerModal game list ->
-                    Html.map (always CloseModal)
-                        <| Views.ViewModal.viewOnlyClose "Sieger"
-                        <| List.singleton
-                        <| Views.ViewWinners.view 
-                            model.now model.levels
-                            game list
-                        <| Maybe.withDefault Dict.empty
-                        <| Maybe.map
-                            (
-                                let 
-                                    lang : Language
-                                    lang = Language.getLanguage
-                                        model.langs
-                                        model.theme
-                                
-                                in List.foldl
-                                    (\r ->
-                                        Dict.insert r
-                                            <| Language.getTextOrPath lang
-                                                [ "theme", "roles", r ]
-                                    )
-                                    Dict.empty
-                            )
-                        <| Maybe.andThen
-                            (\dict ->
-                                case model.theme of
-                                    Just (key, _, _) ->
-                                        Dict.get key dict
-                                    Nothing ->  Nothing
-                            )
-                        <| model.roles
-            , Views.ViewErrors.view model.errors
-                |> Html.map WrapError
-            , Debug.Extra.viewModel model
-            ]
+        , body = view model
+            <| Model.getLanguage model
         }
     , update = update
     , subscriptions = subscriptions
@@ -139,12 +75,63 @@ main = Browser.application
     , onUrlChange = SetUrl
     }
 
-tryViewGameFrame : Model -> Maybe (Html Msg)
-tryViewGameFrame model =
+view : Model -> Language -> List (Html Msg)
+view model lang =
+    [ Html.node "link"
+        [ HA.attribute "rel" "stylesheet"
+        , HA.attribute "property" "stylesheet"
+        , HA.attribute "href" "/content/games/werwolf/css/style.css"
+        ] []
+    , viewStyles
+        <| Maybe.withDefault model.bufferedConfig
+        <| Maybe.Extra.orElse
+            ( Maybe.andThen .userConfig model.game)
+        <| case model.modal of
+            Model.SettingsModal conf ->
+                Just conf.config
+            _ -> Nothing
+    , tryViewGamePhase model lang
+        |> Maybe.Extra.orElseLazy
+            (\() -> tryViewGameFrame model lang)
+        |> Maybe.Extra.orElseLazy
+            (\() -> Just
+                <| Views.ViewNoGame.view lang
+                <| model.game == Nothing || model.roles == Nothing
+            )
+        |> Maybe.withDefault (text "")
+    , case model.modal of
+        Model.NoModal -> text ""
+        Model.SettingsModal conf ->
+            Views.ViewModal.viewExtracted CloseModal WrapThemeEditor
+                ( Language.getTextOrPath lang
+                    [ "modals", "theme-editor", "title" ]
+                )
+                <| List.singleton
+                <| Views.ViewThemeEditor.view
+                    lang
+                    conf
+        Model.WinnerModal game list ->
+            Html.map (always CloseModal)
+                <| Views.ViewModal.viewOnlyClose 
+                    ( Language.getTextOrPath lang
+                        [ "modals", "winner", "title" ]
+                    )
+                <| List.singleton
+                <| Views.ViewWinners.view
+                    lang
+                    model.now model.levels
+                    game list
+    , Views.ViewErrors.view model.errors
+        |> Html.map WrapError
+    , Debug.Extra.viewModel model
+    ]
+
+tryViewGameFrame : Model -> Language -> Maybe (Html Msg)
+tryViewGameFrame model lang =
     Maybe.Extra.andThen2
         (\result roles ->
             Maybe.map2
-                (viewGameFrame model roles)
+                (viewGameFrame model lang roles)
                 result.game
                 result.user
         )
@@ -152,25 +139,26 @@ tryViewGameFrame model =
         model.roles
 
 viewGameFrame : Model
+    -> Language
     -> Data.RoleTemplates
     -> Data.Game
     -> String
     -> Html Msg
-viewGameFrame model roles game user =
+viewGameFrame model lang roles game user =
     div [ class "frame-game-outer" ]
         [ div [ class "frame-game-left" ]
             [ Html.map WrapUser
                 <| Views.ViewUserList.view
-                    (Language.getLanguage model.langs model.theme)
+                    lang
                     model.now model.levels
-                    model.token game user roles
+                    model.token game user
             ]
         , div [ class "frame-game-body" ]
             [ Html.map WrapSelectModal
                 <| Views.ViewSettingsBar.view model
             , Html.map WrapEditor
                 <| Views.ViewRoomEditor.view
-                    (Language.getLanguage model.langs model.theme)
+                    lang
                     roles
                     model.theme
                     game
@@ -179,15 +167,15 @@ viewGameFrame model roles game user =
             ]
         ]
 
-tryViewGamePhase : Model -> Maybe (Html Msg)
-tryViewGamePhase model =
-    Maybe.Extra.andThen2
-        (\result roles ->
+tryViewGamePhase : Model -> Language -> Maybe (Html Msg)
+tryViewGamePhase model lang =
+    Maybe.andThen
+        (\result ->
             Maybe.Extra.andThen2
                 (\game user ->
                     Maybe.map
                         (\phase -> 
-                            viewGamePhase model roles game user phase
+                            viewGamePhase model lang game user phase
                         )
                         game.phase
                 )
@@ -195,29 +183,28 @@ tryViewGamePhase model =
                 result.user
         )
         model.game
-        model.roles
 
 viewGamePhase : Model
-    -> Data.RoleTemplates
+    -> Language
     -> Data.Game
     -> String
     -> Data.GamePhase
     -> Html Msg
-viewGamePhase model roles game user phase =
+viewGamePhase model lang game user phase =
     div [ class "frame-game-outer" ]
         [ div [ class "frame-game-left" ]
             [ Html.map WrapUser
                 <| Views.ViewUserList.view
-                    (Language.getLanguage model.langs model.theme)
+                    lang
                     model.now model.levels
-                    model.token game user roles
+                    model.token game user
             ]
         , div [ class "frame-game-body", class "top" ]
             [ Html.map WrapSelectModal
                 <| Views.ViewSettingsBar.view model
             , Html.map WrapPhase
                 <| Views.ViewGamePhase.view
-                    (Language.getLanguage model.langs model.theme)
+                    lang
                     model.now
                     model.token
                     game
@@ -313,11 +300,11 @@ update msg model =
     case msg of
         Response resp ->
             Tuple.mapSecond
-                (Maybe.map
+                (List.map
                     (Network.executeRequest
                         >> Cmd.map Response
                     )
-                    >> Maybe.withDefault Cmd.none
+                    >> Cmd.batch
                 )
             <| Model.applyResponse resp model
         SetUrl url ->

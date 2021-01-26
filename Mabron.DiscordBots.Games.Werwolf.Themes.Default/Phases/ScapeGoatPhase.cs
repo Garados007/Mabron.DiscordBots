@@ -22,8 +22,6 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
 
             protected override string DoNothingOptionText => "Abstimmung beenden";
 
-            public override string Name => "Verteile Stimmrechte";
-
             private bool CanFinishVoting = false;
 
             public override bool CanView(Role viewer)
@@ -80,8 +78,6 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
             return base.CanExecute(game) &&
                 !game.Participants.Values.Where(x => x is OldMan oldMan && oldMan.WasKilledByVillager).Any();
         }
-
-        public override string Name => "Auswahl der Stimmberechtigten";
 
         protected override ScapeGoatSelect Create(ScapeGoat role, GameRoom game, IEnumerable<ulong>? ids = null)
             => new ScapeGoatSelect(role, game, ids);

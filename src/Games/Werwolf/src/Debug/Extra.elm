@@ -1,6 +1,6 @@
 module Debug.Extra exposing (viewModel)
 
-import Html exposing (Html, p, pre, text, div, span)
+import Html exposing (Html, pre, text, div, span)
 import Html.Attributes exposing (style)
 
 

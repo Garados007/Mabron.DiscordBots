@@ -142,9 +142,9 @@ view lang roles theme game editable buffer =
         [ div [ class "editor-roles" ]
             <| List.map viewSingleRole
             <| Maybe.withDefault []
-            <| case theme of
-                Just (k, _, _) -> Dict.get k roles
-                Nothing -> Nothing
+            <| Maybe.andThen
+                (\(k, _, _) -> Dict.get k roles)
+            <| theme
         , viewRoleBar
         , div [ class "editor-checks" ]
             [ viewCheckbox 

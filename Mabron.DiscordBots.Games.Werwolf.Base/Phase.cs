@@ -4,7 +4,17 @@ namespace Mabron.DiscordBots.Games.Werwolf
 {
     public abstract class Phase
     {
-        public abstract string Name { get; }
+        public virtual string LanguageId
+        {
+            get
+            {
+                var name = GetType().FullName;
+                var ind = name.LastIndexOf('.');
+                if (ind >= 0)
+                    return name[(ind + 1)..];
+                else return name;
+            }
+        }
 
         public abstract bool CanExecute(GameRoom game);
 

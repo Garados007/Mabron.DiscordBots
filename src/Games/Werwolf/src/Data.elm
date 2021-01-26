@@ -52,13 +52,13 @@ type alias Game =
     }
 
 type alias GamePhase =
-    { name: String
+    { langId: String
     , voting: List GameVoting
     }
 
 type alias GameVoting =
     { id: String
-    , name: String
+    , langId: String
     , started: Bool
     , canVote: Bool
     , maxVoter: Int
@@ -106,11 +106,11 @@ decodeGameUserResult =
                 |> required "running" JD.bool
                 |> required "phase"
                     (JD.succeed GamePhase
-                        |> required "name" JD.string
+                        |> required "lang-id" JD.string
                         |> required "voting"
                             (JD.succeed GameVoting
                                 |> required "id" JD.string
-                                |> required "name" JD.string
+                                |> required "lang-id" JD.string
                                 |> required "started" JD.bool
                                 |> required "can-vote" JD.bool
                                 |> required "max-voter" JD.int

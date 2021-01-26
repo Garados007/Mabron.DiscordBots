@@ -30,8 +30,6 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
                 return $"{base.GetUserString(id, user)} retten";
             }
 
-            public override string Name => "Lebenstrank nutzen";
-
             public override bool CanView(Role viewer)
             {
                 return viewer == Witch;
@@ -68,8 +66,6 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
                     !baseRole.IsSelectedByWerewolves;
             }
 
-            public override string Name => "Todestrank nutzen";
-
             protected override bool AllowDoNothingOption => true;
 
             public override bool CanView(Role viewer)
@@ -94,8 +90,6 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
 
         public class WitchSafePhase : SeperateVotingPhase<WitchSafe, Witch>
         {
-            public override string Name => "";
-
             protected override WitchSafe Create(Witch role, GameRoom game, IEnumerable<ulong>? ids = null)
                 => new WitchSafe(role, game, ids);
 
@@ -113,8 +107,6 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
 
         public class WitchKillPhase : SeperateVotingPhase<WitchKill, Witch>
         {
-            public override string Name => "";
-
             protected override WitchKill Create(Witch role, GameRoom game, IEnumerable<ulong>? ids = null)
                 => new WitchKill(role, game);
 
@@ -130,7 +122,5 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
             return base.CanExecute(game) &&
                 !game.Participants.Values.Where(x => x is OldMan oldMan && oldMan.WasKilledByVillager).Any();
         }
-
-        public override string Name => "Braustunde der Hexe";
     }
 }

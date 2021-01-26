@@ -38,8 +38,6 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
             }
         }
 
-        public override string Name => "Vererbung des Bürgermeisters";
-
         public override bool CanExecute(GameRoom game)
         {
             return game.Participants.Values

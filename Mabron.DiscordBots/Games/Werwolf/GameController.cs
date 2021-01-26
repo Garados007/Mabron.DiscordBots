@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using Discord.WebSocket;
 
 namespace Mabron.DiscordBots.Games.Werwolf
 {
@@ -18,8 +16,10 @@ namespace Mabron.DiscordBots.Games.Werwolf
         {
             var r = new Random();
             int id;
-            //while (rooms.ContainsKey(id = r.Next())) ;
+            while (rooms.ContainsKey(id = r.Next())) ;
+#if ROOM_ID_1
             id = 1;
+#endif
             rooms.TryAdd(id, new GameRoom(id, leader) 
             { 
                 Theme = new Themes.Default.DefaultTheme(),

@@ -36,8 +36,6 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
             }
         }
 
-        public override string Name => "Nacht: Werwölfe";
-
         public override bool CanExecute(GameRoom game)
         {
             return game.AliveRoles.Where(x => x is WerwolfBase).Any();

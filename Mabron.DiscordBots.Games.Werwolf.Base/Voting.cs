@@ -16,7 +16,17 @@ namespace Mabron.DiscordBots.Games.Werwolf
             Id = unchecked(nextId++);
         }
 
-        public abstract string Name { get; }
+        public virtual string LanguageId
+        {
+            get
+            {
+                var name = GetType().FullName;
+                var ind = name.LastIndexOf('.');
+                if (ind >= 0)
+                    return name[(ind + 1)..];
+                else return name;
+            }
+        }
 
         public bool Started { get; set; }
 

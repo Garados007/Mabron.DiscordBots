@@ -20,8 +20,8 @@ namespace Mabron.DiscordBots.Games.Werwolf
         /// <returns>a list of defined tags</returns>
         public virtual IEnumerable<string> GetTags(GameRoom game, Role? viewer)
         {
-            if (IsAlive)
-                yield return "alive";
+            if (!IsAlive)
+                yield return "not-alive";
             if (IsMajor)
                 yield return "major";
         }

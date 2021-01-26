@@ -17,6 +17,7 @@ import Language exposing (Language, LanguageInfo)
 type NetworkRequest
     = GetRoles
     | GetLangInfo
+    | GetRootLang String
     | GetLang Language.ThemeKey
     | GetGame String
     | PostGameConfig String EditGameConfig
@@ -36,6 +37,7 @@ type NetworkResponse
     | RespError String
     | RespNoError
     | RespLangInfo LanguageInfo
+    | RespRootLang String Language
     | RespLang Language.ThemeKey Language
 
 mapRespError : Cmd (Response Data.Error) -> Cmd (Response NetworkResponse)
@@ -69,6 +71,8 @@ executeRequest request =
             |> Cmd.map (Result.map RespRoles)
         GetLangInfo -> getLangInfo
             |> Cmd.map (Result.map RespLangInfo)
+        GetRootLang lang -> getRootLang lang
+            |> Cmd.map (Result.map <| RespRootLang lang)
         GetLang key -> getLang key
             |> Cmd.map (Result.map <| RespLang key)
         GetGame token -> getGame token
@@ -280,6 +284,13 @@ getLangInfo =
     Http.get
         { url = "/content/games/werwolf/lang/index.json"
         , expect = Http.expectJson identity Language.decodeLanguageInfo
+        }
+
+getRootLang : String -> Cmd (Response Language)
+getRootLang lang =
+    Http.get
+        { url = "/content/games/werwolf/lang/root/" ++ lang ++ ".json"
+        , expect = Http.expectJson identity Language.decodeLanguage
         }
 
 getLang : Language.ThemeKey -> Cmd (Response Language)

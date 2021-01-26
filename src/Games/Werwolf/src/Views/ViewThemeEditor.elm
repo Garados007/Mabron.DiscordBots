@@ -30,8 +30,8 @@ init config =
     , picker = ColorPicker.empty
     }
 
-view : Model -> Html Msg
-view model =
+view : Language -> Model -> Html Msg
+view lang model =
     div [ class "theme-editor" ]
         [ div [ class "group" ]
             <| List.singleton
@@ -47,8 +47,7 @@ view model =
                 [ HA.type_ "url"
                 , HA.value model.config.background
                 , HA.placeholder
-                    <| Language.getTextOrPath
-                        (Language.getLanguage model.langs model.theme)
+                    <| Language.getTextOrPath lang
                         [ "modals", "theme-editor", "background-url" ]
                 , HE.onInput UpdateBgUrl
                 ] []

@@ -2,6 +2,7 @@ module Model exposing
     ( Model
     , Modal (..)
     , applyResponse
+    , getLanguage
     , init
     )
 
@@ -29,7 +30,8 @@ type alias Model =
     , bufferedConfig: Data.UserConfig
     , levels: Dict String Level
     , langInfo: LanguageInfo
-    , langs: Dict Language.ThemeKey Language
+    , rootLang: Dict String Language
+    , themeLangs: Dict Language.ThemeKey Language
     , theme: Maybe Language.ThemeKey
     }
 
@@ -57,11 +59,29 @@ init token key =
         { languages = Dict.empty
         , themes = Dict.empty
         }
-    , langs = Dict.empty
+    , rootLang = Dict.empty
+    , themeLangs = Dict.empty
     , theme = Nothing
     }
 
-applyResponse : NetworkResponse -> Model -> (Model, Maybe Network.NetworkRequest)
+getLanguage : Model -> Language
+getLanguage model =
+    let
+        rootLang : Language
+        rootLang =
+            Language.getLanguage model.rootLang
+                <| Maybe.map
+                    (\(_, _, lang) -> lang)
+                <| model.theme
+        
+        themeLang : Language
+        themeLang =
+            Language.getLanguage 
+                model.themeLangs
+                model.theme
+    in Language.alternate themeLang rootLang
+    
+applyResponse : NetworkResponse -> Model -> (Model, List Network.NetworkRequest)
 applyResponse response model =
     case response of
         RespRoles roles ->
@@ -69,7 +89,7 @@ applyResponse response model =
                 { model
                 | roles = Just roles
                 }
-                Nothing
+                []
         RespGame game ->
             Tuple.pair
                 { model
@@ -114,7 +134,7 @@ applyResponse response model =
                             Dict.empty
                         Nothing -> Dict.empty
                 }
-                Nothing
+                []
         RespError error ->
             Tuple.pair
                 { model
@@ -123,19 +143,29 @@ applyResponse response model =
                     then model.errors
                     else error :: model.errors
                 }
-                Nothing
-        RespNoError -> (model, Nothing)
+                []
+        RespNoError -> (model, [])
         RespLangInfo info ->
             Tuple.pair
                 { model
                 | langInfo = info
                 , theme = Language.firstTheme info
                 }
-            <| Maybe.map Network.GetLang
-            <| Language.firstTheme info
+            <|  ( case Maybe.map Network.GetLang <| Language.firstTheme info of
+                    Just x -> (::) x
+                    Nothing -> identity
+                )
+            <| List.map Network.GetRootLang
+            <| Dict.keys info.languages
+        RespRootLang lang info ->
+            Tuple.pair
+                { model
+                | rootLang = Dict.insert lang info model.rootLang
+                }
+                []
         RespLang key info ->
             Tuple.pair
                 { model
-                | langs = Dict.insert key info model.langs
+                | themeLangs = Dict.insert key info model.themeLangs
                 }
-                Nothing
+                []

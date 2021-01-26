@@ -7,10 +7,11 @@ import Html exposing (Html, div, text)
 import Html.Attributes as HA exposing (class)
 import Dict exposing (Dict)
 import Time exposing (Posix)
+import Language exposing (Language)
 
-view : Posix -> Dict String Level -> Data.Game -> List String 
-    -> Dict String String -> Html Never
-view now levels game winners roles =
+view : Language -> Posix -> Dict String Level -> Data.Game -> List String 
+    -> Html Never
+view lang now levels game winners =
     div [ class "winner-box" ]
         <| List.map
             (\winner ->
@@ -26,11 +27,14 @@ view now levels game winners roles =
                         |> Maybe.withDefault winner
                     
                     role : String
-                    role = Dict.get winner game.participants
-                        |> Maybe.andThen identity
-                        |> Maybe.andThen .role
-                        |> Maybe.andThen (\key -> Dict.get key roles)
-                        |> Maybe.withDefault "???"
+                    role = Language.getTextOrPath lang
+                        [ "theme"
+                        , "roles"
+                        , Dict.get winner game.participants
+                            |> Maybe.andThen identity
+                            |> Maybe.andThen .role
+                            |> Maybe.withDefault "unknown"
+                        ]
 
                     level : LevelData
                     level = Dict.get winner levels

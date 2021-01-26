@@ -10,6 +10,7 @@ import Dict
 import Html exposing (option)
 import Time exposing (Posix)
 import Language exposing (Language)
+import Maybe.Extra
 
 type Msg
     = Noop
@@ -22,7 +23,10 @@ view lang now token game phase isLeader myId =
         viewPhaseHeader =
             div [ class "phase-header" ]
                 [ div [ class "title" ]
-                    [ text phase.name ]
+                    <| List.singleton
+                    <| text
+                    <| Language.getTextOrPath lang
+                        [ "theme", "phases", phase.langId ]
                 ]
 
         viewVoting : Data.GameVoting -> Html Msg
@@ -30,7 +34,21 @@ view lang now token game phase isLeader myId =
             div [ class "voting-box" ]
                 [ div [ class "voting-header" ]
                     [ div [ class "title" ]
-                        [ text voting.name ]
+                        <| List.singleton
+                        <| text
+                        <|  (\value ->
+                                case value of
+                                    Just x -> x
+                                    Nothing ->
+                                        "theme.voting-title." ++ voting.langId
+                            )
+                        <| Maybe.Extra.orElseLazy
+                            (\() ->
+                                Language.getText lang
+                                    [ "theme", "voting-title", "default" ]
+                            )
+                        <| Language.getText lang
+                            [ "theme", "voting-title", voting.langId ]
                     , div [ class "status" ]
                         [ div 
                             [ HA.classList

@@ -31,8 +31,6 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
             }
         }
 
-        public override string Name => "Bürgermeisterwahl";
-
         public override bool CanExecute(GameRoom game)
         {
             var isMajorRemoved = game.Participants.Values

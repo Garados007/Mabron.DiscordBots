@@ -56,7 +56,8 @@ type alias RgbColor =
 
 hslToRgb : HslColor -> RgbColor
 hslToRgb color =
-    let c : Float
+    let 
+        c : Float
         c = (1 - abs (2 * color.lightness - 1)) * color.saturation
 
         x : Float

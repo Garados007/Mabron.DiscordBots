@@ -91,8 +91,6 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
             }
         }
 
-        public override string Name => "Tag: Dorfwahl";
-
         public override bool CanExecute(GameRoom game)
         {
             return true;

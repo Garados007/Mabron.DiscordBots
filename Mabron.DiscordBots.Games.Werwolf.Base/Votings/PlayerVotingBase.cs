@@ -12,8 +12,6 @@ namespace Mabron.DiscordBots.Games.Werwolf.Votings
         public override IEnumerable<(int id, VoteOption option)> Options
             => options.Select(x => (x.Key, x.Value.opt));
 
-        public override string Name => "Wähle einen Spieler";
-
         protected virtual bool AllowDoNothingOption { get; } = false;
 
         protected int? NoOptionId { get; }

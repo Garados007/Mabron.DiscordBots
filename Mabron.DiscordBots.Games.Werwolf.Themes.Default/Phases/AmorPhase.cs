@@ -36,8 +36,6 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
             }
         }
 
-        public override string Name => "Amor sucht das Liebespaar";
-
         public override bool CanExecute(GameRoom game)
         {
             return game.AliveRoles.Any(x => x is Roles.Amor) &&

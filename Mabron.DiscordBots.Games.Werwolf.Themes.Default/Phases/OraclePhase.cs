@@ -37,8 +37,6 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
             }
         }
 
-        public override string Name => "Alte Seherin";
-
         public override bool CanExecute(GameRoom game)
         {
             return game.AliveRoles.Where(x => x is Roles.Oracle).Any() &&

@@ -2,8 +2,6 @@
 {
     public abstract class ActionPhaseBase : Phase
     {
-        public override string Name => $"Action Phase: {GetType().Name}";
-
         public override bool CanExecute(GameRoom game)
             => true;
 

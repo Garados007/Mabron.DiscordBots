@@ -41,8 +41,6 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
                 !game.Participants.Values.Where(x => x is OldMan oldMan && oldMan.WasKilledByVillager).Any();
         }
 
-        public override string Name => "Rache des Jägers";
-
         protected override HunterKill Create(Hunter role, GameRoom game, IEnumerable<ulong>? ids = null)
             => new HunterKill(game, role, ids);
 

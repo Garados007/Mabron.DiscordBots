@@ -1,5 +1,10 @@
 {
     "theme": {
+        "names": {
+            "game-leader": "Spielleiter",
+            "member": "Mitspieler",
+            "player": "Spieler"
+        },
         "roles": {
             "Amor": "Amor",
             "Flutist": "Flötenspieler",
@@ -34,43 +39,12 @@
             "werwolf-select": "(Werwolfopfer)",
             "enchant-flutist": "(verzaubert)",
             "major": "(Bürgermeister)"
-        }
-    },
-    "settings": {
-        "game-room": {
-            "editor-role-count": "Der aktuelle Anzahl auf dem Spielserver. Unter bestimmten Umständen dauert es kurz bis sich diese Zahl aktualisiert.",
-            "leader-is-player": "Spielleiter ist auch ein Mitspieler",
-            "dead-can-see-all-roles": "Tote können alle Rollen sehen",
-            "auto-start-votings": "Votings automatisch starten",
-            "auto-finish-votings": "Votings automatisch beenden",
-            "votings-timeout": "Votings automatisch nach einen Timeout beenden",
-            "auto-finish-rounds": "Runden automatisch beenden wenn kein Voting mehr existiert",
-            "start": "Start"
-        }
-    },
-    "game": {
-        "voting": {
-            "started": "Gestarted",
-            "not-started": "Nicht gestarted",
-            "can-vote": "Darf abstimmen",
-            "cannot-vote": "Darf nicht abstimmen",
-            "nobody-has-voted": "Niemand hat bisher so abgestimmt",
-            "has-voted-list": "Bisher so abgestimmt haben: {list}",
-            "button": {
-                "start": "Starten",
-                "end": "Beenden",
-                "add-time-hint": "In {time-left} Sekunden wird das Voting automatisch beendet. Hier klicken um auf {max-time} Sekunden zurückzusetzen.",
-                "add-time": "Zeitzugabe ({time-left})"
-            }
         },
-        "phase": {
-            "end": "Spiel beenden",
-            "next": "Nächste Runde"
-        }
-    },
-    "modals": {
-        "theme-editor": {
-            "background-url": "Hintergrundbild (URL)"
+        "voting-title": {
+            "default": "Wähle eine Option",
+            "ScapeGoatPhase+ScapeGoatSelect": "Verteile Stimmrechte",
+            "WitchPhase+WitchSafe": "Lebenstrank nutzen",
+            "WitchPhase+WitchKill": "Todestrank nutzen"
         }
     }
 }

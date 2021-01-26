@@ -4,6 +4,7 @@
     <TargetFramework>netstandard2.1</TargetFramework>
     <RootNamespace>Mabron.DiscordBots.Games.Werwolf</RootNamespace>
     <Nullable>enable</Nullable>
+    <Configurations>Debug;Release;DebugTest</Configurations>
   </PropertyGroup>
 
   <ItemGroup>

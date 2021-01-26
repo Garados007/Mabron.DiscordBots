@@ -51,7 +51,9 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
             // init file storage
             var searcher = new HttpDocumentFinder();
-            searcher.Add(new HttpDocumentFinder.Rule("/content/", "content/", false, true));
+            if (System.Diagnostics.Debugger.IsAttached)
+                searcher.Add(new HttpDocumentFinder.Rule("/content/", "../../../content/", false, true));
+            else searcher.Add(new HttpDocumentFinder.Rule("/content/", "content/", false, true));
             server.AddWebService(searcher);
             server.AddWebService(new HttpDirectoryMapper(false));
             server.AddWebService(new DisallowRootAccess());
@@ -221,7 +223,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                 else
                 {
                     writer.WriteStartObject("phase"); // phase
-                    writer.WriteString("name", game.Phase.Current.Name);
+                    writer.WriteString("lang-id", game.Phase.Current.LanguageId);
                     writer.WriteStartArray("voting"); // voting
                     foreach (var voting in game.Phase.Current.Votings)
                     {
@@ -229,7 +231,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                             continue;
                         writer.WriteStartObject(); // {}
                         writer.WriteString("id", voting.Id.ToString());
-                        writer.WriteString("name", voting.Name);
+                        writer.WriteString("lang-id", voting.LanguageId);
                         writer.WriteBoolean("started", voting.Started);
                         writer.WriteBoolean("can-vote", ownRole != null && voting.CanVote(ownRole));
                         writer.WriteNumber("max-voter", voting.GetVoter(game).Count());

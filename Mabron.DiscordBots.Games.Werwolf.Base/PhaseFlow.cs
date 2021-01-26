@@ -9,8 +9,6 @@ namespace Mabron.DiscordBots.Games.Werwolf
         /// </summary>
         private sealed class InitialPhase : Phase
         {
-            public override string Name => "Init";
-
             public override bool IsGamePhase => false;
 
             public override bool CanExecute(GameRoom game)

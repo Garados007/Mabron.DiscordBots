@@ -53,8 +53,6 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
             }
         }
 
-        public override string Name => "Flötenspieler sammelt Jünger";
-
         public override bool CanExecute(GameRoom game)
         {
             return game.AliveRoles.Any(x => x is Roles.Flutist);

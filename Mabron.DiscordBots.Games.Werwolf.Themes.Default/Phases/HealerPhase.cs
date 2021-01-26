@@ -33,8 +33,6 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
             }
         }
 
-        public override string Name => "Heiler wendet Praktiken an";
-
         public override bool CanExecute(GameRoom game)
         {
             return game.AliveRoles.Where(x => x is Roles.Healer).Any() &&

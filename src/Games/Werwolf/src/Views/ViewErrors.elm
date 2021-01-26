@@ -1,10 +1,7 @@
 module Views.ViewErrors exposing (..)
 
-import Data
-import Model
-
 import Html exposing (Html, div, text)
-import Html.Attributes as HA exposing (class)
+import Html.Attributes exposing (class)
 import Html.Events as HE
 
 view : List String -> Html Int
