@@ -5,6 +5,7 @@ using MaxLib.WebServer;
 using MaxLib.WebServer.Api.Rest;
 using MaxLib.WebServer.Post;
 using MaxLib.WebServer.Services;
+using MaxLib.WebServer.WebSocket;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -17,6 +18,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
     public static class GameServer
     {
         private static Server? server;
+        private static WebSocketService? webSocket;
 
         class PostRule : ApiRule
         {
@@ -58,6 +60,11 @@ namespace Mabron.DiscordBots.Games.Werwolf
             server.AddWebService(new HttpDirectoryMapper(false));
             server.AddWebService(new DisallowRootAccess());
             server.AddWebService(new GameService());
+
+            // init ws
+            webSocket = new WebSocketService();
+            webSocket.Add(new GameWebSocketEndpoint());
+            server.AddWebService(webSocket);
 
             // init api
             var api = new RestApiService("api");
@@ -165,6 +172,8 @@ namespace Mabron.DiscordBots.Games.Werwolf
         public static void Stop()
         {
             server?.Stop();
+            GameController.Current.Dispose();
+            webSocket?.Dispose();
         }
 
         private static async Task<HttpDataSource> RolesAsync()
@@ -200,17 +209,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
             if (result != null)
             {
                 var (game, user) = result.Value;
-                if (!game.Participants.TryGetValue(user.DiscordId, out Role? ownRole))
-                    ownRole = null;
-
-                static bool CanViewVoting(GameRoom game, GameUser user, Role? ownRole, Voting voting)
-                {
-                    if (game.Leader == user.DiscordId && !game.LeaderIsPlayer)
-                        return true;
-                    if (ownRole == null)
-                        return false;
-                    return voting.CanView(ownRole);
-                }
+                var ownRole = game.TryGetRole(user.DiscordId);
 
                 writer.WriteStartObject("game");
 
@@ -218,43 +217,8 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
                 writer.WriteBoolean("running", game.IsRunning);
 
-                if (game.Phase == null)
-                    writer.WriteNull("phase");
-                else
-                {
-                    writer.WriteStartObject("phase"); // phase
-                    writer.WriteString("lang-id", game.Phase.Current.LanguageId);
-                    writer.WriteStartArray("voting"); // voting
-                    foreach (var voting in game.Phase.Current.Votings)
-                    {
-                        if (!CanViewVoting(game, user, ownRole, voting))
-                            continue;
-                        writer.WriteStartObject(); // {}
-                        writer.WriteString("id", voting.Id.ToString());
-                        writer.WriteString("lang-id", voting.LanguageId);
-                        writer.WriteBoolean("started", voting.Started);
-                        writer.WriteBoolean("can-vote", ownRole != null && voting.CanVote(ownRole));
-                        writer.WriteNumber("max-voter", voting.GetVoter(game).Count());
-                        if (voting.Timeout != null)
-                            writer.WriteString("timeout", voting.Timeout.Value);
-                        else writer.WriteNull("timeout");
-                        writer.WriteStartObject("options"); // options
-                        foreach (var (id, option) in voting.Options)
-                        {
-                            writer.WriteStartObject(id.ToString()); // id
-                            writer.WriteString("name", option.Name);
-                            writer.WriteStartArray("user");
-                            foreach (var vuser in option.Users)
-                                writer.WriteStringValue(vuser.ToString());
-                            writer.WriteEndArray();
-                            writer.WriteEndObject(); // id
-                        }
-                        writer.WriteEndObject(); // options
-                        writer.WriteEndObject(); // {}
-                    }
-                    writer.WriteEndArray(); //voting
-                    writer.WriteEndObject(); // phase
-                }
+                new Events.NextPhase(game.Phase?.Current)
+                    .WriteContent(writer, game, user);
 
                 var winner = game.Winner;
                 writer.WriteStartObject("participants");

@@ -164,5 +164,14 @@ namespace Mabron.DiscordBots.Games.Werwolf
             if (game.AutoFinishVotings && GetMissingVotes(game) == 0)
                 FinishVoting(game);
         }
+
+        public static bool CanViewVoting(GameRoom game, GameUser user, Role? ownRole, Voting voting)
+        {
+            if (game.Leader == user.DiscordId && !game.LeaderIsPlayer)
+                return true;
+            if (ownRole == null)
+                return false;
+            return voting.CanView(ownRole);
+        }
     }
 }

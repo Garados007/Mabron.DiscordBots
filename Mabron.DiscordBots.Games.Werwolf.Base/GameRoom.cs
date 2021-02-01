@@ -14,7 +14,16 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
         public RestUserMessage? Message { get; set; }
 
-        public ulong Leader { get; set; }
+        ulong leader;
+        public ulong Leader
+        {
+            get => leader;
+            set
+            {
+                Leader = value;
+                SendEvent(new Events.OnLeaderChanged(value));
+            }
+        }
 
         public bool IsRunning { get; set; } = false;
 
@@ -74,6 +83,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
             Participants.TryAdd(user.DiscordId, null);
             UserCache[user.DiscordId] = user;
+            SendEvent(new Events.AddParticipant(user));
             return true;
         }
 
@@ -81,10 +91,18 @@ namespace Mabron.DiscordBots.Games.Werwolf
         {
             if (Participants!.Remove(user.DiscordId, out _))
                 UserCache.Remove(user.DiscordId, out _);
+            SendEvent(new Events.RemoveParticipant(user.DiscordId));
         }
 
         public IEnumerable<Role> AliveRoles
             => Participants.Values.Where(x => x != null).Cast<Role>().Where(x => x.IsAlive);
+
+        public Role? TryGetRole(ulong id)
+        {
+            if (Participants.TryGetValue(id, out Role? role))
+                return role;
+            else return null;
+        }
 
         public bool FullConfiguration => RoleConfiguration.Values.Sum() == Participants.Count;
 
@@ -92,6 +110,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
         {
             if (!Phase?.Next(this) ?? true)
                 Phase = null;
+            SendEvent(new Events.NextPhase(Phase?.Current));
         }
 
         public void StartGame()
@@ -170,6 +189,14 @@ namespace Mabron.DiscordBots.Games.Werwolf
             }
             IsRunning = false;
             Phase = null;
+        }
+    
+        public event EventHandler<GameEvent>? OnEvent;
+
+        public void SendEvent<T>(T @event)
+            where T : GameEvent
+        {
+            OnEvent?.Invoke(this, @event);
         }
     }
 }

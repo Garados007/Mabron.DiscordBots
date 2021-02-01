@@ -1,9 +1,12 @@
+using System.Threading.Tasks;
+using System.Threading;
+using System.Collections.Generic;
 using System;
 using System.Collections.Concurrent;
 
 namespace Mabron.DiscordBots.Games.Werwolf
 {
-    public class GameController
+    public class GameController : IDisposable
     {
         public static GameController Current { get; }
             = new GameController();
@@ -11,6 +14,11 @@ namespace Mabron.DiscordBots.Games.Werwolf
         private GameController() {}
 
         readonly ConcurrentDictionary<int, GameRoom> rooms = new ConcurrentDictionary<int, GameRoom>();
+
+        readonly HashSet<GameWebSocketConnection> wsConnections
+            = new HashSet<GameWebSocketConnection>();
+        readonly ReaderWriterLockSlim lockWsConnections
+            = new ReaderWriterLockSlim();
 
         public int CreateGame(GameUser leader)
         {
@@ -59,6 +67,36 @@ namespace Mabron.DiscordBots.Games.Werwolf
             if (!game.UserCache.TryGetValue(userId, out GameUser? user))
                 return null;
             return (game, user);
+        }
+
+        private void OnGameEvent(object sender, GameEvent @event)
+        {
+            lockWsConnections.EnterReadLock();
+            foreach (var connection in wsConnections)
+                if (connection.Game == sender && @event.CanSendTo(connection.Game, connection.User))
+                {
+                    _ = Task.Run(async () => await connection.SendEvent(@event));
+                }
+            lockWsConnections.ExitReadLock();
+        }
+
+        public void AddWsConnection(GameWebSocketConnection connection)
+        {
+            lockWsConnections.EnterWriteLock();
+            wsConnections.Add(connection);
+            lockWsConnections.ExitWriteLock();
+        }
+
+        public void RemoveWsConnection(GameWebSocketConnection connection)
+        {
+            lockWsConnections.EnterWriteLock();
+            wsConnections.Remove(connection);
+            lockWsConnections.ExitWriteLock();
+        }
+
+        public void Dispose()
+        {
+            lockWsConnections.Dispose();
         }
     }
 }
