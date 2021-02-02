@@ -37,7 +37,6 @@ type alias GameUserResult =
 
 type alias Game =
     { leader: String
-    , running: Bool
     , phase: Maybe GamePhase
     , participants: Dict String (Maybe GameParticipant)
     , user: Dict String GameUser
@@ -101,7 +100,6 @@ decodeGameUserResult =
         |> required "game"
             (JD.succeed Game
                 |> required "leader" JD.string
-                |> required "running" JD.bool
                 |> required "phase"
                     (JD.succeed GamePhase
                         |> required "lang-id" JD.string

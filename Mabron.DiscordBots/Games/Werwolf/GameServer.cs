@@ -215,8 +215,6 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
                 writer.WriteString("leader", game.Leader.ToString());
 
-                writer.WriteBoolean("running", game.IsRunning);
-
                 if (game.Phase == null)
                     writer.WriteNull("phase");
                 else
@@ -342,7 +340,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
                 static string? Set(GameRoom game, GameUser user, UrlEncodedData post)
                 {
-                    if (game.IsRunning)
+                    if (game.Phase != null)
                         return "cannot change settings of running game";
                     try
                     {
@@ -574,7 +572,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                 if (user.DiscordId != game.Leader)
                     return "you are not the leader of the group";
 
-                if (game.IsRunning)
+                if (game.Phase != null)
                     return "game is already running";
 
                 if (!game.FullConfiguration)
@@ -595,7 +593,6 @@ namespace Mabron.DiscordBots.Games.Werwolf
                 }
 
                 game.StartGame();
-                game.IsRunning = true;
                 return null;
             }
             writer.WriteString("error", Do(writer, token));
@@ -830,7 +827,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                 if (user.DiscordId != game.Leader)
                     return "you are not the leader of the group";
 
-                if (!game.IsRunning)
+                if (game.Phase == null)
                     return "the game is not running";
 
                 game.StopGame(null);

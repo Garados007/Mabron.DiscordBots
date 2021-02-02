@@ -24,8 +24,6 @@ namespace Mabron.DiscordBots.Games.Werwolf
             }
         }
 
-        public bool IsRunning { get; set; } = false;
-
         public PhaseFlow? Phase { get; private set; }
 
         public ConcurrentDictionary<ulong, Role?> Participants { get; }
@@ -194,7 +192,6 @@ namespace Mabron.DiscordBots.Games.Werwolf
                 }
                 Winner = (ExecutionRound, winIds.ToArray());
             }
-            IsRunning = false;
             Phase = null;
             SendEvent(new Events.GameEnd());
             foreach (var role in Participants.Values)
