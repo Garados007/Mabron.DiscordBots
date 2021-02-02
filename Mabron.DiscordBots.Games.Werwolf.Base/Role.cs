@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Mabron.DiscordBots.Games.Werwolf
 {
@@ -70,6 +71,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
         public virtual void Kill(GameRoom game)
         {
             IsAlive = false;
+            SendRoleInfoChanged();
         }
 
         public static Role? GetSeenRole(GameRoom game, uint? round, GameUser user, ulong targetId, Role target)
@@ -83,6 +85,15 @@ namespace Mabron.DiscordBots.Games.Werwolf
                 ownRole != null ?
                 target.ViewRole(ownRole) :
                 null;
+        }
+
+        public static IEnumerable<string> GetSeenTags(GameRoom game, GameUser user, Role? viewer, Role target)
+        {
+            if (viewer == null && game.Leader != user.DiscordId)
+                return Enumerable.Empty<string>();
+            if (viewer != null && game.DeadCanSeeAllRoles && !viewer.IsAlive)
+                viewer = null;
+            return target.GetTags(game, viewer);
         }
     }
 }

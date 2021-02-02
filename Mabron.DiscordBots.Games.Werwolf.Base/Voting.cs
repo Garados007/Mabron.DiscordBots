@@ -95,6 +95,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
             {
                 game.Phase!.Current.ExecuteMultipleWinner(this, game);
             }
+            AfterFinishExecute(game);
             if (new WinCondition().Check(game, out ReadOnlyMemory<Role>? winner))
             {
                 game.StopGame(winner);
@@ -103,6 +104,11 @@ namespace Mabron.DiscordBots.Games.Werwolf
             {
                 game.NextPhase();
             }
+        }
+
+        protected virtual void AfterFinishExecute(GameRoom game)
+        {
+
         }
 
         public IEnumerable<Role> GetVoter(GameRoom game)

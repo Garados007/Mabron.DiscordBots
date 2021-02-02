@@ -51,6 +51,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default
             phases.Add(new Phase[]
             {
                 new Phases.KillWerwolfVictimAction(),
+                new Phases.KillNightVictimsAction(),
                 new Phases.HunterPhase(),
                 new Phases.InheritMajorPhase(),
             });

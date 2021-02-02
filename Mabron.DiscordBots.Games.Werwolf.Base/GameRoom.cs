@@ -103,6 +103,14 @@ namespace Mabron.DiscordBots.Games.Werwolf
             else return null;
         }
 
+        public ulong? TryGetId(Role role)
+        {
+            foreach (var (id, prole) in Participants)
+                if (prole == role)
+                    return id;
+            return null;
+        }
+
         public bool FullConfiguration => RoleConfiguration.Values.Sum() == Participants.Count;
 
         public void NextPhase()
@@ -115,6 +123,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
         {
             Winner = null;
             ExecutionRound++;
+            SendEvent(new Events.GameStart());
             // Setup phases
             Phase = Theme?.GetPhases();
             if (Phase != null && (!Phase.Current.IsGamePhase || !Phase.Current.CanExecute(this)))
@@ -190,7 +199,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
             SendEvent(new Events.GameEnd());
             foreach (var role in Participants.Values)
                 if (role != null)
-                    SendEvent(new Events.OnRoleInfoChanged(role));
+                    SendEvent(new Events.OnRoleInfoChanged(role, ExecutionRound));
         }
     
         public event EventHandler<GameEvent>? OnEvent;

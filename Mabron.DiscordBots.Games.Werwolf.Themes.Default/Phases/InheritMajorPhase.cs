@@ -35,6 +35,10 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
                     if (entry != null)
                         entry.IsMajor = false;
                 role.IsMajor = true;
+                game.SendEvent(new Events.PlayerNotification(
+                    "new-major",
+                    new[] { id }
+                ));
             }
         }
 

@@ -73,6 +73,14 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
 
                 return null;
             }
+
+            protected override void AfterFinishExecute(GameRoom game)
+            {
+                game.SendEvent(new Events.PlayerNotification(
+                    "scapegoat-vote",
+                    GetResultUserIds().ToArray()
+                ));
+            }
         }
 
         public override bool CanExecute(GameRoom game)

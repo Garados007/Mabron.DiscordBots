@@ -19,8 +19,6 @@ namespace Mabron.DiscordBots.Games.Werwolf.Events
                 writer.WriteNull("phase");
             else
             {
-                var ownRole = game.TryGetRole(user.DiscordId);
-
                 writer.WriteStartObject("phase"); // phase
                 writer.WriteString("lang-id", Phase.LanguageId);
                 writer.WriteEndObject();

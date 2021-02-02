@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace Mabron.DiscordBots.Games.Werwolf
 {
@@ -33,6 +34,8 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
         protected virtual void AddVoting(Voting voting)
         {
+            if (!voting.Options.Any())
+                return;
             votings.Add(voting);
             voting.Started = game?.AutostartVotings ?? false;
             if (game?.UseVotingTimeouts ?? false)

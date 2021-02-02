@@ -19,6 +19,8 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default
             }
         }
 
+        public bool IsAboutToBeKilled { get; private set; } = false;
+
         public bool IsSelectedByHealer { get; set; } = false;
 
         private bool isViewedByOracle = false;
@@ -89,11 +91,23 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default
 
         private void Kill(GameRoom game, bool checkLoved)
         {
-            base.Kill(game);
+            IsAboutToBeKilled = true;
             if (IsLoved && checkLoved)
                 foreach (var role in game.AliveRoles)
                     if (role is BaseRole baseRole && baseRole.IsLoved)
                         baseRole.Kill(game, false);
+        }
+
+        public void RealKill(GameRoom game, string? notificationId)
+        {
+            if (!IsAboutToBeKilled)
+                Kill(game, true);
+            IsAboutToBeKilled = false;
+            base.Kill(game);
+            ulong? id;
+            if (notificationId != null && (id = game.TryGetId(this)) != null)
+                game.SendEvent(new Events.PlayerNotification(notificationId, new[] { id.Value }));
+
         }
     }
 }

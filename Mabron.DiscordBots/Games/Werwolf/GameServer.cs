@@ -247,13 +247,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
                         writer.WriteStartObject(participant.Key.ToString());
                         writer.WriteStartArray("tags");
-                        foreach (var tag in participant.Value.GetTags(
-                            game,
-                            (game.Leader == user.DiscordId && !game.LeaderIsPlayer) ||
-                            (ownRole != null && game.DeadCanSeeAllRoles && !ownRole.IsAlive)
-                            ? null
-                            : ownRole
-                        ))
+                        foreach (var tag in Role.GetSeenTags(game, user, ownRole, participant.Value))
                             writer.WriteStringValue(tag);
                         writer.WriteEndArray();
                         writer.WriteString("role", seenRole?.GetType().Name);

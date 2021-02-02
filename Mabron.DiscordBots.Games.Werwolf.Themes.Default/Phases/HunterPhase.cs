@@ -10,9 +10,9 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
     {
         public class HunterKill : PlayerVotingBase
         {
-            public Roles.Hunter Hunter { get; }
+            public Hunter Hunter { get; }
 
-            public HunterKill(GameRoom game, Roles.Hunter hunter, IEnumerable<ulong>? participants = null) 
+            public HunterKill(GameRoom game, Hunter hunter, IEnumerable<ulong>? participants = null) 
                 : base(game, participants)
             {
                 Hunter = hunter;
@@ -30,7 +30,9 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
 
             public override void Execute(GameRoom game, ulong id, Role role)
             {
-                role.Kill(game);
+                if (role is BaseRole baseRole)
+                    baseRole.RealKill(game, "hunter-kill");
+                else role.Kill(game);
                 Hunter.HasKilled = true;
             }
         }
