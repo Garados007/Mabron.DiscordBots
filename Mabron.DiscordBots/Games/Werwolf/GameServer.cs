@@ -866,6 +866,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
                 game.Participants!.Remove(userId, out _);
                 game.UserCache.Remove(userId, out _);
+                game.SendEvent(new Events.RemoveParticipant(userId));
 
                 return null;
             }

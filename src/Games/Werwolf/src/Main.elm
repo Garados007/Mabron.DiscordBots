@@ -1,6 +1,7 @@
 port module Main exposing (..)
 
 import Data
+import EventData exposing (EventData)
 import Model exposing (Model)
 import Network exposing (NetworkResponse)
 import Language exposing (Language)
@@ -14,6 +15,7 @@ import Views.ViewSettingsBar
 import Views.ViewThemeEditor
 import Views.ViewModal
 import Views.ViewWinners
+import Views.ViewPlayerNotification
 
 import Browser
 import Browser.Navigation
@@ -39,6 +41,7 @@ import Level
 import Json.Decode as JD
 import Json.Encode as JE
 import WebSocket
+import Maybe
 
 port receiveSocketMsg : (JD.Value -> msg) -> Sub msg
 port sendSocketCommand : JE.Value -> Cmd msg
@@ -151,17 +154,33 @@ view model lang =
                     lang
                     model.now model.levels
                     game list
+        Model.PlayerNotification nid player ->
+            Html.map (always CloseModal)
+                <| Views.ViewModal.viewOnlyClose
+                    ( Language.getTextOrPath lang
+                        [ "modals", "player-notification", "title" ]
+                    )
+                <| List.singleton
+                <| Views.ViewPlayerNotification.view
+                    lang
+                    (Maybe.andThen .game model.game)
+                    nid
+                    player
     , Views.ViewErrors.view model.errors
         |> Html.map WrapError
     -- , Debug.Extra.viewModel model
     ]
 
-viewEvents : List String -> Html msg
+viewEvents : List (Bool, String) -> Html msg
 viewEvents events =
     div [ class "event-list" ]
         <| List.map
-            (\content ->
-                div [ class "event-item" ]
+            (\(used, content) ->
+                div [ HA.classList
+                        [ ("event-item", True)
+                        , ("used", used)
+                        ]
+                    ]
                     [ text content ]
             )
             events
@@ -446,21 +465,41 @@ update msg model =
         CloseModal ->
             ({ model | modal = Model.NoModal }, Cmd.none)
         WsMsg (Ok (WebSocket.Data d)) ->
-            case JD.decodeString JD.value d.data of
-                Ok value ->
-                    Tuple.pair
+            let
+
+                decodedData : Result String EventData
+                decodedData = d.data
+                    |> JD.decodeString EventData.decodeEventData
+                    |> Result.mapError JD.errorToString
+
+                formatedRaw : String
+                formatedRaw = d.data
+                    |> JD.decodeString JD.value
+                    |> Result.toMaybe
+                    |> Maybe.map (JE.encode 2)
+                    |> Maybe.withDefault d.data
+                    
+            in case decodedData of
+                Ok data ->
+                    Tuple.mapSecond
+                        (List.map
+                            (Network.executeRequest
+                                >> Cmd.map Response
+                            )
+                            >> Cmd.batch
+                        )
+                    <| Model.applyEventData data
                         { model
-                        | events = (JE.encode 2 value) :: model.events
+                        | events = (True, formatedRaw) :: model.events
                         }
-                        Cmd.none
-                Err err ->
-                    Tuple.pair
-                        { model
-                        | errors = (++) model.errors
-                            <| List.singleton
-                            <| Debug.toString err
-                        }
-                        Cmd.none
+                Err err -> Tuple.pair 
+                    { model
+                    | events = (False, formatedRaw) :: model.events
+                    , errors = (++) model.errors
+                        <| List.singleton 
+                        <| "Socket error: " ++ err
+                    }
+                    Cmd.none
         WsMsg (Ok _) -> (model, Cmd.none)
         WsMsg (Err err) ->
             Tuple.pair
@@ -483,14 +522,15 @@ subscriptions model =
             SetTime  
         -- , Time.every 1000 SetTime
         -- [ Sub.none
-        , if model.game 
-                |> Maybe.map 
-                    (\result -> result.game /= Nothing &&
-                        result.user /= Nothing
-                    )
-                |> Maybe.withDefault True
-            then Time.every 3000 (always FetchData)
-            else Time.every 20000 (always FetchData)
+        -- , if model.game 
+        --         |> Maybe.map 
+        --             (\result -> result.game /= Nothing &&
+        --                 result.user /= Nothing
+        --             )
+        --         |> Maybe.withDefault True
+        --     then Time.every 3000 (always FetchData)
+        --     else Time.every 20000 (always FetchData)
+        , Time.every 60000 (always FetchData)
         , receiveSocketMsg
             <| WebSocket.receive WsMsg
         ]

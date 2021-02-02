@@ -89,11 +89,11 @@ namespace Mabron.DiscordBots.Games.Werwolf
             if (vote != null)
             {
                 Execute(game, vote.Value);
-                game.Phase!.Current.RemoveVoting(this);
+                game.Phase?.Current.RemoveVoting(this);
             }
             else
             {
-                game.Phase!.Current.ExecuteMultipleWinner(this, game);
+                game.Phase?.Current.ExecuteMultipleWinner(this, game);
             }
             AfterFinishExecute(game);
             if (new WinCondition().Check(game, out ReadOnlyMemory<Role>? winner))

@@ -45,6 +45,11 @@
             "ScapeGoatPhase+ScapeGoatSelect": "Verteile Stimmrechte",
             "WitchPhase+WitchSafe": "Lebenstrank nutzen",
             "WitchPhase+WitchKill": "Todestrank nutzen"
+        },
+        "event": {
+            "player-notification": {
+                
+            }
         }
     }
 }

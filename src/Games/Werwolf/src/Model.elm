@@ -2,11 +2,13 @@ module Model exposing
     ( Model
     , Modal (..)
     , applyResponse
+    , applyEventData
     , getLanguage
     , init
     )
 
 import Data
+import EventData exposing (EventData)
 import Dict exposing (Dict)
 import Network exposing (NetworkResponse(..))
 import Browser.Navigation exposing (Key)
@@ -33,13 +35,14 @@ type alias Model =
     , rootLang: Dict String Language
     , themeLangs: Dict Language.ThemeKey Language
     , theme: Maybe Language.ThemeKey
-    , events: List String
+    , events: List (Bool,String)
     }
 
 type Modal
     = NoModal
     | SettingsModal Views.ViewThemeEditor.Model
     | WinnerModal Data.Game (List String)
+    | PlayerNotification String (List String)
 
 init : String -> Key -> Model
 init token key =
@@ -171,3 +174,215 @@ applyResponse response model =
                 | themeLangs = Dict.insert key info model.themeLangs
                 }
                 []
+
+editGame : Model -> (Data.Game -> Data.Game) -> Maybe Data.GameUserResult
+editGame model editFunc =
+    Maybe.map
+        (\gameResult ->
+            { gameResult
+            | game = Maybe.map editFunc gameResult.game
+            }
+        )
+        model.game
+
+applyEventData : EventData -> Model -> (Model, List Network.NetworkRequest)
+applyEventData event model =
+    case event of
+        EventData.AddParticipant id user -> Tuple.pair 
+            { model
+            | game = editGame model <| \game ->
+                { game
+                | user = Dict.insert id user game.user
+                , participants = Dict.insert id Nothing game.participants
+                }
+            }
+            []
+        EventData.AddVoting voting -> Tuple.pair 
+            { model
+            | game = editGame model <| \game ->
+                { game
+                | phase = Maybe.withDefault (Data.GamePhase "" []) game.phase 
+                    |> \phase -> Just
+                        { phase
+                        | voting = 
+                            if List.isEmpty
+                                <| List.filter
+                                    (\v -> v.id == voting.id)
+                                <| phase.voting
+                            then phase.voting ++ [ voting ]
+                            else phase.voting
+                        }
+                }
+            }
+            []
+        EventData.GameEnd winner -> Tuple.pair
+            { model
+            | game = editGame model <| \game ->
+                { game
+                | winner = winner
+                , phase = Nothing
+                }
+            , modal = case winner of
+                Just list -> 
+                    Maybe.withDefault model.modal
+                    <| Maybe.andThen
+                        (Maybe.map
+                            (\game -> WinnerModal game list)
+                        << .game
+                        )
+                        model.game
+                Nothing -> model.modal
+            }
+            []
+        EventData.GameStart newParticipant -> Tuple.pair
+            { model
+            | game = editGame model <| \game ->
+                { game
+                | phase = game.phase
+                    |> Maybe.withDefault
+                        (Data.GamePhase "" [])
+                    |> Just
+                , participants = newParticipant
+                , winner = Nothing
+                }
+            }
+            []
+        EventData.NextPhase nextPhase -> Tuple.pair
+            { model
+            | game = editGame model <| \game ->
+                { game
+                | phase = case (nextPhase, game.phase) of
+                    (Nothing, _) -> Nothing
+                    (Just key, Just oldPhase) -> Just
+                        { oldPhase
+                        | langId = key
+                        }
+                    (Just key, Nothing) -> Just
+                        <| Data.GamePhase key []
+                }
+            }
+            []
+        EventData.OnLeaderChanged newLeader -> Tuple.pair
+            { model
+            | game = editGame model <| \game ->
+                { game
+                | leader = newLeader
+                }
+            }
+            []
+        EventData.OnRoleInfoChanged Nothing _ -> (model, [])
+        EventData.OnRoleInfoChanged (Just id) role -> Tuple.pair
+            { model
+            | game = editGame model <| \game ->
+                { game
+                | participants = Dict.insert id (Just role) game.participants
+                }
+            }
+            []
+        EventData.PlayerNotification nid player -> Tuple.pair
+            { model
+            | modal = PlayerNotification nid player
+            }
+            []
+        EventData.RemoveParticipant id -> Tuple.pair 
+            { model
+            | game = editGame model <| \game ->
+                { game
+                | user = Dict.remove id game.user
+                , participants = Dict.remove id game.participants
+                }
+            }
+            []
+        EventData.RemoveVoting id -> Tuple.pair 
+            { model
+            | game = editGame model <| \game ->
+                { game
+                | phase = Maybe.withDefault (Data.GamePhase "" []) game.phase 
+                    |> \phase -> Just
+                        { phase
+                        | voting = List.filter
+                            (\v -> v.id /= id)
+                            phase.voting
+                        }
+                }
+            }
+            []
+        EventData.SetGameConfig newConfig -> Tuple.pair 
+            { model
+            | game = editGame model <| \game ->
+                { game
+                | config = newConfig.config
+                , participants =
+                    if newConfig.leaderIsPlayer == game.leaderIsPlayer
+                    then game.participants
+                    else if newConfig.leaderIsPlayer
+                    then Dict.insert game.leader Nothing game.participants
+                    else Dict.remove game.leader game.participants
+                , leaderIsPlayer = newConfig.leaderIsPlayer
+                , deadCanSeeAllRoles = newConfig.deadCanSeeAllRoles
+                , autostartVotings = newConfig.autostartVotings
+                , autofinishVotings = newConfig.autofinishVotings
+                , votingTimeout = newConfig.votingTimeout
+                , autofinishRound = newConfig.autofinishRound
+                }
+            }
+            []
+        EventData.SetUserConfig newConfig -> Tuple.pair
+            { model
+            | game = Maybe.map
+                (\gameResult ->
+                    { gameResult
+                    | userConfig = Just newConfig
+                    }
+                )
+                model.game
+            }
+            []
+        EventData.SetVotingTimeout vid timeout -> Tuple.pair 
+            { model
+            | game = editGame model <| \game ->
+                { game
+                | phase = Maybe.withDefault (Data.GamePhase "" []) game.phase 
+                    |> \phase -> Just
+                        { phase
+                        | voting = List.map
+                            (\v ->
+                                if v.id == vid
+                                then { v | timeout = timeout}
+                                else v
+                            )
+                            phase.voting
+                        }
+                }
+            }
+            []
+        EventData.SetVotingVote vid oid voter -> Tuple.pair 
+            { model
+            | game = editGame model <| \game ->
+                { game
+                | phase = Maybe.withDefault (Data.GamePhase "" []) game.phase 
+                    |> \phase -> Just
+                        { phase
+                        | voting = List.map
+                            (\v ->
+                                if v.id == vid
+                                then
+                                    { v
+                                    | options = Dict.map
+                                        (\key value ->
+                                            if key == oid
+                                            then 
+                                                { value
+                                                | user = value.user ++ [ voter ]
+                                                }
+                                            else value
+                                        )
+                                        v.options
+                                    }
+                                else v
+                            )
+                            phase.voting
+                        }
+                }
+            }
+            []

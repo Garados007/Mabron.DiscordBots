@@ -28,6 +28,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
             public override void Execute(GameRoom game, ulong id, Role role)
             {
                 role.IsMajor = true;
+                game.SendEvent(new Events.PlayerNotification("new-voted-major", new[] { id }));
             }
         }
 

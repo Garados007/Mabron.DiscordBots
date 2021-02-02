@@ -42,6 +42,9 @@
         },
         "winner": {
             "title": "Sieger"
+        },
+        "player-notification": {
+            "title": "Spielerbenachrichtigung"
         }
     },
     "user-stats": {

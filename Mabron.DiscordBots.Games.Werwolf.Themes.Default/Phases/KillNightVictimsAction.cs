@@ -1,4 +1,5 @@
 ﻿using Mabron.DiscordBots.Games.Werwolf.Phases;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -24,6 +25,10 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
                     "night-kills",
                     killedOnes.ToArray()
                 ));
+            if (new WinCondition().Check(game, out ReadOnlyMemory<Role>? winner))
+            {
+                game.StopGame(winner);
+            }
         }
     }
 }
