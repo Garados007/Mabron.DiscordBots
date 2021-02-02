@@ -8,13 +8,6 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Roles
 
         public bool WasKilledByVillager { get; set; } = false;
 
-        public override void Reset()
-        {
-            base.Reset();
-            WasKilledByWolvesOneTime = false; 
-            WasKilledByVillager = false;
-        }
-
         public OldMan(Theme theme) : base(theme)
         {
         }

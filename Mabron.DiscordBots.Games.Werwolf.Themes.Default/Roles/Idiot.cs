@@ -2,7 +2,16 @@
 {
     public class Idiot : VillagerBase
     {
-        public bool IsRevealed { get; set; }
+        private bool isRevealed = false;
+        public bool IsRevealed
+        {
+            get => isRevealed;
+            set
+            {
+                isRevealed = value;
+                SendRoleInfoChanged();
+            }
+        }
 
         public bool WasMajor { get; set; }
 

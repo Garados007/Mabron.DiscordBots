@@ -8,9 +8,27 @@ namespace Mabron.DiscordBots.Games.Werwolf
     /// </summary>
     public abstract class Role
     {
-        public bool IsAlive { get; private set; }
+        private bool isAlive = true;
+        public bool IsAlive
+        {
+            get => isAlive;
+            set
+            {
+                isAlive = value;
+                SendRoleInfoChanged();
+            }
+        }
 
-        public bool IsMajor { get; set; }
+        private bool isMajor = false;
+        public bool IsMajor
+        {
+            get => isMajor;
+            set
+            {
+                isMajor = value;
+                SendRoleInfoChanged();
+            }
+        }
 
         /// <summary>
         /// Get a list of special tags that are defined for this role. 
@@ -26,10 +44,9 @@ namespace Mabron.DiscordBots.Games.Werwolf
                 yield return "major";
         }
 
-        public virtual void Reset()
+        public void SendRoleInfoChanged()
         {
-            IsAlive = true;
-            IsMajor = false;
+            Theme.Game?.SendEvent(new Events.OnRoleInfoChanged(this));
         }
 
         public Theme Theme { get; }
@@ -37,7 +54,6 @@ namespace Mabron.DiscordBots.Games.Werwolf
         public Role(Theme theme)
         {
             Theme = theme ?? throw new ArgumentNullException(nameof(theme));
-            Reset();
         }
 
         public abstract bool? IsSameFaction(Role other);
@@ -54,6 +70,19 @@ namespace Mabron.DiscordBots.Games.Werwolf
         public virtual void Kill(GameRoom game)
         {
             IsAlive = false;
+        }
+
+        public static Role? GetSeenRole(GameRoom game, uint? round, GameUser user, ulong targetId, Role target)
+        {
+            var ownRole = game.TryGetRole(user.DiscordId);
+            return (game.Leader == user.DiscordId && !game.LeaderIsPlayer) ||
+                    targetId == user.DiscordId ||
+                    round == game.ExecutionRound ||
+                    (ownRole != null && game.DeadCanSeeAllRoles && !ownRole.IsAlive) ?
+                target :
+                ownRole != null ?
+                target.ViewRole(ownRole) :
+                null;
         }
     }
 }

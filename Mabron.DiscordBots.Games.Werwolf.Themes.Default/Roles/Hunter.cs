@@ -21,11 +21,5 @@
                 return this;
             return base.ViewRole(viewer);
         }
-
-        public override void Reset()
-        {
-            base.Reset();
-            HasKilled = false;
-        }
     }
 }

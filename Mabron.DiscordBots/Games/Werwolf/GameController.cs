@@ -28,10 +28,10 @@ namespace Mabron.DiscordBots.Games.Werwolf
 #if ROOM_ID_1
             id = 1;
 #endif
-            rooms.TryAdd(id, new GameRoom(id, leader) 
-            { 
-                Theme = new Themes.Default.DefaultTheme(),
-            });
+            var room = new GameRoom(id, leader);
+            room.Theme = new Themes.Default.DefaultTheme(room);
+            rooms.TryAdd(id, room);
+            room.OnEvent += OnGameEvent;
             return id;
         }
 
@@ -69,7 +69,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
             return (game, user);
         }
 
-        private void OnGameEvent(object sender, GameEvent @event)
+        private void OnGameEvent(object? sender, GameEvent @event)
         {
             lockWsConnections.EnterReadLock();
             foreach (var connection in wsConnections)

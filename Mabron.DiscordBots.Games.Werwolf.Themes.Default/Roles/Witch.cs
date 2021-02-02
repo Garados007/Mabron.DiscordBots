@@ -10,12 +10,6 @@
         {
         }
 
-        public override void Reset()
-        {
-            base.Reset();
-            UsedDeathPotion = false;
-            UsedLivePotion = false;
-        }
 
         public override string Name => "Hexe";
 

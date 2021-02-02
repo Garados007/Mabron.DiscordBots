@@ -8,17 +8,53 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default
         {
         }
 
-        public bool IsSelectedByWerewolves { get; set; } = false;
+        private bool isSelectedByWerewolves = false;
+        public bool IsSelectedByWerewolves
+        {
+            get => isSelectedByWerewolves;
+            set
+            {
+                isSelectedByWerewolves = value;
+                SendRoleInfoChanged();
+            }
+        }
 
         public bool IsSelectedByHealer { get; set; } = false;
 
-        public bool IsViewedByOracle { get; set; } = false;
+        private bool isViewedByOracle = false;
+        public bool IsViewedByOracle
+        {
+            get => isViewedByOracle;
+            set
+            {
+                isViewedByOracle = value;
+                SendRoleInfoChanged();
+            }
+        }
 
-        public bool IsLoved { get; set; } = false;
+        private bool isLoved = false;
+        public bool IsLoved
+        {
+            get => isLoved;
+            set
+            {
+                isLoved = value;
+                SendRoleInfoChanged();
+            }
+        }
 
         public bool HasVotePermitFromScapeGoat { get; set; } = false;
 
-        public bool IsEnchantedByFlutist { get; set; } = false;
+        private bool isEnchantedByFlutist = false;
+        public bool IsEnchantedByFlutist
+        {
+            get => isEnchantedByFlutist;
+            set
+            {
+                isEnchantedByFlutist = value;
+                SendRoleInfoChanged();
+            }
+        }
 
         public override IEnumerable<string> GetTags(GameRoom game, Role? viewer)
         {
@@ -30,17 +66,6 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default
                 yield return "werwolf-select";
             if (IsEnchantedByFlutist && (viewer == null || viewer is Roles.Flutist || (viewer is BaseRole baseRole && baseRole.IsEnchantedByFlutist)))
                 yield return "enchant-flutist";
-        }
-
-        public override void Reset()
-        {
-            base.Reset();
-            IsSelectedByWerewolves = false;
-            IsSelectedByHealer = false;
-            IsViewedByOracle = false;
-            IsLoved = false;
-            HasVotePermitFromScapeGoat = false;
-            IsEnchantedByFlutist = false;
         }
 
         public override Role ViewRole(Role viewer)

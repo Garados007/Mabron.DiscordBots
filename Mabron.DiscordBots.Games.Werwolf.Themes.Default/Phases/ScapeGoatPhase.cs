@@ -64,6 +64,8 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
                 if ((error = Vote(game, voter, option)) != null)
                     return error;
 
+                game.SendEvent(new Events.SetVotingVote(this, id, voter));
+
                 if (id == 0)
                     CanFinishVoting = true;
 

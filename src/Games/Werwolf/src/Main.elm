@@ -1,4 +1,4 @@
-module Main exposing (..)
+port module Main exposing (..)
 
 import Data
 import Model exposing (Model)
@@ -16,6 +16,7 @@ import Views.ViewModal
 import Views.ViewWinners
 
 import Browser
+import Browser.Navigation
 import Html exposing (Html, div, text)
 import Html.Attributes as HA exposing (class)
 import Html.Lazy as HL
@@ -35,6 +36,13 @@ import Color.Manipulate as CM
 import Regex
 import Level
 
+import Json.Decode as JD
+import Json.Encode as JE
+import WebSocket
+
+port receiveSocketMsg : (JD.Value -> msg) -> Sub msg
+port sendSocketCommand : JE.Value -> Cmd msg
+
 type Msg
     = Response NetworkResponse
     | SetUrl Url
@@ -49,16 +57,11 @@ type Msg
     | WrapSelectModal Model.Modal
     | WrapThemeEditor Views.ViewThemeEditor.Msg
     | CloseModal
+    | WsMsg (Result JD.Error WebSocket.WebSocketMsg)
 
 main : Program () Model Msg
 main = Browser.application
-    { init = \() url key ->
-        ( Model.init
-            (getId url |> Maybe.withDefault "")
-            key
-        , Task.perform identity
-            <| Task.succeed Init
-        )
+    { init = \() -> init
     , view = \model ->
         { title = "Werwolf"
         , body = view model
@@ -74,6 +77,33 @@ main = Browser.application
                 Noop
     , onUrlChange = SetUrl
     }
+
+init : Url -> Browser.Navigation.Key -> (Model, Cmd Msg)
+init url key =
+    let
+        token : String
+        token = getId url |> Maybe.withDefault ""
+
+    in  ( Model.init token key
+        , Cmd.batch
+            [ Task.perform identity
+                <| Task.succeed Init
+            , WebSocket.send sendSocketCommand
+                <| WebSocket.Connect
+                    { name = "wss"
+                    , address =
+                        "wss://" ++ url.host ++
+                        (Maybe.map
+                            ((++) ":" << String.fromInt)
+                            url.port_
+                            |> Maybe.withDefault ""
+                        ) ++
+                        "/ws/" ++ token
+                        -- "wss://localhost:8000"
+                    , protocol = ""
+                    }
+            ]
+        )
 
 view : Model -> Language -> List (Html Msg)
 view model lang =
@@ -123,8 +153,18 @@ view model lang =
                     game list
     , Views.ViewErrors.view model.errors
         |> Html.map WrapError
-    , Debug.Extra.viewModel model
+    -- , Debug.Extra.viewModel model
     ]
+
+viewEvents : List String -> Html msg
+viewEvents events =
+    div [ class "event-list" ]
+        <| List.map
+            (\content ->
+                div [ class "event-item" ]
+                    [ text content ]
+            )
+            events
 
 tryViewGameFrame : Model -> Language -> Maybe (Html Msg)
 tryViewGameFrame model lang =
@@ -165,6 +205,7 @@ viewGameFrame model lang roles game user =
                     (user == game.leader)
                     model.editor
             ]
+        , viewEvents model.events
         ]
 
 tryViewGamePhase : Model -> Language -> Maybe (Html Msg)
@@ -212,6 +253,7 @@ viewGamePhase model lang game user phase =
                     (user == game.leader)
                     user
             ]
+        , viewEvents model.events
         ]
 
 viewStyles : Data.UserConfig -> Html msg
@@ -403,6 +445,31 @@ update msg model =
                 _ -> (model, Cmd.none)
         CloseModal ->
             ({ model | modal = Model.NoModal }, Cmd.none)
+        WsMsg (Ok (WebSocket.Data d)) ->
+            case JD.decodeString JD.value d.data of
+                Ok value ->
+                    Tuple.pair
+                        { model
+                        | events = (JE.encode 2 value) :: model.events
+                        }
+                        Cmd.none
+                Err err ->
+                    Tuple.pair
+                        { model
+                        | errors = (++) model.errors
+                            <| List.singleton
+                            <| Debug.toString err
+                        }
+                        Cmd.none
+        WsMsg (Ok _) -> (model, Cmd.none)
+        WsMsg (Err err) ->
+            Tuple.pair
+                { model
+                | errors = (++) model.errors
+                    <| List.singleton
+                    <| Debug.toString err
+                }
+                Cmd.none
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
@@ -424,6 +491,8 @@ subscriptions model =
                 |> Maybe.withDefault True
             then Time.every 3000 (always FetchData)
             else Time.every 20000 (always FetchData)
+        , receiveSocketMsg
+            <| WebSocket.receive WsMsg
         ]
 
 getId : Url -> Maybe String

@@ -7,6 +7,10 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default
 {
     public class DefaultTheme : Theme
     {
+        public DefaultTheme(GameRoom? game) : base(game)
+        {
+        }
+
         public override Role GetBasicRole()
             => new Roles.Villager(this);
 

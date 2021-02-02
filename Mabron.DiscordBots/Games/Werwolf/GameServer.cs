@@ -182,7 +182,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
             var writer = new Utf8JsonWriter(stream);
             writer.WriteStartObject();
 
-            var theme = new DefaultTheme();
+            var theme = new DefaultTheme(null);
             writer.WriteStartArray(theme.GetType().FullName ?? "");
             foreach (var template in theme.GetRoleTemplates())
             {
@@ -217,8 +217,22 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
                 writer.WriteBoolean("running", game.IsRunning);
 
-                new Events.NextPhase(game.Phase?.Current)
-                    .WriteContent(writer, game, user);
+                if (game.Phase == null)
+                    writer.WriteNull("phase");
+                else
+                {
+                    writer.WriteStartObject("phase"); // phase
+                    writer.WriteString("lang-id", game.Phase.Current.LanguageId);
+                    writer.WriteStartArray("voting"); // voting
+                    foreach (var voting in game.Phase.Current.Votings)
+                    {
+                        if (!Voting.CanViewVoting(game, user, ownRole, voting))
+                            continue;
+                        voting.WriteToJson(writer, game, user);
+                    }
+                    writer.WriteEndArray(); //voting
+                    writer.WriteEndObject(); // phase
+                }
 
                 var winner = game.Winner;
                 writer.WriteStartObject("participants");
@@ -228,18 +242,10 @@ namespace Mabron.DiscordBots.Games.Werwolf
                         writer.WriteNull(participant.Key.ToString());
                     else
                     {
-                        var seenRole = (game.Leader == user.DiscordId && !game.LeaderIsPlayer) || 
-                                participant.Key == user.DiscordId || 
-                                (winner != null && winner.Value.round == game.ExecutionRound) ||
-                                (ownRole != null && game.DeadCanSeeAllRoles && !ownRole.IsAlive)?
-                            participant.Value :
-                            ownRole != null ?
-                            participant.Value.ViewRole(ownRole) :
-                            null;
+                        var seenRole = Role.GetSeenRole(game, winner?.round, user, 
+                            participant.Key, participant.Value);
 
                         writer.WriteStartObject(participant.Key.ToString());
-                        writer.WriteBoolean("alive", participant.Value.IsAlive);
-                        writer.WriteBoolean("major", participant.Value.IsMajor);
                         writer.WriteStartArray("tags");
                         foreach (var tag in participant.Value.GetTags(
                             game,
@@ -462,6 +468,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                     {
                         return e.ToString();
                     }
+                    game.SendEvent(new Events.SetGameConfig());
                     return null;
                 }
 
@@ -537,6 +544,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                     {
                         return e.ToString();
                     }
+                    game.SendEvent(new Events.SetUserConfig(user));
                     return null;
                 }
 

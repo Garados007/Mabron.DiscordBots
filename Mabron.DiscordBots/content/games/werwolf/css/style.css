@@ -29,6 +29,17 @@
 * {
   scrollbar-color: var(--color-medium) var(--color-base);
 }
+.event-list {
+  overflow-y: auto;
+  height: 100%;
+}
+.event-item {
+  margin: 0.5em;
+  padding: 0.5em;
+  white-space: pre;
+  font-size: 0.75em;
+  background-color: var(--color-light-transparent);
+}
 ::-webkit-scrollbar {
   background-color: var(--color-base);
 }

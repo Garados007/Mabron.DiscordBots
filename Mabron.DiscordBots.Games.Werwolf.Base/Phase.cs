@@ -37,11 +37,13 @@ namespace Mabron.DiscordBots.Games.Werwolf
             voting.Started = game?.AutostartVotings ?? false;
             if (game?.UseVotingTimeouts ?? false)
                 voting.SetTimeout(game, true);
+            game?.SendEvent(new Events.AddVoting(voting));
         }
 
         public virtual void RemoveVoting(Voting voting)
         {
-            votings.Remove(voting);
+            votings.Remove(voting); 
+            game?.SendEvent(new Events.RemoveVoting(voting.Id));
         }
 
         public virtual void ExecuteMultipleWinner(Voting voting, GameRoom game)

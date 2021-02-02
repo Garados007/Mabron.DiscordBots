@@ -1,5 +1,4 @@
 ﻿using LiteDB;
-using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 
@@ -24,6 +23,11 @@ namespace Mabron.DiscordBots.Games.Werwolf
         public abstract PhaseFlow GetPhases();
 
         public abstract IEnumerable<WinConditionCheck> GetWinConditions();
+
+        public GameRoom? Game { get; }
+
+        public Theme(GameRoom? game)
+            => Game = game;
 
         public virtual bool CheckRoleUsage(Role role, ref int count, int oldCount, 
             [NotNullWhen(false)] out string? error

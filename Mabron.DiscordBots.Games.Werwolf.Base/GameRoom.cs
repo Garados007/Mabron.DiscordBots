@@ -20,8 +20,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
             get => leader;
             set
             {
-                Leader = value;
-                SendEvent(new Events.OnLeaderChanged(value));
+                SendEvent(new Events.OnLeaderChanged(leader = value));
             }
         }
 
@@ -110,7 +109,6 @@ namespace Mabron.DiscordBots.Games.Werwolf
         {
             if (!Phase?.Next(this) ?? true)
                 Phase = null;
-            SendEvent(new Events.NextPhase(Phase?.Current));
         }
 
         public void StartGame()
@@ -189,6 +187,10 @@ namespace Mabron.DiscordBots.Games.Werwolf
             }
             IsRunning = false;
             Phase = null;
+            SendEvent(new Events.GameEnd());
+            foreach (var role in Participants.Values)
+                if (role != null)
+                    SendEvent(new Events.OnRoleInfoChanged(role));
         }
     
         public event EventHandler<GameEvent>? OnEvent;

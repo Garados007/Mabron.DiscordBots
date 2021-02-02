@@ -33,6 +33,7 @@ type alias Model =
     , rootLang: Dict String Language
     , themeLangs: Dict Language.ThemeKey Language
     , theme: Maybe Language.ThemeKey
+    , events: List String
     }
 
 type Modal
@@ -62,6 +63,7 @@ init token key =
     , rootLang = Dict.empty
     , themeLangs = Dict.empty
     , theme = Nothing
+    , events = []
     }
 
 getLanguage : Model -> Language

@@ -63,6 +63,9 @@ namespace Mabron.DiscordBots.Games.Werwolf
                 if (!Current.CanExecute(game))
                     continue;
 
+                if (Current.IsGamePhase)
+                    game.SendEvent(new Events.NextPhase(Current));
+
                 Current.Init(game);
 
                 if (!Current.IsGamePhase)

@@ -8,14 +8,6 @@
 
         public bool HasDecided { get; set; } = false;
 
-        public override void Reset()
-        {
-            base.Reset();
-            WasKilledByVillage = false;
-            HasRevenge = false;
-            HasDecided = false;
-        }
-
         public ScapeGoat(Theme theme) : base(theme)
         {
         }
