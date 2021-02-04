@@ -201,7 +201,13 @@ applyEventData event model =
             { model
             | game = editGame model <| \game ->
                 { game
-                | phase = Maybe.withDefault (Data.GamePhase "" []) game.phase 
+                | phase =
+                    Maybe.withDefault 
+                        (Data.GamePhase "" 
+                            (Data.GameStage "" "")
+                            []
+                        ) 
+                        game.phase 
                     |> \phase -> Just
                         { phase
                         | voting = 
@@ -240,7 +246,10 @@ applyEventData event model =
                 { game
                 | phase = game.phase
                     |> Maybe.withDefault
-                        (Data.GamePhase "" [])
+                        (Data.GamePhase "" 
+                            (Data.GameStage "" "")
+                            []
+                        ) 
                     |> Just
                 , participants = newParticipant
                 , winner = Nothing
@@ -258,7 +267,9 @@ applyEventData event model =
                         | langId = key
                         }
                     (Just key, Nothing) -> Just
-                        <| Data.GamePhase key []
+                        <| Data.GamePhase "" 
+                            (Data.GameStage "" "")
+                            []
                 }
             }
             []
@@ -297,13 +308,35 @@ applyEventData event model =
             { model
             | game = editGame model <| \game ->
                 { game
-                | phase = Maybe.withDefault (Data.GamePhase "" []) game.phase 
+                | phase = 
+                    Maybe.withDefault
+                        (Data.GamePhase "" 
+                            (Data.GameStage "" "")
+                            []
+                        ) 
+                        game.phase 
                     |> \phase -> Just
                         { phase
                         | voting = List.filter
                             (\v -> v.id /= id)
                             phase.voting
                         }
+                }
+            }
+            []
+        EventData.SendStage stage -> Tuple.pair
+            { model
+            | game = editGame model <| \game ->
+                { game
+                | phase = case game.phase of
+                    Just oldPhase -> Just
+                        { oldPhase
+                        | stage = stage
+                        }
+                    Nothing -> Just
+                        <| Data.GamePhase "" 
+                            stage
+                            []
                 }
             }
             []
@@ -342,7 +375,13 @@ applyEventData event model =
             { model
             | game = editGame model <| \game ->
                 { game
-                | phase = Maybe.withDefault (Data.GamePhase "" []) game.phase 
+                | phase = 
+                    Maybe.withDefault
+                        (Data.GamePhase "" 
+                            (Data.GameStage "" "")
+                            []
+                        ) 
+                        game.phase 
                     |> \phase -> Just
                         { phase
                         | voting = List.map
@@ -360,7 +399,13 @@ applyEventData event model =
             { model
             | game = editGame model <| \game ->
                 { game
-                | phase = Maybe.withDefault (Data.GamePhase "" []) game.phase 
+                | phase = 
+                    Maybe.withDefault
+                        (Data.GamePhase "" 
+                            (Data.GameStage "" "")
+                            []
+                        ) 
+                        game.phase 
                     |> \phase -> Just
                         { phase
                         | voting = List.map

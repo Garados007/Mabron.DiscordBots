@@ -32,12 +32,24 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default
 
         public override PhaseFlow GetPhases()
         {
+            // init stages
+            var nightStage = new Stages.NightStage();
+            var dayStage = new Stages.DayStage();
+
+            // build phases
             var phases = new PhaseFlowBuilder();
+            static IEnumerable<Phase> KillHandling()
+            {
+                yield return new Phases.HunterPhase();
+                yield return new Phases.InheritMajorPhase();
+            }
 
             // add init phases
+            phases.Add(nightStage, true);
             phases.Add(new Phases.AmorPhase(), true);
 
             // add night phases
+            phases.Add(nightStage);
             phases.Add(new Phase[]
             {
                 new Phases.HealerPhase(),
@@ -52,11 +64,11 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default
             {
                 new Phases.KillWerwolfVictimAction(),
                 new Phases.KillNightVictimsAction(),
-                new Phases.HunterPhase(),
-                new Phases.InheritMajorPhase(),
             });
+            phases.Add(KillHandling);
 
             // add day phases
+            phases.Add(dayStage);
             phases.Add(new Phase[]
             {
                 new Phases.ElectMajorPhase(),
@@ -68,9 +80,8 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default
             {
                 new Phases.ScapeGoatResetAction(),
                 new Phases.ScapeGoatPhase(),
-                new Phases.HunterPhase(),
-                new Phases.InheritMajorPhase(),
             });
+            phases.Add(KillHandling);
 
             return phases.Build() ?? throw new InvalidOperationException();
         }

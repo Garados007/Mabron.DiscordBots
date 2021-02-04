@@ -19,6 +19,7 @@ type EventData
     | PlayerNotification String (List String)
     | RemoveParticipant String
     | RemoveVoting String
+    | SendStage GameStage
     | SetGameConfig EventGameConfig
     | SetUserConfig UserConfig
     | SetVotingTimeout String (Maybe Posix)
@@ -114,6 +115,11 @@ decodeEventData =
                 "RemoveVoting" ->
                     JD.succeed RemoveVoting
                     |> required "id" JD.string
+                "SendStage" ->
+                    JD.succeed GameStage
+                    |> required "lang-id" JD.string
+                    |> required "background-id" JD.string
+                    |> JD.map SendStage
                 "SetGameConfig" ->
                     JD.succeed EventGameConfig
                     |> required "config" (JD.dict JD.int)

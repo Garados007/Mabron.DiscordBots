@@ -6,6 +6,7 @@ module Data exposing
     , GameUser
     , GameUserResult
     , GameUserStats
+    , GameStage
     , GameVoting
     , GameVotingOption
     , RoleTemplates
@@ -52,7 +53,13 @@ type alias Game =
 
 type alias GamePhase =
     { langId: String
+    , stage: GameStage
     , voting: List GameVoting
+    }
+
+type alias GameStage =
+    { langId: String
+    , backgroundId: String
     }
 
 type alias GameVoting =
@@ -103,6 +110,11 @@ decodeGameUserResult =
                 |> required "phase"
                     (JD.succeed GamePhase
                         |> required "lang-id" JD.string
+                        |> required "stage"
+                            ( JD.succeed GameStage
+                                |> required "lang-id" JD.string
+                                |> required "background-id" JD.string
+                            )
                         |> required "voting"
                             (JD.succeed GameVoting
                                 |> required "id" JD.string

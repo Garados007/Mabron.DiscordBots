@@ -221,6 +221,12 @@ namespace Mabron.DiscordBots.Games.Werwolf
                 {
                     writer.WriteStartObject("phase"); // phase
                     writer.WriteString("lang-id", game.Phase.Current.LanguageId);
+
+                    writer.WriteStartObject("stage");
+                    writer.WriteString("lang-id", game.Phase.Stage.LanguageId);
+                    writer.WriteString("background-id", game.Phase.Stage.BackgroundId);
+                    writer.WriteEndObject();
+
                     writer.WriteStartArray("voting"); // voting
                     foreach (var voting in game.Phase.Current.Votings)
                     {
