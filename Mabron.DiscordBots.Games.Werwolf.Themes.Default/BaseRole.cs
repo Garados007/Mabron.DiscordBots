@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default
 {
@@ -98,16 +99,28 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default
                         baseRole.Kill(game, false);
         }
 
-        public void RealKill(GameRoom game, string? notificationId)
+        private void RealKill(GameRoom game)
+            => base.Kill(game);
+
+        public void RealKill(GameRoom game, string? notificationId, out IEnumerable<ulong> victims)
         {
-            if (!IsAboutToBeKilled)
-                Kill(game, true);
+            var victims_ = new HashSet<ulong>();
+            ulong? id;
+            if ((id = game.TryGetId(this)) != null)
+                victims_.Add(id.Value);
+            if (IsLoved)
+                foreach (var (pid, role) in game.Participants)
+                    if (role is BaseRole baseRole && baseRole.IsLoved)
+                    {
+                        victims_.Add(pid);
+                        baseRole.RealKill(game);
+                        baseRole.IsAboutToBeKilled = false;
+                    }
             IsAboutToBeKilled = false;
             base.Kill(game);
-            ulong? id;
-            if (notificationId != null && (id = game.TryGetId(this)) != null)
-                game.SendEvent(new Events.PlayerNotification(notificationId, new[] { id.Value }));
-
+            if (notificationId != null)
+                game.SendEvent(new Events.PlayerNotification(notificationId, victims_.ToArray()));
+            victims = victims_;
         }
     }
 }

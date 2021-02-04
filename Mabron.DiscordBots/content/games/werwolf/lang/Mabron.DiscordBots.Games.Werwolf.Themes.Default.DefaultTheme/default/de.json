@@ -48,7 +48,14 @@
         },
         "event": {
             "player-notification": {
-                
+                "village-kill": "Das Dorf hat entschieden den/die Spieler zu töten.",
+                "killed-by-major": "Der Hauptmann hat entschieden den Spieler zu töten.",
+                "scapegoat-kill": "Der Sündebock musste sterben da ihr euch nicht entscheiden konntet.",
+                "new-voted-major": "Ein neuer Hauptmann wurde bestimmt!",
+                "hunter-kill": "Der Jäger hat geschossen.",
+                "new-major": "Der Hauptmann wurde vererbt.",
+                "night-kills": "Leider haben nicht alle die Nacht überlebt.",
+                "scapegoat-vote": "Der Sündenbock hat entschieden welche Spieler am kommenden Tag abstimmen dürfen."
             }
         }
     }

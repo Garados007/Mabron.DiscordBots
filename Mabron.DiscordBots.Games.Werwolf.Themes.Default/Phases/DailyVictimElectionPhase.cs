@@ -56,7 +56,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
                     if (oldManKilled)
                     {
                         idiot.IsRevealed = false;
-                        idiot.RealKill(game, "village-kill");
+                        idiot.RealKill(game, "village-kill", out _);
                     }
                     return;
                 }
@@ -65,7 +65,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
                     oldMan.WasKilledByVillager = true;
                 }
                 if (role is BaseRole baseRole)
-                    baseRole.RealKill(game, "village-kill");
+                    baseRole.RealKill(game, "village-kill", out _);
                 else role.Kill(game);
             }
         }
@@ -90,7 +90,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
             public override void Execute(GameRoom game, ulong id, Role role)
             {
                 if (role is BaseRole baseRole)
-                    baseRole.RealKill(game, "killed-by-major");
+                    baseRole.RealKill(game, "killed-by-major", out _);
                 else role.Kill(game);
             }
         }
@@ -122,7 +122,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
                             {
                                 // kill the scape goat and end the voting
                                 scapeGoat.WasKilledByVillage = true;
-                                scapeGoat.RealKill(game, "scapegoat-kill");
+                                scapeGoat.RealKill(game, "scapegoat-kill", out _);
                             }
                     }
                     else if (hasMajor)

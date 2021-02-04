@@ -31,7 +31,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
             public override void Execute(GameRoom game, ulong id, Role role)
             {
                 if (role is BaseRole baseRole)
-                    baseRole.RealKill(game, "hunter-kill");
+                    baseRole.RealKill(game, "hunter-kill", out _);
                 else role.Kill(game);
                 Hunter.HasKilled = true;
             }

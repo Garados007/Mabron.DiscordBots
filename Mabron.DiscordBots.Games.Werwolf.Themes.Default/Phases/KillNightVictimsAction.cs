@@ -17,7 +17,9 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
                 if (baseRole.IsAboutToBeKilled)
                 {
                     killedOnes.Add(id);
-                    baseRole.RealKill(game, null);
+                    baseRole.RealKill(game, null, out IEnumerable<ulong> nowKills);
+                    foreach (var kill in nowKills)
+                        killedOnes.Add(kill);
                 }
             }
             if (killedOnes.Count > 0)

@@ -278,7 +278,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                 {
                     IsInline = false,
                     Name = "Teilnehmer",
-                    Value = $"{game.Participants.Count + 1}/500",
+                    Value = $"{game.Participants.Count + (game.LeaderIsPlayer ? 0 : 1)}/500",
                 },
                 new EmbedFieldBuilder
                 {
@@ -289,12 +289,13 @@ namespace Mabron.DiscordBots.Games.Werwolf
                 }
             };
             foreach (var user in game.Participants.Keys)
-                fields.Add(new EmbedFieldBuilder
-                {
-                    IsInline = true,
-                    Name = GetName(user),
-                    Value = "Spieler",
-                });
+                if (user != game.Leader)
+                    fields.Add(new EmbedFieldBuilder
+                    {
+                        IsInline = true,
+                        Name = GetName(user),
+                        Value = "Spieler",
+                    });
             return new EmbedBuilder
             {
                 Title = "Werwölfe von Düsterwald",
