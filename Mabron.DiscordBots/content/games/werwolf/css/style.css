@@ -1,3 +1,12 @@
+@import url("events.css");
+@import url("error-box.css");
+
+@import url("modals.css");
+@import url("theme-editor.css");
+@import url("winner-box.css");
+@import url("event-data.css");
+@import url("player-notification.css");
+
 :root {
   /* the default base color of the page */
   --color-base: #fff;
@@ -29,21 +38,6 @@
 * {
   scrollbar-color: var(--color-medium) var(--color-base);
 }
-.event-list {
-  overflow-y: auto;
-  height: 100%;
-  max-width: 20em;
-}
-.event-item {
-  margin: 0.5em;
-  padding: 0.5em;
-  white-space: pre;
-  font-size: 0.75em;
-  background-color: var(--color-light);
-}
-.event-item.used {
-  background-color: var(--color-light-transparent);
-}
 ::-webkit-scrollbar {
   background-color: var(--color-base);
 }
@@ -71,38 +65,6 @@ body {
   background-size: cover;
   background-image: var(--bg-url);
   z-index: -1;
-}
-.error-box {
-  position: fixed;
-  top: 0;
-  right: 0;
-  z-index: 1;
-  max-height: 100vh;
-  max-width: 100vw;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-}
-.error-box .error-entry {
-  background-color: var(--color-dark);
-  color: var(--text-inv-color);
-  padding: 0.5em 0.8em;
-  margin: 0.5em;
-  box-shadow: 0.2em 0.2em 0.8em var(--color-dark);
-  max-width: 100%;
-  box-sizing: border-box;
-  width: fit-content;
-}
-.error-box .remove {
-  display: float;
-  float: right;
-  margin: -0.25em -0.5em 0.25em 0.25em;
-  padding: 0.25em 0.5em;
-  cursor: pointer;
-}
-.error-box .remove:hover {
-  background-color: var(--color-darker);
 }
 .frame-status-box {
   display: flex;
@@ -435,104 +397,4 @@ body {
 }
 .settings-bar svg:hover {
   fill: var(--color-darker);
-}
-.modal-background {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%; 
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10;
-}
-.modal-window {
-  background-color: var(--color-base);
-  box-shadow: 0.6em 0.6em 2em var(--color-dark);
-  display: flex;
-  flex-direction: column;
-  max-width: 100%;
-  max-height: 100%;
-  /*! z-index: 10; */
-}
-.modal-title-box {
-  background-color: var(--color-darker);
-  color: var(--text-inv-color);
-  display: flex;
-  font-size: 1.5em;
-}
-.modal-title {
-  flex-grow: 1;
-  padding: 0.5em 0.8em;
-}
-.modal-close {
-  padding: 0.5em 0.8em;
-  cursor: pointer;
-}
-.modal-close:hover {
-  background-color: var(--color-dark);
-}
-.modal-content {
-  flex-grow: 1;
-  overflow: auto;
-  position: relative;
-}
-
-.theme-editor {
-  display: flex;
-  flex-direction: row;
-}
-.theme-editor .group {
-  flex-grow: 1;
-}
-.theme-editor .group:first-child {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 1em;
-}
-.theme-editor .group:nth-child(2) {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 1em;
-  justify-content: center;
-}
-.theme-editor .group:nth-child(2) input {
-  width: 100%;
-  box-sizing: border-box;
-}
-.theme-editor .group:nth-child(2) img {
-  max-width: 25em;
-  max-height: 15em;
-}
-
-.winner-box {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-around;
-}
-.winner-box .winner {
-  margin: 1em;
-  display: flex;
-  align-items: center;
-  flex-direction: column;
-}
-.winner-box img {
-  width: 10em;
-  height: 10em;
-  border-radius: 80%;
-}
-.winner-box .name {
-  font-size: 1.6em;
-  font-weight: bold;
-  text-align: center;
-  margin: 0.7em 0 0.2em;
-}
-.winner-box .role {
-  text-align: center;
-  margin: 0 0 0.65em;
 }
