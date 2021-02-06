@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using LiteDB;
 
 namespace Mabron.DiscordBots.Games.Werwolf
 {
@@ -29,36 +30,28 @@ namespace Mabron.DiscordBots.Games.Werwolf
                 {
                     if (!added)
                         return;
-                    var gameUser = GameUser.Get(reaction.UserId);
-                    if (gameUser == null)
+                    IUser user = reaction.User.IsSpecified
+                        ? (SocketUser)reaction.User
+                        : Program.DiscordClient!.GetUser(reaction.UserId);
+                    if (user == null)
                     {
-                        IUser user = reaction.User.IsSpecified
-                            ? (SocketUser)reaction.User
-                            : Program.DiscordClient!.GetUser(reaction.UserId);
-                        if (user == null)
-                        {
-                            user = await reaction.Channel.GetUserAsync(reaction.UserId);
-                        }
-                        if (user == null)
-                        {
-                            user = Context.Guild.GetUser(reaction.UserId);
-                        }
-                        if (user == null)
-                        {
-                            user = await Program.DiscordRestClient!.GetUserAsync(reaction.UserId);
-                        }
-                        if (user == null)
-                        {
-                            await reaction.Channel.SendMessageAsync($"Sorry <@!{reaction.UserId}> but it seems I have no stats for you. Do you have written something" +
-                                $"in this text channel before? Just write `!werwolf join {GetPublicId(game.Id)}` to join the game. Next time you can use " +
-                                $"the reactions like any other user - I promise!.");
-                            await message.RemoveReactionAsync(reaction.Emote, reaction.UserId);
-                            return;
-                        }
-                        if (user.IsBot)
-                            return;
-                        gameUser = GameUser.Create(user);
+                        user = await reaction.Channel.GetUserAsync(reaction.UserId);
                     }
+                    if (user == null)
+                    {
+                        user = await Program.DiscordRestClient!.GetUserAsync(reaction.UserId);
+                    }
+                    if (user == null)
+                    {
+                        await reaction.Channel.SendMessageAsync($"Sorry <@!{reaction.UserId}> but it seems I have no stats for you. Do you have written something" +
+                            $"in this text channel before? Just write `!werwolf join {GetPublicId(game.Id)}` to join the game. Next time you can use " +
+                            $"the reactions like any other user - I promise!.");
+                        await message.RemoveReactionAsync(reaction.Emote, reaction.UserId);
+                        return;
+                    }
+                    if (user.IsBot)
+                        return;
+                    var gameUser = GameUser.Create(user);
                     if (reaction.Emote.Name == "\u2705")
                     {
                         if (game.Participants.Count >= 500)
@@ -202,9 +195,9 @@ namespace Mabron.DiscordBots.Games.Werwolf
                 if (Context.User.IsBot)
                     return;
                 var gameUser = GameUser.Create(Context.User);
-                if (gameUser.DiscordId != game.Leader && !game.Participants.TryGetValue(gameUser.DiscordId, out _))
+                if (gameUser.Id != game.Leader && !game.Participants.TryGetValue(gameUser.Id, out _))
                 {
-                    await ReplyAsync($"<@!{gameUser.DiscordId}> is not a member of this game. Try to join it.");
+                    await ReplyAsync($"<@!{gameUser.UserId.Id}> is not a member of this game. Try to join it.");
                     return;
                 }
 
@@ -258,17 +251,17 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
         public static Embed GetGameEmbed(GameRoom game)
         {
-            string GetName(ulong id)
+            string GetName(ObjectId id)
             {
                 if (game.UserCache.TryGetValue(id, out GameUser? user))
                     return user.Username;
-                var discordUser = Program.DiscordClient?.GetUser(id);
-                user = discordUser != null ? GameUser.Create(discordUser) : null;
-                if (user != null)
-                {
-                    game.UserCache.TryAdd(id, user);
-                    return user.Username;
-                }
+                //var discordUser = Program.DiscordClient?.GetUser(discordId);
+                //user = discordUser != null ? GameUser.Create(discordUser) : null;
+                //if (user != null)
+                //{
+                //    game.UserCache.TryAdd(id, user);
+                //    return user.Username;
+                //}
                 return $"User {id}";
             }
 
@@ -298,7 +291,11 @@ namespace Mabron.DiscordBots.Games.Werwolf
                     });
             return new EmbedBuilder
             {
+#if TEST_HEADER
+                Title = "[TEST] Wer-Bugs vom Testserver",
+#else
                 Title = "Werwölfe von Düsterwald",
+#endif
                 Description = "Reagiere mit :white_check_mark: um an dem Spiel " +
                     "teilzunehmen. Reagiere mit :x: um wieder auszutreten. " +
                     $"Alternativ kannst du auch mit `!werwolf join {GetPublicId(game.Id)}` " +
@@ -311,10 +308,10 @@ namespace Mabron.DiscordBots.Games.Werwolf
         {
             var urlBase = Program.Config?[0]["game.werwolf.urlbase"].String ?? "http://localhost/";
             var url = $"{urlBase}game/{GameController.Current.GetUserToken(game, user)}";
-            IUser discordUser = Program.DiscordClient!.GetUser(user.DiscordId);
+            IUser discordUser = Program.DiscordClient!.GetUser(user.UserId.Id);
             if (discordUser == null)
             {
-                discordUser = await Program.DiscordRestClient!.GetUserAsync(user.DiscordId);
+                discordUser = await Program.DiscordRestClient!.GetUserAsync(user.UserId.Id);
             }
             await discordUser.SendMessageAsync(
                 embed: new EmbedBuilder

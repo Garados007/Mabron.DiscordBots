@@ -1,9 +1,9 @@
 {
     "settings": {
         "game-room": {
-            "editor-role-count": "Der aktuelle Anzahl auf dem Spielserver. Unter bestimmten Umständen dauert es kurz bis sich diese Zahl aktualisiert.",
             "leader-is-player": "Spielleiter ist auch ein Mitspieler",
             "dead-can-see-all-roles": "Tote können alle Rollen sehen",
+            "all-can-see-role-of-dead": "Alle können die Rolle der Toten sehen",
             "auto-start-votings": "Votings automatisch starten",
             "auto-finish-votings": "Votings automatisch beenden",
             "votings-timeout": "Votings automatisch nach einen Timeout beenden",

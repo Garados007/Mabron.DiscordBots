@@ -1,10 +1,11 @@
-﻿using System.Text.Json;
+﻿using LiteDB;
+using System.Text.Json;
 
 namespace Mabron.DiscordBots.Games.Werwolf.Events
 {
     public class SetVotingVote : GameEvent
     {
-        public SetVotingVote(Voting voting, int option, ulong voter)
+        public SetVotingVote(Voting voting, int option, ObjectId voter)
         {
             Voting = voting;
             Option = option;
@@ -15,11 +16,11 @@ namespace Mabron.DiscordBots.Games.Werwolf.Events
 
         public int Option { get; }
 
-        public ulong Voter { get; }
+        public ObjectId Voter { get; }
 
         public override bool CanSendTo(GameRoom game, GameUser user)
         {
-            return Voting.CanViewVoting(game, user, game.TryGetRole(user.DiscordId), Voting);
+            return Voting.CanViewVoting(game, user, game.TryGetRole(user.Id), Voting);
         }
 
         public override void WriteContent(Utf8JsonWriter writer, GameRoom game, GameUser user)

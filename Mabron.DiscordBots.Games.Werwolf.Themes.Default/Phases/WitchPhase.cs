@@ -1,4 +1,5 @@
-﻿using Mabron.DiscordBots.Games.Werwolf.Phases;
+﻿using LiteDB;
+using Mabron.DiscordBots.Games.Werwolf.Phases;
 using Mabron.DiscordBots.Games.Werwolf.Themes.Default.Roles;
 using Mabron.DiscordBots.Games.Werwolf.Votings;
 using System.Collections.Generic;
@@ -10,9 +11,9 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
     {
         public class WitchSafe : PlayerVotingBase
         {
-            public Roles.Witch Witch { get; }
+            public Witch Witch { get; }
 
-            public WitchSafe(Roles.Witch witch, GameRoom game, IEnumerable<ulong>? participants = null)
+            public WitchSafe(Witch witch, GameRoom game, IEnumerable<ObjectId>? participants = null)
                 : base(game, participants)
             {
                 Witch = witch;
@@ -20,15 +21,10 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
 
             protected override bool DefaultParticipantSelector(Role role)
             {
-                return role is BaseRole baseRole && baseRole.IsSelectedByWerewolves;
+                return role.KillInfo is KillInfos.KilledByWerwolf;
             }
 
             protected override bool AllowDoNothingOption => true;
-
-            protected override string GetUserString(ulong id, GameUser? user)
-            {
-                return $"{base.GetUserString(id, user)} retten";
-            }
 
             public override bool CanView(Role viewer)
             {
@@ -40,21 +36,18 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
                 return voter == Witch;
             }
 
-            public override void Execute(GameRoom game, ulong id, Role role)
+            public override void Execute(GameRoom game, ObjectId id, Role role)
             {
-                if (role is BaseRole baseRole)
-                {
-                    baseRole.IsSelectedByWerewolves = false;
-                    Witch.UsedLivePotion = true;
-                }
+                role.RemoveKillFlag();
+                Witch.UsedLivePotion = true;
             }
         }
 
         public class WitchKill : PlayerVotingBase
         {
-            public Roles.Witch Witch { get; }
+            public Witch Witch { get; }
 
-            public WitchKill(Roles.Witch witch, GameRoom game, IEnumerable<ulong>? participants = null) 
+            public WitchKill(Witch witch, GameRoom game, IEnumerable<ObjectId>? participants = null) 
                 : base(game, participants)
             {
                 Witch = witch;
@@ -62,15 +55,14 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
 
             protected override bool DefaultParticipantSelector(Role role)
             {
-                return role.IsAlive && role is BaseRole baseRole &&
-                    !baseRole.IsSelectedByWerewolves;
+                return role.IsAlive && !(role.KillInfo is KillInfos.KilledByWerwolf);
             }
 
             protected override bool AllowDoNothingOption => true;
 
             public override bool CanView(Role viewer)
             {
-                return viewer is Roles.Witch;
+                return viewer is Witch;
             }
 
             public override bool CanVote(Role voter)
@@ -78,19 +70,16 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
                 return voter == Witch && !Witch.UsedDeathPotion;
             }
 
-            public override void Execute(GameRoom game, ulong id, Role role)
+            public override void Execute(GameRoom game, ObjectId id, Role role)
             {
-                if (role is BaseRole baseRole)
-                {
-                    baseRole.Kill(game);
-                    Witch.UsedDeathPotion = true;
-                }
+                role.AddKillFlag(new KillInfos.KilledByWithDeathPotion());
+                Witch.UsedDeathPotion = true;
             }
         }
 
         public class WitchSafePhase : SeperateVotingPhase<WitchSafe, Witch>
         {
-            protected override WitchSafe Create(Witch role, GameRoom game, IEnumerable<ulong>? ids = null)
+            protected override WitchSafe Create(Witch role, GameRoom game, IEnumerable<ObjectId>? ids = null)
                 => new WitchSafe(role, game, ids);
 
             protected override bool FilterVoter(Witch role)
@@ -107,7 +96,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
 
         public class WitchKillPhase : SeperateVotingPhase<WitchKill, Witch>
         {
-            protected override WitchKill Create(Witch role, GameRoom game, IEnumerable<ulong>? ids = null)
+            protected override WitchKill Create(Witch role, GameRoom game, IEnumerable<ObjectId>? ids = null)
                 => new WitchKill(role, game);
 
             protected override bool FilterVoter(Witch role)

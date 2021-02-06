@@ -9,41 +9,56 @@ import Html.Events as HE
 import Dict exposing (Dict)
 import Maybe.Extra
 import Language exposing (Language)
+import Html
+import Svg.Attributes exposing (in_)
 
 type Msg
     = SetBuffer (Dict String Int) EditGameConfig
     | SendConf EditGameConfig
     | StartGame
+    | ShowRoleInfo String
     | Noop
 
-view : Language -> Data.RoleTemplates -> Maybe Language.ThemeKey -> Data.Game -> Bool 
+view : Language -> Data.RoleTemplates -> Maybe Language.ThemeRawKey -> Data.Game -> Bool 
     -> Dict String Int -> Html Msg
 view lang roles theme game editable buffer =
     let
 
-        handleInput : String -> String -> Msg
-        handleInput id value =
-            case String.toInt value of
+        handleNewRoleCount : String -> Maybe Int -> Msg
+        handleNewRoleCount id value =
+            case value of
                 Nothing -> Noop
                 Just new ->
-                    SetBuffer
-                        (Dict.insert id new buffer)
-                        { editGameConfig
-                        | newConfig = Just
-                            <| Dict.insert id new buffer
-                        }
-        
-        viewSingleRole : String -> Html Msg
-        viewSingleRole id =
+                    (\dict -> 
+                        SetBuffer dict 
+                        { editGameConfig | newConfig = Just dict }
+                    )
+                    <| Dict.insert id new buffer
+
+        viewSingleRoleBox : String -> Html Msg
+        viewSingleRoleBox id =
             div [ class "editor-role-box" ]
-                [ div [ class "editor-role-name" ]
+                [ div
+                    [ class "editor-role-info"
+                    , HE.onClick <| ShowRoleInfo id
+                    ]
+                    [ text "i" ]
+                , Html.img 
+                    [ class "editor-role-image"
+                    , HA.src "/content/games/werwolf/img/assasin.svg"
+                    ] []
+                , div [ class "editor-role-name" ]
                     <| List.singleton
                     <| text
-                    <| Language.getTextOrPath
-                        lang
+                    <| Language.getTextOrPath lang
                         [ "theme", "roles", id ]
-                , if editable
-                    then Html.input
+                , div 
+                    [ HA.classList
+                        [ ("editor-role-number", True)
+                        , ("editable", editable)
+                        ]
+                    ]
+                    [ Html.input
                         [ HA.type_ "number"
                         , HA.min "0"
                         , HA.step "1"
@@ -54,25 +69,38 @@ view lang roles theme game editable buffer =
                             <| Maybe.Extra.orLazy
                                 (Dict.get id buffer)
                                 (\() -> Dict.get id game.config)
-                        , HE.onInput <| handleInput id
+                        , HA.disabled <| not editable
+                        , HE.onInput 
+                            <| handleNewRoleCount id 
+                            << String.toInt
                         ] []
-                    else text ""
-                , div 
-                    [ class "editor-role-count"
-                    , HA.title <| Language.getTextOrPath lang
-                        [ "settings", "game-room", "editor-role-count" ]
-                    ]
-                    <| List.singleton
-                    <| text
-                    <| String.concat
-                        [ "("
-                        , String.fromInt
+                    , div
+                        [ class "down"
+                        , HE.onClick
+                            <| handleNewRoleCount id
+                            <| Just
+                            <| max 0
+                            <| (+) -1
                             <| Maybe.withDefault 0
-                            <| Dict.get id game.config
-                        , ")"
-                        ]
+                            <| Maybe.Extra.orLazy
+                                (Dict.get id buffer)
+                                (\() -> Dict.get id game.config)
+                        ] []
+                    , div
+                        [ class "up"
+                        , HE.onClick
+                            <| handleNewRoleCount id
+                            <| Just
+                            <| min 500
+                            <| (+) 1
+                            <| Maybe.withDefault 0
+                            <| Maybe.Extra.orLazy
+                                (Dict.get id buffer)
+                                (\() -> Dict.get id game.config)
+                        ] []
+                    ]
                 ]
-    
+        
         maxPlayer = (+) 1 <| Dict.size game.participants
         maxRoles = (+) 1 <| List.sum <| Dict.values 
             <| Dict.union buffer game.config
@@ -140,10 +168,11 @@ view lang roles theme game editable buffer =
 
     in div [ class "editor" ]
         [ div [ class "editor-roles" ]
-            <| List.map viewSingleRole
+            -- <| List.map viewSingleRole
+            <| List.map viewSingleRoleBox
             <| Maybe.withDefault []
             <| Maybe.andThen
-                (\(k, _, _) -> Dict.get k roles)
+                (\(k, _) -> Dict.get k roles)
             <| theme
         , viewRoleBar
         , div [ class "editor-checks" ]
@@ -166,6 +195,16 @@ view lang roles theme game editable buffer =
                 <| \new -> SendConf
                     { editGameConfig
                     | newDeadCanSeeAllRoles = Just new
+                    }
+            , viewCheckbox 
+                (Language.getTextOrPath lang 
+                    [ "settings", "game-room", "all-can-see-role-of-dead" ]
+                )
+                True
+                game.allCanSeeRoleOfDead
+                <| \new -> SendConf
+                    { editGameConfig
+                    | newAllCanSeeRoleOfDead = Just new
                     }
             , viewCheckbox 
                 (Language.getTextOrPath lang 

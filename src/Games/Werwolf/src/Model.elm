@@ -15,8 +15,11 @@ import Browser.Navigation exposing (Key)
 import Time exposing (Posix)
 import Level exposing (Level)
 import Language exposing (Language, LanguageInfo)
+import Styles exposing (Styles)
 
 import Views.ViewThemeEditor
+import Styles
+import Language
 
 type alias Model =
     { game: Maybe Data.GameUserResult
@@ -29,20 +32,23 @@ type alias Model =
     -- local editor
     , editor: Dict String Int
     -- buffer
+    , oldBufferedConfig: (Posix, Data.UserConfig)
     , bufferedConfig: Data.UserConfig
     , levels: Dict String Level
     , langInfo: LanguageInfo
     , rootLang: Dict String Language
     , themeLangs: Dict Language.ThemeKey Language
-    , theme: Maybe Language.ThemeKey
+    , theme: Maybe (String, String)
     , events: List (Bool,String)
+    , styles: Styles
     }
 
 type Modal
     = NoModal
     | SettingsModal Views.ViewThemeEditor.Model
     | WinnerModal Data.Game (List String)
-    | PlayerNotification String (List String)
+    | PlayerNotification (Dict String (List String))
+    | RoleInfo String
 
 init : String -> Key -> Model
 init token key =
@@ -54,35 +60,56 @@ init token key =
     , now = Time.millisToPosix 0
     , modal = NoModal
     , editor = Dict.empty
-    , bufferedConfig =
-        { theme = "#ffffff"
+    , oldBufferedConfig = Tuple.pair
+        (Time.millisToPosix 0)
+        { theme = ""
         , background = ""
+        , language = ""
+        }
+    , bufferedConfig =
+        { theme = ""
+        , background = ""
+        , language = ""
         }
     , levels = Dict.empty
     , langInfo =
         { languages = Dict.empty
+        , icons = Dict.empty
         , themes = Dict.empty
         }
     , rootLang = Dict.empty
     , themeLangs = Dict.empty
     , theme = Nothing
     , events = []
+    , styles = Styles.init
     }
 
 getLanguage : Model -> Language
 getLanguage model =
     let
+        lang : Maybe String
+        lang = model.game
+            |> Maybe.andThen .userConfig
+            |> Maybe.map .language
+            |> Maybe.andThen
+                (\key ->
+                    if key == ""
+                    then Nothing
+                    else Just key
+                )
+            |> Maybe.withDefault "de"
+            |> Just
+
         rootLang : Language
         rootLang =
-            Language.getLanguage model.rootLang
-                <| Maybe.map
-                    (\(_, _, lang) -> lang)
-                <| model.theme
+            Language.getLanguage model.rootLang lang
         
         themeLang : Language
         themeLang =
             Language.getLanguage 
                 model.themeLangs
+            <| Maybe.andThen
+                (\x -> Maybe.map (Language.toThemeKey x) lang)
                 model.theme
     in Language.alternate themeLang rootLang
     
@@ -99,6 +126,10 @@ applyResponse response model =
             Tuple.pair
                 { model
                 | game = Just game
+                , oldBufferedConfig = Tuple.pair model.now <|
+                    if model.bufferedConfig.theme == ""
+                    then Maybe.withDefault model.bufferedConfig game.userConfig
+                    else model.bufferedConfig
                 , bufferedConfig = game.userConfig
                     |> Maybe.withDefault model.bufferedConfig
                 , modal =
@@ -139,7 +170,18 @@ applyResponse response model =
                             Dict.empty
                         Nothing -> Dict.empty
                 }
-                []
+            <| case Maybe.map .language game.userConfig of
+                Nothing -> []
+                Just l ->
+                    if Dict.member l model.rootLang
+                    then []
+                    else List.filterMap identity
+                        [ Just <| Network.GetRootLang l
+                        , Maybe.map Network.GetLang
+                            <| Maybe.map
+                                (\x -> Language.toThemeKey x l)
+                            <| model.theme
+                        ]
         RespError error ->
             Tuple.pair
                 { model
@@ -154,7 +196,10 @@ applyResponse response model =
             Tuple.pair
                 { model
                 | langInfo = info
-                , theme = Language.firstTheme info
+                , theme = 
+                    Maybe.map
+                        (\(v1, v2, _) -> (v1, v2))
+                    <| Language.firstTheme info
                 }
             <|  ( case Maybe.map Network.GetLang <| Language.firstTheme info of
                     Just x -> (::) x
@@ -204,7 +249,7 @@ applyEventData event model =
                 | phase =
                     Maybe.withDefault 
                         (Data.GamePhase "" 
-                            (Data.GameStage "" "")
+                            (Data.GameStage "" "" "")
                             []
                         ) 
                         game.phase 
@@ -247,13 +292,33 @@ applyEventData event model =
                 | phase = game.phase
                     |> Maybe.withDefault
                         (Data.GamePhase "" 
-                            (Data.GameStage "" "")
+                            (Data.GameStage "" "" "")
                             []
                         ) 
                     |> Just
                 , participants = newParticipant
                 , winner = Nothing
                 }
+            }
+            []
+        EventData.MultiPlayerNotification notifications -> Tuple.pair
+            { model
+            | modal = case model.modal of
+                PlayerNotification oldDict ->
+                    PlayerNotification
+                        <| Dict.merge
+                            Dict.insert
+                            (\k v1 v2 d ->
+                                Dict.insert
+                                    k
+                                    (v1 ++ v2)
+                                    d
+                            )
+                            Dict.insert
+                            oldDict
+                            notifications
+                            Dict.empty
+                _ -> PlayerNotification notifications
             }
             []
         EventData.NextPhase nextPhase -> Tuple.pair
@@ -267,8 +332,8 @@ applyEventData event model =
                         | langId = key
                         }
                     (Just key, Nothing) -> Just
-                        <| Data.GamePhase "" 
-                            (Data.GameStage "" "")
+                        <| Data.GamePhase key
+                            (Data.GameStage "" "" "")
                             []
                 }
             }
@@ -292,7 +357,15 @@ applyEventData event model =
             []
         EventData.PlayerNotification nid player -> Tuple.pair
             { model
-            | modal = PlayerNotification nid player
+            | modal = PlayerNotification
+                <| case model.modal of
+                    PlayerNotification oldDict ->
+                        Dict.insert nid
+                            ((Dict.get nid oldDict |> Maybe.withDefault [])
+                                ++ player
+                            )
+                            oldDict
+                    _ -> Dict.singleton nid player
             }
             []
         EventData.RemoveParticipant id -> Tuple.pair 
@@ -311,7 +384,7 @@ applyEventData event model =
                 | phase = 
                     Maybe.withDefault
                         (Data.GamePhase "" 
-                            (Data.GameStage "" "")
+                            (Data.GameStage "" "" "")
                             []
                         ) 
                         game.phase 
@@ -353,6 +426,7 @@ applyEventData event model =
                     else Dict.remove game.leader game.participants
                 , leaderIsPlayer = newConfig.leaderIsPlayer
                 , deadCanSeeAllRoles = newConfig.deadCanSeeAllRoles
+                , allCanSeeRoleOfDead = newConfig.allCanSeeRoleOfDead
                 , autostartVotings = newConfig.autostartVotings
                 , autofinishVotings = newConfig.autofinishVotings
                 , votingTimeout = newConfig.votingTimeout
@@ -369,8 +443,22 @@ applyEventData event model =
                     }
                 )
                 model.game
+            , oldBufferedConfig = Tuple.pair model.now <|
+                if model.bufferedConfig.theme == ""
+                then newConfig
+                else model.bufferedConfig
+            , bufferedConfig = newConfig
             }
-            []
+            <| 
+                if Dict.member newConfig.language model.rootLang
+                then []
+                else List.filterMap identity
+                    [ Just <| Network.GetRootLang newConfig.language
+                    , Maybe.map Network.GetLang
+                        <| Maybe.map
+                            (\x -> Language.toThemeKey x newConfig.language)
+                        <| model.theme
+                    ]
         EventData.SetVotingTimeout vid timeout -> Tuple.pair 
             { model
             | game = editGame model <| \game ->
@@ -378,7 +466,7 @@ applyEventData event model =
                 | phase = 
                     Maybe.withDefault
                         (Data.GamePhase "" 
-                            (Data.GameStage "" "")
+                            (Data.GameStage "" "" "")
                             []
                         ) 
                         game.phase 
@@ -402,7 +490,7 @@ applyEventData event model =
                 | phase = 
                     Maybe.withDefault
                         (Data.GamePhase "" 
-                            (Data.GameStage "" "")
+                            (Data.GameStage "" "" "")
                             []
                         ) 
                         game.phase 

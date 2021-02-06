@@ -67,3 +67,20 @@ attraktiver in größeren Gruppen zu spielen (Erfahrungsgemäß kann ich sagen, 
 sogar schneller spielt, als wenn sie in kleinen Gruppen arbeitet).
 
 Ein Spieler alleine bekommt keine XP. Dafür braucht man schon einen zweiten.
+
+### Killsystem
+
+- Leben hat jetzt mehrere Stufen:
+    - `Alive` - ganz normal am Leben
+    - `MarkedKill` - Je nach Quelle gibt es einen anderen Verursacher. Das Opfer ist nur als zu töten markiert. Dieser Zustand lässt sich rückgängig machen.
+    - `AboutToKill` - Das Opfer wird vorbereitet zum töten. Hier werden die Verliebten zum töten markiert.
+    - `BeforeKill` - Alle sehen das Opfer schon als tot. Theoretisch sieht man auch schon die Eigenschaften des Verstorbenen. Der Verstorbene sieht aber noch nicht der anderen. Hier werden noch letzte Aktionen ausgeführt.
+    - `Killed` - Jetzt ist das Opfer wirklich tot und hat keine Handlung mehr. Der Killzustand wird gelöscht.
+- Jemanden umzubringen durchläuft nun folgende Schritte:
+    1. Der Zustand wird auf `MarkedKill` gesetzt und ein Zustandsobjekt wird gesetzt. Über diesen könnte man später Details erfragen.
+    2. `MarkedKill` lässt sich rückgängig machen.
+    3. `MarkedKill` wird zu `AboutToKill` gewechselt. In dieser Phase werden auch verkettete Tote abgerufen. Diese werden auch auf `AboutToKill` gesetzt.
+    2. Falls möglich werden nun Benachrichtigungen rausgeschickt. Alle Spieler mit `AboutToKill` werden auf `BeforeKill` gesetzt.
+    3. Die Spieler mit passender `BeforeKill` können nun ihre Handlung ausführen.
+    4. Danach werden alle `BeforeKill` auf `Killed` gesetzt. Diese bekommen noch die Informationen der Lebenden zugeschickt.
+- Kills müssen nur am Ende der Stages abgearbeitet werden und sind prinzipiell ähnlich aufgebaut. Von daher kann man solche Phasen in `PhaseBuilder` zusammenfassen.

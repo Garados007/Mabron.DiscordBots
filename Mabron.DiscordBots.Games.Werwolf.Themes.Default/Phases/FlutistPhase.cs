@@ -1,4 +1,5 @@
-﻿using Mabron.DiscordBots.Games.Werwolf.Phases;
+﻿using LiteDB;
+using Mabron.DiscordBots.Games.Werwolf.Phases;
 using Mabron.DiscordBots.Games.Werwolf.Votings;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,7 +12,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
         {
             public GameRoom Game { get; }
 
-            public FlutistPick(GameRoom game, IEnumerable<ulong>? participants = null) 
+            public FlutistPick(GameRoom game, IEnumerable<ObjectId>? participants = null) 
                 : base(game, participants)
             {
                 Game = game;
@@ -33,7 +34,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
                 return voter is Roles.Flutist && voter.IsAlive;
             }
 
-            public override void Execute(GameRoom game, ulong id, Role role)
+            public override void Execute(GameRoom game, ObjectId id, Role role)
             {
                 if (!(role is BaseRole baseRole))
                     return;
@@ -44,7 +45,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
                 }
             }
 
-            public override void RemoveOption(ulong user)
+            public override void RemoveOption(ObjectId user)
             {
                 base.RemoveOption(user);
 
@@ -64,7 +65,8 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
         {
             base.Init(game);
             picks.Clear();
-            for (int i = 0; i < 2; ++i)
+            int maxEnchants = game.Participants.Count < 8 ? 1 : 2;
+            for (int i = 0; i < maxEnchants; ++i)
             {
                 var pick = new FlutistPick(game);
                 picks.Add(pick);

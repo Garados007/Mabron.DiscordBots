@@ -1,4 +1,5 @@
-﻿using Mabron.DiscordBots.Games.Werwolf.Phases;
+﻿using LiteDB;
+using Mabron.DiscordBots.Games.Werwolf.Phases;
 using Mabron.DiscordBots.Games.Werwolf.Votings;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +10,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
     {
         public class OraclePick : PlayerVotingBase
         {
-            public OraclePick(GameRoom game, IEnumerable<ulong>? participants = null)
+            public OraclePick(GameRoom game, IEnumerable<ObjectId>? participants = null)
                 : base(game, participants)
             {
             }
@@ -30,7 +31,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
                 return voter is Roles.Oracle && voter.IsAlive;
             }
 
-            public override void Execute(GameRoom game, ulong id, Role role)
+            public override void Execute(GameRoom game, ObjectId id, Role role)
             {
                 if (role is BaseRole baseRole)
                     baseRole.IsViewedByOracle = true;
@@ -43,7 +44,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
                 !game.Participants.Values.Where(x => x is Roles.OldMan oldMan && oldMan.WasKilledByVillager).Any();
         }
 
-        protected override OraclePick Create(GameRoom game, IEnumerable<ulong>? ids = null)
+        protected override OraclePick Create(GameRoom game, IEnumerable<ObjectId>? ids = null)
             => new OraclePick(game, ids);
     }
 }

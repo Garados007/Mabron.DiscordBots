@@ -3,6 +3,7 @@ using Discord.Rest;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using LiteDB;
 
 namespace Mabron.DiscordBots.Games.Werwolf
 {
@@ -14,8 +15,8 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
         public RestUserMessage? Message { get; set; }
 
-        ulong leader;
-        public ulong Leader
+        ObjectId leader = new ObjectId();
+        public ObjectId Leader
         {
             get => leader;
             set
@@ -26,9 +27,9 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
         public PhaseFlow? Phase { get; private set; }
 
-        public ConcurrentDictionary<ulong, Role?> Participants { get; }
+        public ConcurrentDictionary<ObjectId, Role?> Participants { get; }
 
-        public ConcurrentDictionary<ulong, GameUser> UserCache { get; }
+        public ConcurrentDictionary<ObjectId, GameUser> UserCache { get; }
 
         public ConcurrentDictionary<Role, int> RoleConfiguration { get; }
 
@@ -49,6 +50,8 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
         public bool DeadCanSeeAllRoles { get; set; } = false;
 
+        public bool AllCanSeeRoleOfDead { get; set; } = false;
+
         public bool AutostartVotings { get; set; } = false;
 
         public bool AutoFinishVotings { get; set; } = false;
@@ -59,49 +62,59 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
         public Theme? Theme { get; set; }
 
-        public (uint round, ReadOnlyMemory<ulong> winner)? Winner { get; set; }
+        public (uint round, ReadOnlyMemory<ObjectId> winner)? Winner { get; set; }
 
         public GameRoom(int id, GameUser leader)
         {
             Id = id;
-            Leader = leader.DiscordId;
-            Participants = new ConcurrentDictionary<ulong, Role?>();
-            UserCache = new ConcurrentDictionary<ulong, GameUser>()
+            Leader = leader.Id;
+            Participants = new ConcurrentDictionary<ObjectId, Role?>();
+            UserCache = new ConcurrentDictionary<ObjectId, GameUser>()
             {
-                [leader.DiscordId] = leader
+                [leader.Id] = leader
             };
             RoleConfiguration = new ConcurrentDictionary<Role, int>();
         }
 
         public bool AddParticipant(GameUser user)
         {
-            if (Leader == user.DiscordId || Participants.ContainsKey(user.DiscordId))
+            if (Leader == user.Id || Participants.ContainsKey(user.Id))
                 return false;
 
-            Participants.TryAdd(user.DiscordId, null);
-            UserCache[user.DiscordId] = user;
+            Participants.TryAdd(user.Id, null);
+            UserCache[user.Id] = user;
             SendEvent(new Events.AddParticipant(user));
             return true;
         }
 
         public void RemoveParticipant(GameUser user)
         {
-            if (Participants!.Remove(user.DiscordId, out _))
-                UserCache.Remove(user.DiscordId, out _);
-            SendEvent(new Events.RemoveParticipant(user.DiscordId));
+            if (Participants!.Remove(user.Id, out _))
+                UserCache.Remove(user.Id, out _);
+            SendEvent(new Events.RemoveParticipant(user.Id));
         }
 
+        /// <summary>
+        /// Any existing roles that are consideres as alive. All close to death roles are excluded.
+        /// </summary>
         public IEnumerable<Role> AliveRoles
             => Participants.Values.Where(x => x != null).Cast<Role>().Where(x => x.IsAlive);
 
-        public Role? TryGetRole(ulong id)
+        /// <summary>
+        /// Any existing roles that are not finally dead. Only roles that have the
+        /// <see cref="KillState.Killed"/> are excluded.
+        /// </summary>
+        public IEnumerable<Role> NotKilledRoles
+            => Participants.Values.Where(x => x != null).Cast<Role>().Where(x => x.KillState != KillState.Killed);
+
+        public Role? TryGetRole(ObjectId id)
         {
             if (Participants.TryGetValue(id, out Role? role))
                 return role;
             else return null;
         }
 
-        public ulong? TryGetId(Role role)
+        public ObjectId? TryGetId(Role role)
         {
             foreach (var (id, prole) in Participants)
                 if (prole == role)
@@ -130,7 +143,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
             var users = UserCache.Keys.ToArray();
             foreach (var user in users)
                 UserCache[user] = Theme.User!.Query()
-                    .Where(x => x.DiscordId == user)
+                    .Where(x => x.Id == user)
                     .First();
         }
 
@@ -141,7 +154,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
             if (winner != null)
             {
                 var winnerSpan = winner.Value.Span;
-                var winIds = new List<ulong>(winner.Value.Length);
+                var winIds = new List<ObjectId>(winner.Value.Length);
                 // -0.15 is for the leader
                 var xpMultiplier = Participants.Values.Where(x => x != null).Count() * 0.15;
                 if (leaderIsPlayer) // we have one more player

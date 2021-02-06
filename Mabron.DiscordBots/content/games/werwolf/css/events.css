@@ -2,6 +2,7 @@
   overflow-y: auto;
   height: 100%;
   max-width: 20em;
+  flex-shrink: 0;
 }
 .event-item {
   margin: 0.5em;

@@ -15,7 +15,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Events
         public override void WriteContent(Utf8JsonWriter writer, GameRoom game, GameUser user)
         {
             var entry = User;
-            writer.WriteString("id", User.DiscordId.ToString());
+            writer.WriteString("id", User.Id.ToString());
             writer.WriteString("name", entry.Username);
             writer.WriteString("img", entry.Image);
             writer.WriteStartObject("stats");

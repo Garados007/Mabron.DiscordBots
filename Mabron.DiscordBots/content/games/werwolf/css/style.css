@@ -3,8 +3,8 @@
 
 @import url("modals.css");
 @import url("theme-editor.css");
+@import url("editor.css");
 @import url("winner-box.css");
-@import url("event-data.css");
 @import url("player-notification.css");
 
 :root {
@@ -66,6 +66,9 @@ body {
   background-image: var(--bg-url);
   z-index: -1;
 }
+.styles .background.old {
+  background-image: var(--bg-old-url);
+}
 .frame-status-box {
   display: flex;
   align-items: center;
@@ -83,7 +86,7 @@ body {
 .frame-game-outer {
   display: flex;
   flex-direction: row;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   /*! width: 100vw; */
   height: 100vh;
 }
@@ -91,6 +94,7 @@ body {
   width: 20em;
   overflow-y: auto;
   height: 100%;
+  flex-shrink: 0;
 }
 .frame-game-body {
   flex-grow: 1;
@@ -204,93 +208,6 @@ body {
   background-color: var(--color-dark);
 }
 
-.editor {
-  width: 35em;
-  max-width: 100%;
-}
-.editor-role-box {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  background-color: var(--color-light-transparent);
-  margin: 0.5em 0;
-  padding: 0.5em 0.8em;
-
-}
-.editor-role-name {
-  flex-grow: 1;
-  flex-shrink: 1;
-}
-.editor-role-box input {
-  width: 3em;
-  font-family: inherit;
-  box-sizing: border-box;
-}
-.editor-role-box .editor-role-count {
-  padding-left: 0.5em;
-}
-
-.editor-bar-box {
-  margin: 4em 1em;
-  position: relative;
-}
-.editor-bar-fill-outer {
-  margin: 2em 0;
-  position: relative;
-  height: 2em;
-  background-color: var(--color-dark-transparent);
-}
-.editor-bar-fill-inner {
-  position: absolute;
-  height: 100%;
-  background-color: var(--color-darker-transparent);
-  transition: width 0.3s;
-}
-.editor-bar-player-box, .editor-bar-roles-box {
-  position: absolute;
-  top: 0;
-  width: 0;
-  transition: left 0.3s;
-}
-.editor-bar-player-box .line, .editor-bar-roles-box .line {
-  position: absolute;
-  height: 2.5em;
-  bottom: -2em;
-  border: 0.1em solid var(--text-color);
-  transform: translateX(-50%);
-}
-.editor-bar-player-box .number, .editor-bar-roles-box .number {
-  position: absolute;
-  bottom: 0.6em;
-  transform: translateX(-50%);
-}
-.editor-bar-player-box .line {
-  bottom: unset;;
-  top: 0em;
-}
-.editor-bar-player-box .number {
-  bottom: unset;
-  top: 2.6em;
-}
-.editor-checks label {
-  display: block;
-}
-.editor-checks label.disabled {
-  color: var(--text-color-light);
-  text-decoration: line-through;
-}
-.editor .start-button {
-  margin: 2em 0;
-  padding: 0.5em 0.8em;
-  background-color: var(--color-light-transparent);
-  cursor: pointer;
-  text-align: center;
-  font-size: 1.1em;
-  border-radius: 0.4em;
-}
-.editor .start-button.disabled {
-  cursor: not-allowed;
-}
 
 .phase-header,
 .phase-controls {

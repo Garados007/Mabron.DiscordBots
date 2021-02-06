@@ -9,7 +9,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Events
 
         public override void WriteContent(Utf8JsonWriter writer, GameRoom game, GameUser user)
         {
-            var ownRole = game.TryGetRole(user.DiscordId);
+            var ownRole = game.TryGetRole(user.Id);
             writer.WriteStartObject("participants");
             foreach (var participant in game.Participants.ToArray())
             {

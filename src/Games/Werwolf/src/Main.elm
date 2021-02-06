@@ -5,6 +5,7 @@ import EventData exposing (EventData)
 import Model exposing (Model)
 import Network exposing (NetworkResponse)
 import Language exposing (Language)
+import Debug.Extra
 
 import Views.ViewUserList
 import Views.ViewRoomEditor
@@ -16,6 +17,7 @@ import Views.ViewThemeEditor
 import Views.ViewModal
 import Views.ViewWinners
 import Views.ViewPlayerNotification
+import Views.ViewRoleInfo
 
 import Browser
 import Browser.Navigation
@@ -37,11 +39,17 @@ import Color.Convert as CC
 import Color.Manipulate as CM
 import Regex
 import Level
+import Styles exposing (Styles)
 
 import Json.Decode as JD
 import Json.Encode as JE
 import WebSocket
 import Maybe
+import Level exposing (isAnimating)
+import Styles
+import Styles
+import Views.ViewModal
+import Model
 
 port receiveSocketMsg : (JD.Value -> msg) -> Sub msg
 port sendSocketCommand : JE.Value -> Cmd msg
@@ -70,7 +78,39 @@ main = Browser.application
         , body = view model
             <| Model.getLanguage model
         }
-    , update = update
+    , update = \msg model ->
+        let
+            (newModel, cmd) = update msg model
+        in Tuple.pair
+            { newModel
+            | styles = Styles.pushState
+                    newModel.now
+                    newModel.styles
+                <| Maybe.withDefault 
+                    model.bufferedConfig
+                <| Maybe.Extra.orElse
+                    ( Maybe.andThen .userConfig model.game)
+                <| Maybe.Extra.orElse
+                    ( Maybe.andThen .game model.game
+                        |> Maybe.andThen .phase
+                        |> Maybe.map .stage
+                        |> Maybe.andThen
+                            (\stage ->
+                                if stage.backgroundId == ""
+                                then Nothing
+                                else Just
+                                    { theme = stage.theme
+                                    , background = stage.backgroundId
+                                    , language = ""
+                                    }   
+                            )
+                    )
+                <| case model.modal of
+                    Model.SettingsModal conf ->
+                        Just conf.config
+                    _ -> Nothing
+            }
+            cmd
     , subscriptions = subscriptions
     , onUrlRequest = \rurl ->
         case rurl of
@@ -115,14 +155,12 @@ view model lang =
         , HA.attribute "property" "stylesheet"
         , HA.attribute "href" "/content/games/werwolf/css/style.css"
         ] []
-    , viewStyles
-        <| Maybe.withDefault model.bufferedConfig
-        <| Maybe.Extra.orElse
-            ( Maybe.andThen .userConfig model.game)
-        <| case model.modal of
-            Model.SettingsModal conf ->
-                Just conf.config
-            _ -> Nothing
+    , Html.node "link"
+        [ HA.attribute "rel" "stylesheet"
+        , HA.attribute "property" "stylesheet"
+        , HA.attribute "href" "/content/vendor/flag-icon-css/css/flag-icon.min.css"
+        ] []
+    , Styles.view model.now model.styles
     , tryViewGamePhase model lang
         |> Maybe.Extra.orElseLazy
             (\() -> tryViewGameFrame model lang)
@@ -142,6 +180,7 @@ view model lang =
                 <| List.singleton
                 <| Views.ViewThemeEditor.view
                     lang
+                    model.langInfo.icons
                     conf
         Model.WinnerModal game list ->
             Html.map (always CloseModal)
@@ -154,18 +193,29 @@ view model lang =
                     lang
                     model.now model.levels
                     game list
-        Model.PlayerNotification nid player ->
+        Model.PlayerNotification notification ->
             Html.map (always CloseModal)
                 <| Views.ViewModal.viewOnlyClose
                     ( Language.getTextOrPath lang
                         [ "modals", "player-notification", "title" ]
                     )
+                <| List.map
+                    (\(nid,player) ->
+                        Views.ViewPlayerNotification.view
+                            lang
+                            (Maybe.andThen .game model.game)
+                            nid
+                            player
+                    )
+                <| Dict.toList notification
+        Model.RoleInfo roleKey ->
+            Html.map (always CloseModal)
+                <| Views.ViewModal.viewOnlyClose
+                    ( Language.getTextOrPath lang
+                        [ "theme", "roles", roleKey ]
+                    )
                 <| List.singleton
-                <| Views.ViewPlayerNotification.view
-                    lang
-                    (Maybe.andThen .game model.game)
-                    nid
-                    player
+                <| Views.ViewRoleInfo.view lang roleKey
     , Views.ViewErrors.view model.errors
         |> Html.map WrapError
     -- , Debug.Extra.viewModel model
@@ -275,87 +325,6 @@ viewGamePhase model lang game user phase =
         , viewEvents model.events
         ]
 
-viewStyles : Data.UserConfig -> Html msg
-viewStyles = HL.lazy <| \config ->
-    let
-        colorBase : Color
-        colorBase = CC.hexToColor config.theme
-            |> Result.toMaybe
-            |> Maybe.withDefault Color.white
-        
-        isDark : Bool
-        isDark = CA.luminance colorBase <= 0.5
-
-        darken : Float -> Color -> Color
-        darken = if isDark then CM.lighten else CM.darken
-
-        colorBackground : Color
-        colorBackground = colorBase
-
-        textColor : Color
-        textColor = if isDark then Color.white else Color.black
-        
-        textColorLight : Color
-        textColorLight = CM.weightedMix
-            colorBase
-            textColor
-            0.375
-        
-        textInvColor : Color
-        textInvColor = if isDark then Color.black else Color.white
-        
-        colorLight : Color
-        colorLight = darken 0.20 colorBase
-
-        colorMedium : Color
-        colorMedium = darken 0.30 colorBase
-
-        colorDark : Color
-        colorDark = darken 0.40 colorBase
-
-        colorDarker : Color
-        colorDarker = darken 0.50 colorBase
-
-        build : String -> Regex.Regex
-        build = Regex.fromString >> Maybe.withDefault Regex.never
-
-    in div [ class "styles" ]
-        [ Html.node "style"
-            [ HA.rel "stylesheet" ]
-            <| List.singleton
-            <| text
-            <| (\style -> 
-                    ":root { " ++ style ++ "; --bg-url: url(\"" ++
-                    (config.background 
-                        |> Regex.replace (build "\\s") (always "")
-                        |> Regex.replace (build "\\\\") (always "\\\\")
-                        |> Regex.replace (build "\"") (always "\\\"")
-                    )
-                    ++ "\"); }" 
-                )
-            <| String.concat
-            <| List.intersperse "; "
-            <| List.map
-                (\(rule, color) ->
-                    "--" ++ rule ++ ": " ++ CC.colorToCssRgba color
-                )
-                [ ("color-base", colorBase)
-                , ("color-background", colorBackground)
-                , ("text-color", textColor)
-                , ("text-color-light", textColorLight)
-                , ("text-inv-color", textInvColor)
-                , ("color-light", colorLight)
-                , ("color-light-transparent", CM.fadeOut 0.4 colorLight)
-                , ("color-medium", colorMedium)
-                , ("color-dark", colorDark)
-                , ("color-dark-transparent", CM.fadeOut 0.4 colorLight)
-                , ("color-darker", colorDarker)
-                , ("color-darker-transparent", CM.fadeOut 0.4 colorLight)
-                ]
-        , div [ class "background" ] []
-        ]
-    
-
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
     case msg of
@@ -417,6 +386,10 @@ update msg model =
                 <| Cmd.map Response
                 <| Network.executeRequest
                 <| Network.GetGameStart model.token
+        WrapEditor (Views.ViewRoomEditor.ShowRoleInfo roleKey) ->
+            Tuple.pair
+                { model | modal = Model.RoleInfo roleKey }
+                Cmd.none
         WrapEditor Views.ViewRoomEditor.Noop ->
             Tuple.pair model Cmd.none
         WrapPhase Views.ViewGamePhase.Noop ->
@@ -514,8 +487,10 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
         [ Time.every
-            (   if Dict.values model.levels
-                    |> List.any Level.isAnimating
+            (   if (Dict.values model.levels
+                        |> List.any Level.isAnimating
+                    ) 
+                    || Styles.isAnimating model.now model.styles
                 then 50
                 else 1000
             )

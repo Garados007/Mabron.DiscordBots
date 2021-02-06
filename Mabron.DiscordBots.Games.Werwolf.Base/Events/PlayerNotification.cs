@@ -1,4 +1,5 @@
-﻿using System;
+﻿using LiteDB;
+using System;
 using System.Text.Json;
 
 namespace Mabron.DiscordBots.Games.Werwolf.Events
@@ -7,9 +8,9 @@ namespace Mabron.DiscordBots.Games.Werwolf.Events
     {
         public string NotificationId { get; }
 
-        public ReadOnlyMemory<ulong> Player { get; }
+        public ReadOnlyMemory<ObjectId> Player { get; }
 
-        public PlayerNotification(string notificationId, ReadOnlyMemory<ulong> player)
+        public PlayerNotification(string notificationId, ReadOnlyMemory<ObjectId> player)
             => (NotificationId, Player) = (notificationId, player);
 
         public override bool CanSendTo(GameRoom game, GameUser user)

@@ -1,4 +1,5 @@
-﻿using Mabron.DiscordBots.Games.Werwolf.Votings;
+﻿using LiteDB;
+using Mabron.DiscordBots.Games.Werwolf.Votings;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -7,7 +8,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Phases
     public abstract class SingleVotingPhase<T> : Phase
         where T : PlayerVotingBase
     {
-        protected abstract T Create(GameRoom game, IEnumerable<ulong>? ids = null);
+        protected abstract T Create(GameRoom game, IEnumerable<ObjectId>? ids = null);
 
         public override void Init(GameRoom game)
         {

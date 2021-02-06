@@ -1,4 +1,5 @@
-﻿using Mabron.DiscordBots.Games.Werwolf.Phases;
+﻿using LiteDB;
+using Mabron.DiscordBots.Games.Werwolf.Phases;
 using Mabron.DiscordBots.Games.Werwolf.Themes.Default.Roles;
 using Mabron.DiscordBots.Games.Werwolf.Votings;
 using System.Collections.Generic;
@@ -12,7 +13,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
         {
             public Hunter Hunter { get; }
 
-            public HunterKill(GameRoom game, Hunter hunter, IEnumerable<ulong>? participants = null) 
+            public HunterKill(GameRoom game, Hunter hunter, IEnumerable<ObjectId>? participants = null) 
                 : base(game, participants)
             {
                 Hunter = hunter;
@@ -28,11 +29,9 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
                 return voter == Hunter;
             }
 
-            public override void Execute(GameRoom game, ulong id, Role role)
+            public override void Execute(GameRoom game, ObjectId id, Role role)
             {
-                if (role is BaseRole baseRole)
-                    baseRole.RealKill(game, "hunter-kill", out _);
-                else role.Kill(game);
+                role.SetKill(game, new KillInfos.KilledByHunter());
                 Hunter.HasKilled = true;
             }
         }
@@ -43,7 +42,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
                 !game.Participants.Values.Where(x => x is OldMan oldMan && oldMan.WasKilledByVillager).Any();
         }
 
-        protected override HunterKill Create(Hunter role, GameRoom game, IEnumerable<ulong>? ids = null)
+        protected override HunterKill Create(Hunter role, GameRoom game, IEnumerable<ObjectId>? ids = null)
             => new HunterKill(game, role, ids);
 
         protected override Hunter GetRole(HunterKill voting)

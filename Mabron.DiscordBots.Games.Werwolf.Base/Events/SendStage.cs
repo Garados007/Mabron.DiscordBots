@@ -16,6 +16,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Events
         {
             writer.WriteString("lang-id", Stage.LanguageId);
             writer.WriteString("background-id", Stage.BackgroundId);
+            writer.WriteString("theme", Stage.ColorTheme);
         }
     }
 }

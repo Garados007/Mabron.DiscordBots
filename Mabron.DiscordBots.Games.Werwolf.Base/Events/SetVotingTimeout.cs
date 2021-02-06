@@ -11,7 +11,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Events
 
         public override bool CanSendTo(GameRoom game, GameUser user)
         {
-            return Voting.CanViewVoting(game, user, game.TryGetRole(user.DiscordId), Voting);
+            return Voting.CanViewVoting(game, user, game.TryGetRole(user.Id), Voting);
         }
 
         public override void WriteContent(Utf8JsonWriter writer, GameRoom game, GameUser user)

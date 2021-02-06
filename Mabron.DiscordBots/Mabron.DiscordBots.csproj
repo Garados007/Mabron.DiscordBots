@@ -8,8 +8,12 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugTest|AnyCPU'">
-    <DefineConstants>TRACE;DEBUG;ROOM_ID_1</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;ROOM_ID_1;TEST_HEADER</DefineConstants>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\.editorconfig" Link=".editorconfig" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Discord.Net" Version="2.3.0" />

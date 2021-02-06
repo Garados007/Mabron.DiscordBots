@@ -120,6 +120,7 @@ editGameConfig =
     , newConfig = Nothing
     , leaderIsPlayer = Nothing
     , newDeadCanSeeAllRoles = Nothing
+    , newAllCanSeeRoleOfDead = Nothing
     , autostartVotings = Nothing
     , autofinishVotings = Nothing
     , votingTimeout = Nothing
@@ -131,6 +132,7 @@ type alias EditGameConfig =
     , newConfig: Maybe (Dict String Int)
     , leaderIsPlayer: Maybe Bool
     , newDeadCanSeeAllRoles: Maybe Bool
+    , newAllCanSeeRoleOfDead: Maybe Bool
     , autostartVotings: Maybe Bool
     , autofinishVotings: Maybe Bool
     , votingTimeout: Maybe Bool
@@ -165,6 +167,11 @@ convertEditGameConfig config =
             if new then "true" else "false"
         )
         config.newDeadCanSeeAllRoles
+    , Maybe.map
+        (\new -> "all-can-see-role-of-dead=" ++
+            if new then "true" else "false"        
+        )
+        config.newAllCanSeeRoleOfDead
     , Maybe.map
         (\new -> "autostart-votings=" ++
             if new then "true" else "false"        
@@ -203,11 +210,13 @@ editUserConfig : EditUserConfig
 editUserConfig =
     { newTheme = Nothing
     , newBackground = Nothing
+    , newLanguage = Nothing
     }
 
 type alias EditUserConfig =
     { newTheme: Maybe String
     , newBackground: Maybe String
+    , newLanguage: Maybe String
     }
 
 convertEditUserConfig : EditUserConfig -> String
@@ -218,6 +227,9 @@ convertEditUserConfig config =
     , Maybe.map
         (\background -> "background=" ++ Url.percentEncode background)
         config.newBackground
+    , Maybe.map
+        (\language -> "language=" ++ language)
+        config.newLanguage
     ]
     |> List.filterMap identity
     |> List.intersperse "&"

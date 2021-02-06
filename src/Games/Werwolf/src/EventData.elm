@@ -13,6 +13,7 @@ type EventData
     | AddVoting GameVoting
     | GameEnd (Maybe (List String))
     | GameStart (Dict String (Maybe GameParticipant))
+    | MultiPlayerNotification (Dict String (List String))
     | NextPhase (Maybe String)
     | OnLeaderChanged String
     | OnRoleInfoChanged (Maybe String) GameParticipant
@@ -29,6 +30,7 @@ type alias EventGameConfig =
     { config: Dict String Int
     , leaderIsPlayer: Bool
     , deadCanSeeAllRoles: Bool
+    , allCanSeeRoleOfDead: Bool
     , autostartVotings: Bool
     , autofinishVotings: Bool
     , votingTimeout: Bool
@@ -70,7 +72,8 @@ decodeEventData =
                         (JD.nullable Iso8601.decoder)
                     |> required "options"
                         (JD.succeed GameVotingOption
-                            |> required "name" JD.string
+                            |> required "lang-id" JD.string
+                            |> required "vars" (JD.dict JD.string)
                             |> required "user" (JD.list JD.string)
                             |> JD.dict
                         )
@@ -90,6 +93,11 @@ decodeEventData =
                     |> JD.dict
                     |> JD.field "participants"
                     |> JD.map GameStart
+                "MultiPlayerNotification" ->
+                    JD.map MultiPlayerNotification
+                    <| JD.field "notifications"
+                    <| JD.dict
+                    <| JD.list JD.string
                 "NextPhase" ->
                     JD.map NextPhase
                     <| JD.field "phase"
@@ -119,12 +127,14 @@ decodeEventData =
                     JD.succeed GameStage
                     |> required "lang-id" JD.string
                     |> required "background-id" JD.string
+                    |> required "theme" JD.string
                     |> JD.map SendStage
                 "SetGameConfig" ->
                     JD.succeed EventGameConfig
                     |> required "config" (JD.dict JD.int)
                     |> required "leader-is-player" JD.bool
                     |> required "dead-can-see-all-roles" JD.bool
+                    |> required "all-can-see-role-of-dead" JD.bool
                     |> required "autostart-votings" JD.bool
                     |> required "autofinish-votings" JD.bool
                     |> required "voting-timeout" JD.bool
@@ -134,6 +144,7 @@ decodeEventData =
                     JD.succeed UserConfig
                     |> required "theme" JD.string
                     |> required "background" JD.string 
+                    |> required "language" JD.string
                     |> JD.field "user-config"
                     |> JD.map SetUserConfig
                 "SetVotingTimeout" ->

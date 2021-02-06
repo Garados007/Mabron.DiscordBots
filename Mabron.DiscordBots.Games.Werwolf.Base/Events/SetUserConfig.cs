@@ -11,19 +11,20 @@ namespace Mabron.DiscordBots.Games.Werwolf.Events
 
         public override bool CanSendTo(GameRoom game, GameUser user)
         {
-            return user.DiscordId == User.DiscordId;
+            return user.Id == User.Id;
         }
 
         public override void WriteContent(Utf8JsonWriter writer, GameRoom game, GameUser user)
         {
             var userConfig = Theme.User!.Query()
-                .Where(x => x.DiscordId == user.DiscordId)
+                .Where(x => x.Id == user.Id)
                 .FirstOrDefault();
             if (userConfig != null)
             {
                 writer.WriteStartObject("user-config");
                 writer.WriteString("theme", userConfig.ThemeColor ?? "#ffffff");
                 writer.WriteString("background", userConfig.BackgroundImage ?? "");
+                writer.WriteString("language", userConfig.Language ?? "");
                 writer.WriteEndObject();
             }
             else writer.WriteNull("user-config");

@@ -17,7 +17,9 @@ view model =
             [ SA.width "512"
             , SA.height "512"
             , SA.viewBox "0 0 24 24"
-            , SE.onClick <| SettingsModal <| Views.ViewThemeEditor.init model.bufferedConfig
+            , SE.onClick <| SettingsModal 
+                <| Views.ViewThemeEditor.init 
+                <| model.bufferedConfig
             ]
             [ Svg.path
                 [ SA.d """m22.683 

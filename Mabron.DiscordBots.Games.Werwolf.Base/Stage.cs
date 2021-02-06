@@ -5,5 +5,7 @@
         public abstract string LanguageId { get; }
 
         public abstract string BackgroundId { get; }
+
+        public abstract string ColorTheme { get; }
     }
 }

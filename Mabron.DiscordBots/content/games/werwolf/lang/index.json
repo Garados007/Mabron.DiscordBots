@@ -2,6 +2,10 @@
     "languages": {
         "de": "Deutsch"
     },
+    "icons": {
+        "de": "de",
+        "en": "gb"
+    },
     "themes": {
         "Mabron.DiscordBots.Games.Werwolf.Themes.Default.DefaultTheme": {
             "default": {

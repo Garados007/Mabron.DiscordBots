@@ -12,6 +12,7 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Mabron.DiscordBots.Games.Werwolf
 {
@@ -57,6 +58,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                 searcher.Add(new HttpDocumentFinder.Rule("/content/", "../../../content/", false, true));
             else searcher.Add(new HttpDocumentFinder.Rule("/content/", "content/", false, true));
             server.AddWebService(searcher);
+            server.AddWebService(new SvgContent());
             server.AddWebService(new HttpDirectoryMapper(false));
             server.AddWebService(new DisallowRootAccess());
             server.AddWebService(new GameService());
@@ -154,12 +156,12 @@ namespace Mabron.DiscordBots.Games.Werwolf
                         fact.UrlConstant("stop"),
                         fact.MaxLength()
                     )),
-                RestActionEndpoint.Create<string, ulong>(KickUserAsync, "token", "user")
+                RestActionEndpoint.Create<string, ObjectId>(KickUserAsync, "token", "user")
                     .Add(fact.Location(
                         fact.UrlConstant("game"),
                         fact.UrlArgument("token"),
                         fact.UrlConstant("kick"),
-                        fact.UrlArgument<ulong>("user", ulong.TryParse),
+                        fact.UrlArgument<ObjectId>("user", TryParseObjectId),
                         fact.MaxLength()
                     )),
             });
@@ -167,6 +169,14 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
             // start
             server.Start();
+        }
+
+        public static bool TryParseObjectId(string value, out ObjectId id)
+        {
+            id = new ObjectId();
+            try { id = new ObjectId(value); }
+            catch { return false; }
+            return true;
         }
 
         public static void Stop()
@@ -209,7 +219,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
             if (result != null)
             {
                 var (game, user) = result.Value;
-                var ownRole = game.TryGetRole(user.DiscordId);
+                var ownRole = game.TryGetRole(user.Id);
 
                 writer.WriteStartObject("game");
 
@@ -225,6 +235,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                     writer.WriteStartObject("stage");
                     writer.WriteString("lang-id", game.Phase.Stage.LanguageId);
                     writer.WriteString("background-id", game.Phase.Stage.BackgroundId);
+                    writer.WriteString("theme", game.Phase.Stage.ColorTheme);
                     writer.WriteEndObject();
 
                     writer.WriteStartArray("voting"); // voting
@@ -297,22 +308,24 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
                 writer.WriteBoolean("leader-is-player", game.LeaderIsPlayer);
                 writer.WriteBoolean("dead-can-see-all-roles", game.DeadCanSeeAllRoles);
+                writer.WriteBoolean("all-can-see-role-of-dead", game.AllCanSeeRoleOfDead);
                 writer.WriteBoolean("autostart-votings", game.AutostartVotings);
                 writer.WriteBoolean("autofinish-votings", game.AutoFinishVotings);
                 writer.WriteBoolean("voting-timeout", game.UseVotingTimeouts);
                 writer.WriteBoolean("autofinish-rounds", game.AutoFinishRounds);
 
                 writer.WriteEndObject();
-                writer.WriteString("user", user.DiscordId.ToString());
+                writer.WriteString("user", user.Id.ToString());
 
                 var userConfig = Theme.User!.Query()
-                    .Where(x => x.DiscordId == user.DiscordId)
+                    .Where(x => x.Id == user.Id)
                     .FirstOrDefault();
                 if (userConfig != null)
                 {
                     writer.WriteStartObject("user-config");
                     writer.WriteString("theme", userConfig.ThemeColor ?? "#ffffff");
                     writer.WriteString("background", userConfig.BackgroundImage ?? "");
+                    writer.WriteString("language", userConfig.Language ?? "");
                     writer.WriteEndObject();
                 }
                 else writer.WriteNull("user-config");
@@ -354,6 +367,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                         Dictionary<Role, int>? newConfig = null;
                         var leaderIsPlayer = game.LeaderIsPlayer;
                         var deadCanSeeRoles = game.DeadCanSeeAllRoles;
+                        var allCanSeeRoleOfDead = game.AllCanSeeRoleOfDead;
                         var autostartVotings = game.AutostartVotings;
                         var autoFinishVotings = game.AutoFinishVotings;
                         var votingTimeout = game.UseVotingTimeouts;
@@ -361,7 +375,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
                         if (post.Parameter.TryGetValue("leader", out string? value))
                         {
-                            newLeader = ulong.Parse(value);
+                            newLeader = new ObjectId(value);
                             if (newLeader != game.Leader && !game.Participants.ContainsKey(newLeader))
                                 return "new leader is not a member of the group";
                         }
@@ -405,6 +419,11 @@ namespace Mabron.DiscordBots.Games.Werwolf
                         if (post.Parameter.TryGetValue("dead-can-see-all-roles", out value))
                         {
                             deadCanSeeRoles = bool.Parse(value);
+                        }
+
+                        if (post.Parameter.TryGetValue("all-can-see-role-of-dead", out value))
+                        {
+                            allCanSeeRoleOfDead = bool.Parse(value);
                         }
 
                         if (post.Parameter.TryGetValue("autostart-votings", out value))
@@ -457,6 +476,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                         }
                         game.LeaderIsPlayer = leaderIsPlayer;
                         game.DeadCanSeeAllRoles = deadCanSeeRoles;
+                        game.AllCanSeeRoleOfDead = allCanSeeRoleOfDead;
                         game.AutostartVotings = autostartVotings;
                         game.AutoFinishVotings = autoFinishVotings;
                         game.UseVotingTimeouts = votingTimeout;
@@ -470,7 +490,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                     return null;
                 }
 
-                if (user.DiscordId == game.Leader)
+                if (user.Id == game.Leader)
                 {
                     writer.WriteString("error", Set(game, user, post));
                 }
@@ -507,7 +527,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                 static string? Set(GameRoom game, GameUser user, UrlEncodedData post)
                 {
                     var userConfig = Theme.User!.Query()
-                        .Where(x => x.DiscordId == user.DiscordId)
+                        .Where(x => x.Id == user.Id)
                         .FirstOrDefault();
                     
                     if (userConfig == null)
@@ -517,6 +537,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                     {
                         var newTheme = userConfig.ThemeColor;
                         var newBackground = userConfig.BackgroundImage;
+                        var newLanguage = userConfig.Language;
 
                         if (post.Parameter.TryGetValue("theme", out string? value))
                         {
@@ -533,9 +554,18 @@ namespace Mabron.DiscordBots.Games.Werwolf
                             newBackground = value;
                         }
 
+                        if (post.Parameter.TryGetValue("language", out value))
+                        {
+                            var check = new Regex("^[\\w\\-]{0,10}$");
+                            if (!check.IsMatch(value))
+                                return "invalid language";
+                            newLanguage = value;
+                        }
+
                         // input is valid use the new data
                         userConfig.ThemeColor = newTheme;
                         userConfig.BackgroundImage = newBackground;
+                        userConfig.Language = newLanguage;
                         Theme.User.Update(userConfig);
                     }
                     catch (Exception e)
@@ -575,7 +605,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                     return "token not found";
 
                 var (game, user) = result.Value;
-                if (user.DiscordId != game.Leader)
+                if (user.Id != game.Leader)
                     return "you are not the leader of the group";
 
                 if (game.Phase != null)
@@ -626,7 +656,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                     return "token not found";
 
                 var (game, user) = result.Value;
-                if (user.DiscordId != game.Leader)
+                if (user.Id != game.Leader)
                     return "you are not the leader of the group";
 
                 if (game.LeaderIsPlayer)
@@ -675,7 +705,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                 if (voting == null)
                     return "no voting exists";
 
-                if (!game.Participants.TryGetValue(user.DiscordId, out Role? ownRole))
+                if (!game.Participants.TryGetValue(user.Id, out Role? ownRole))
                     ownRole = null;
                 if (ownRole == null || !voting.CanVote(ownRole))
                     return "you are not allowed to vote";
@@ -683,7 +713,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                 if (!voting.Started)
                     return "voting is not started";
                 
-                return voting.Vote(game, user.DiscordId, id);
+                return voting.Vote(game, user.Id, id);
             }
             writer.WriteString("error", Do(writer, token, id, vid));
 
@@ -714,9 +744,9 @@ namespace Mabron.DiscordBots.Games.Werwolf
                 if (voting == null)
                     return "no voting exists";
 
-                if (!game.Participants.TryGetValue(user.DiscordId, out Role? ownRole))
+                if (!game.Participants.TryGetValue(user.Id, out Role? ownRole))
                     ownRole = null;
-                if ((user.DiscordId != game.Leader || game.LeaderIsPlayer) 
+                if ((user.Id != game.Leader || game.LeaderIsPlayer) 
                     && (ownRole == null || !voting.CanVote(ownRole)))
                     return "you are not allowed to vote";
 
@@ -755,7 +785,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                     return "token not found";
 
                 var (game, user) = result.Value;
-                if (user.DiscordId != game.Leader)
+                if (user.Id != game.Leader)
                     return "you are not the leader of the group";
 
                 if (game.LeaderIsPlayer)
@@ -796,7 +826,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                     return "token not found";
 
                 var (game, user) = result.Value;
-                if (user.DiscordId != game.Leader)
+                if (user.Id != game.Leader)
                     return "you are not the leader of the group";
 
                 if (game.Phase == null)
@@ -830,7 +860,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                     return "token not found";
 
                 var (game, user) = result.Value;
-                if (user.DiscordId != game.Leader)
+                if (user.Id != game.Leader)
                     return "you are not the leader of the group";
 
                 if (game.Phase == null)
@@ -851,20 +881,20 @@ namespace Mabron.DiscordBots.Games.Werwolf
             };
         }
 
-        public static async Task<HttpDataSource> KickUserAsync(string token, ulong user)
+        public static async Task<HttpDataSource> KickUserAsync(string token, ObjectId user)
         {
             var stream = new MemoryStream();
             var writer = new Utf8JsonWriter(stream);
             writer.WriteStartObject();
 
-            static string? Do(string token, ulong userId)
+            static string? Do(string token, ObjectId userId)
             {
                 var result = GameController.Current.GetFromToken(token);
                 if (result == null)
                     return "token not found";
 
                 var (game, user) = result.Value;
-                if (user.DiscordId != game.Leader)
+                if (user.Id != game.Leader)
                     return "you are not the leader of the group";
 
                 if (!game.Participants.ContainsKey(userId))

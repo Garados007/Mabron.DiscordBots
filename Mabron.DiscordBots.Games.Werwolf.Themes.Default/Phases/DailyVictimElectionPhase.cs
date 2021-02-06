@@ -1,4 +1,5 @@
-﻿using Mabron.DiscordBots.Games.Werwolf.Phases;
+﻿using LiteDB;
+using Mabron.DiscordBots.Games.Werwolf.Phases;
 using Mabron.DiscordBots.Games.Werwolf.Votings;
 using System;
 using System.Collections.Generic;
@@ -12,7 +13,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
         {
             readonly HashSet<Role>? allowedVoter = null;
 
-            public DailyVote(GameRoom game, IEnumerable<ulong>? participants = null) 
+            public DailyVote(GameRoom game, IEnumerable<ObjectId>? participants = null) 
                 : base(game, participants)
             {
                 // check if scape goat phase
@@ -43,7 +44,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
                 return voter.IsAlive && (!(voter is Roles.Idiot idiot) || !idiot.IsRevealed);
             }
 
-            public override void Execute(GameRoom game, ulong id, Role role)
+            public override void Execute(GameRoom game, ObjectId id, Role role)
             {
                 if (role is Roles.Idiot idiot)
                 {
@@ -56,7 +57,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
                     if (oldManKilled)
                     {
                         idiot.IsRevealed = false;
-                        idiot.RealKill(game, "village-kill", out _);
+                        idiot.SetKill(game, new KillInfos.VillageKill());
                     }
                     return;
                 }
@@ -64,15 +65,13 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
                 {
                     oldMan.WasKilledByVillager = true;
                 }
-                if (role is BaseRole baseRole)
-                    baseRole.RealKill(game, "village-kill", out _);
-                else role.Kill(game);
+                role.SetKill(game, new KillInfos.VillageKill());
             }
         }
 
         public class MajorPick : PlayerVotingBase
         {
-            public MajorPick(GameRoom game, IEnumerable<ulong>? participants = null) 
+            public MajorPick(GameRoom game, IEnumerable<ObjectId>? participants = null) 
                 : base(game, participants)
             {
             }
@@ -87,11 +86,9 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
                 return voter.IsMajor && voter.IsAlive;
             }
 
-            public override void Execute(GameRoom game, ulong id, Role role)
+            public override void Execute(GameRoom game, ObjectId id, Role role)
             {
-                if (role is BaseRole baseRole)
-                    baseRole.RealKill(game, "killed-by-major", out _);
-                else role.Kill(game);
+                role.SetKill(game, new KillInfos.KilledByMajor());
             }
         }
 
@@ -122,7 +119,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
                             {
                                 // kill the scape goat and end the voting
                                 scapeGoat.WasKilledByVillage = true;
-                                scapeGoat.RealKill(game, "scapegoat-kill", out _);
+                                scapeGoat.SetKill(game, new KillInfos.ScapeGoatKilled());
                             }
                     }
                     else if (hasMajor)

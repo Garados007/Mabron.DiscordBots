@@ -1,4 +1,5 @@
-﻿using Mabron.DiscordBots.Games.Werwolf.Votings;
+﻿using LiteDB;
+using Mabron.DiscordBots.Games.Werwolf.Votings;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -11,7 +12,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Phases
         protected sealed override TVoting Create(TRole role, GameRoom game)
             => Create(role, game, null);
 
-        protected abstract TVoting Create(TRole role, GameRoom game, IEnumerable<ulong>? ids = null);
+        protected abstract TVoting Create(TRole role, GameRoom game, IEnumerable<ObjectId>? ids = null);
 
         // this should never be used but here is the code
         public override void ExecuteMultipleWinner(Voting voting, GameRoom game)

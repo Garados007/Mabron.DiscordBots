@@ -34,14 +34,27 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default
         {
             // init stages
             var nightStage = new Stages.NightStage();
+            var morningStage = new Stages.MorningStage();
             var dayStage = new Stages.DayStage();
+            var afternoonStage = new Stages.AfternoonStage();
 
             // build phases
             var phases = new PhaseFlowBuilder();
             static IEnumerable<Phase> KillHandling()
             {
+                // remove flags if possible
+                yield return new Phases.KillFlagWerwolfVictimAction();
+                // transition and execute special actions
+                yield return new Werwolf.Phases.KillTransitionToAboutToKillAction();
+                // transition to prepare special phases
+                yield return new Werwolf.Phases.KillTransitionToBeforeKillAction();
+                // special phases
                 yield return new Phases.HunterPhase();
+                yield return new Phases.ScapeGoatPhase();
                 yield return new Phases.InheritMajorPhase();
+                // lastly kill and check for game end
+                yield return new Werwolf.Phases.KillTransitionToKilledAction();
+                yield return new Werwolf.Phases.CheckWinConditionAction();
             }
 
             // add init phases
@@ -60,11 +73,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default
             });
 
             // add kill handling
-            phases.Add(new Phase[]
-            {
-                new Phases.KillWerwolfVictimAction(),
-                new Phases.KillNightVictimsAction(),
-            });
+            phases.Add(morningStage);
             phases.Add(KillHandling);
 
             // add day phases
@@ -76,10 +85,10 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default
             });
 
             // add kill handling
+            phases.Add(afternoonStage);
             phases.Add(new Phase[]
             {
                 new Phases.ScapeGoatResetAction(),
-                new Phases.ScapeGoatPhase(),
             });
             phases.Add(KillHandling);
 
@@ -94,7 +103,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default
 
         static bool OnlyLovedOnes(GameRoom game, [NotNullWhen(true)] out ReadOnlyMemory<Role>? winner)
         {
-            foreach (var player in game.AliveRoles)
+            foreach (var player in game.NotKilledRoles)
                 if (player is BaseRole baseRole && !baseRole.IsLoved)
                 {
                     winner = null;
@@ -106,7 +115,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default
 
         static bool OnlyEnchanted(GameRoom game, [NotNullWhen(true)] out ReadOnlyMemory<Role>? winner)
         {
-            foreach (var player in game.AliveRoles)
+            foreach (var player in game.NotKilledRoles)
                 if (player is BaseRole baseRole && !(baseRole.IsEnchantedByFlutist || player is Roles.Flutist))
                 {
                     winner = null;

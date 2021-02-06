@@ -41,13 +41,12 @@ namespace Mabron.DiscordBots.Games.Werwolf
             
             PhaseFlow.Step? firstConsecutive = null;
             PhaseFlow.Step? last = null;
-            Stage? firstC = null;
-            Stage? stage;
+            Stage? stage = null;
             foreach (var stagePhase in consecutivePhases)
             {
-                if (stagePhase.TryPickT0(out stage, out Phase phase))
+                if (stagePhase.TryPickT0(out Stage stage_, out Phase phase))
                 {
-                    firstC ??= stage;
+                    stage = stage_;
                     continue;
                 }
                 if (stage == null)
@@ -63,12 +62,12 @@ namespace Mabron.DiscordBots.Games.Werwolf
             
             PhaseFlow.Step? firstInit = null;
             last = null;
-            Stage? firstI = null;
+            stage = null;
             foreach (var stagePhase in initOnlyPhases)
             {
-                if (stagePhase.TryPickT0(out stage, out Phase phase))
+                if (stagePhase.TryPickT0(out Stage stage_, out Phase phase))
                 {
-                    firstI ??= stage;
+                    stage = stage_;
                     continue;
                 }
                 if (stage == null)
@@ -83,9 +82,8 @@ namespace Mabron.DiscordBots.Games.Werwolf
                 last.Next = firstConsecutive;
             
             var init = firstInit ?? firstConsecutive;
-            stage = firstI ?? firstC;
             if (init != null && stage != null)
-                return new PhaseFlow(stage, init);
+                return new PhaseFlow(init);
             else return null;
         }
     }

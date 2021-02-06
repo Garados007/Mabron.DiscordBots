@@ -9,19 +9,6 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default
         {
         }
 
-        private bool isSelectedByWerewolves = false;
-        public bool IsSelectedByWerewolves
-        {
-            get => isSelectedByWerewolves;
-            set
-            {
-                isSelectedByWerewolves = value;
-                SendRoleInfoChanged();
-            }
-        }
-
-        public bool IsAboutToBeKilled { get; private set; } = false;
-
         public bool IsSelectedByHealer { get; set; } = false;
 
         private bool isViewedByOracle = false;
@@ -65,8 +52,6 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default
                 yield return tag;
             if (IsLoved && (viewer == this || viewer == null || ViewLoved(viewer)))
                 yield return "loved";
-            if (IsSelectedByWerewolves && (viewer == null || viewer is Roles.Witch))
-                yield return "werwolf-select";
             if (IsEnchantedByFlutist && (viewer == null || viewer is Roles.Flutist || (viewer is BaseRole baseRole && baseRole.IsEnchantedByFlutist)))
                 yield return "enchant-flutist";
         }
@@ -87,40 +72,40 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default
             return false;
         }
 
-        public override void Kill(GameRoom game)
-            => Kill(game, true);
+        //public override void Kill(GameRoom game)
+        //    => Kill(game, true);
 
-        private void Kill(GameRoom game, bool checkLoved)
-        {
-            IsAboutToBeKilled = true;
-            if (IsLoved && checkLoved)
-                foreach (var role in game.AliveRoles)
-                    if (role is BaseRole baseRole && baseRole.IsLoved)
-                        baseRole.Kill(game, false);
-        }
+        //private void Kill(GameRoom game, bool checkLoved)
+        //{
+        //    IsAboutToBeKilled = true;
+        //    if (IsLoved && checkLoved)
+        //        foreach (var role in game.AliveRoles)
+        //            if (role is BaseRole baseRole && baseRole.IsLoved)
+        //                baseRole.Kill(game, false);
+        //}
 
-        private void RealKill(GameRoom game)
-            => base.Kill(game);
+        //private void RealKill(GameRoom game)
+        //    => base.Kill(game);
 
-        public void RealKill(GameRoom game, string? notificationId, out IEnumerable<ulong> victims)
-        {
-            var victims_ = new HashSet<ulong>();
-            ulong? id;
-            if ((id = game.TryGetId(this)) != null)
-                victims_.Add(id.Value);
-            if (IsLoved)
-                foreach (var (pid, role) in game.Participants)
-                    if (role is BaseRole baseRole && baseRole.IsLoved)
-                    {
-                        victims_.Add(pid);
-                        baseRole.RealKill(game);
-                        baseRole.IsAboutToBeKilled = false;
-                    }
-            IsAboutToBeKilled = false;
-            base.Kill(game);
-            if (notificationId != null)
-                game.SendEvent(new Events.PlayerNotification(notificationId, victims_.ToArray()));
-            victims = victims_;
-        }
+        //public void RealKill(GameRoom game, string? notificationId, out IEnumerable<ulong> victims)
+        //{
+        //    var victims_ = new HashSet<ulong>();
+        //    ulong? id;
+        //    if ((id = game.TryGetId(this)) != null)
+        //        victims_.Add(id.Value);
+        //    if (IsLoved)
+        //        foreach (var (pid, role) in game.Participants)
+        //            if (role is BaseRole baseRole && baseRole.IsLoved)
+        //            {
+        //                victims_.Add(pid);
+        //                baseRole.RealKill(game);
+        //                baseRole.IsAboutToBeKilled = false;
+        //            }
+        //    IsAboutToBeKilled = false;
+        //    base.Kill(game);
+        //    if (notificationId != null)
+        //        game.SendEvent(new Events.PlayerNotification(notificationId, victims_.ToArray()));
+        //    victims = victims_;
+        //}
     }
 }

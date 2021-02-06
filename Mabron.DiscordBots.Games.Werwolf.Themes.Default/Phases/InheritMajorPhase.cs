@@ -1,4 +1,5 @@
-﻿using Mabron.DiscordBots.Games.Werwolf.Phases;
+﻿using LiteDB;
+using Mabron.DiscordBots.Games.Werwolf.Phases;
 using Mabron.DiscordBots.Games.Werwolf.Votings;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +10,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
     {
         public class InheritMajor : PlayerVotingBase
         {
-            public InheritMajor(GameRoom game, IEnumerable<ulong>? participants = null) 
+            public InheritMajor(GameRoom game, IEnumerable<ObjectId>? participants = null) 
                 : base(game, participants)
             {
             }
@@ -29,7 +30,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
                 return voter.IsMajor && !voter.IsAlive;
             }
 
-            public override void Execute(GameRoom game, ulong id, Role role)
+            public override void Execute(GameRoom game, ObjectId id, Role role)
             {
                 foreach (var entry in game.Participants.Values)
                     if (entry != null)
@@ -49,7 +50,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
                 .Any();
         }
 
-        protected override InheritMajor Create(GameRoom game, IEnumerable<ulong>? ids = null)
+        protected override InheritMajor Create(GameRoom game, IEnumerable<ObjectId>? ids = null)
             => new InheritMajor(game, ids);
     }
 }

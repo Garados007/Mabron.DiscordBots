@@ -1,12 +1,13 @@
+using LiteDB;
 using System.Text.Json;
 
 namespace Mabron.DiscordBots.Games.Werwolf.Events
 {
     public class OnLeaderChanged : GameEvent
     {
-        public ulong Leader { get; }
+        public ObjectId Leader { get; }
 
-        public OnLeaderChanged(ulong leader)
+        public OnLeaderChanged(ObjectId leader)
             => Leader = leader;
 
         public override bool CanSendTo(GameRoom game, GameUser user)

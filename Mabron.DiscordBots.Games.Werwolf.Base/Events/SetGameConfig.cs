@@ -18,6 +18,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Events
 
             writer.WriteBoolean("leader-is-player", game.LeaderIsPlayer);
             writer.WriteBoolean("dead-can-see-all-roles", game.DeadCanSeeAllRoles);
+            writer.WriteBoolean("all-can-see-role-of-dead", game.AllCanSeeRoleOfDead);
             writer.WriteBoolean("autostart-votings", game.AutostartVotings);
             writer.WriteBoolean("autofinish-votings", game.AutoFinishVotings);
             writer.WriteBoolean("voting-timeout", game.UseVotingTimeouts);

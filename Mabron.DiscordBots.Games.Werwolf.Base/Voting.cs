@@ -1,4 +1,5 @@
-﻿using System;
+﻿using LiteDB;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
@@ -138,7 +139,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
         public abstract void Execute(GameRoom game, int id);
 
-        public virtual string? Vote(GameRoom game, ulong voter, int id)
+        public virtual string? Vote(GameRoom game, ObjectId voter, int id)
         {
             if (Options.Any(x => x.option.Users.Contains(voter)))
                 return "already voted";
@@ -162,7 +163,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
             return null;
         }
 
-        protected virtual string? Vote(GameRoom game, ulong voter, VoteOption option)
+        protected virtual string? Vote(GameRoom game, ObjectId voter, VoteOption option)
         {
             option.Users.Add(voter);
             return null;
@@ -179,7 +180,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
         public static bool CanViewVoting(GameRoom game, GameUser user, Role? ownRole, Voting voting)
         {
-            if (game.Leader == user.DiscordId && !game.LeaderIsPlayer)
+            if (game.Leader == user.Id && !game.LeaderIsPlayer)
                 return true;
             if (ownRole == null)
                 return false;
@@ -188,7 +189,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
         public void WriteToJson(Utf8JsonWriter writer, GameRoom game, GameUser user)
         {
-            var ownRole = game.TryGetRole(user.DiscordId);
+            var ownRole = game.TryGetRole(user.Id);
             writer.WriteStartObject(); // {}
             writer.WriteString("id", Id.ToString());
             writer.WriteString("lang-id", LanguageId);
@@ -202,7 +203,11 @@ namespace Mabron.DiscordBots.Games.Werwolf
             foreach (var (id, option) in Options)
             {
                 writer.WriteStartObject(id.ToString()); // id
-                writer.WriteString("name", option.Name);
+                writer.WriteString("lang-id", option.LangId);
+                writer.WriteStartObject("vars");
+                foreach (var (key, value) in option.Vars)
+                    writer.WriteString(key, value);
+                writer.WriteEndObject();
                 writer.WriteStartArray("user");
                 foreach (var vuser in option.Users)
                     writer.WriteStringValue(vuser.ToString());

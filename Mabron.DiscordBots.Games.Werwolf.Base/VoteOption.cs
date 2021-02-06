@@ -1,16 +1,30 @@
-﻿using System.Collections.Concurrent;
+﻿using LiteDB;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 
 namespace Mabron.DiscordBots.Games.Werwolf
 {
     public class VoteOption
     {
-        public string Name { get; }
+        public string LangId { get; }
 
-        public ConcurrentBag<ulong> Users { get; }
-            = new ConcurrentBag<ulong>();
+        public Dictionary<string, string> Vars { get; }
 
-        public VoteOption(string name)
-            => Name = name;
+        public ConcurrentBag<ObjectId> Users { get; }
+            = new ConcurrentBag<ObjectId>();
+
+        public VoteOption(string langId, params (string key, string value)[] vars)
+        {
+            LangId = langId;
+            Vars = new Dictionary<string, string>();
+            foreach (var (key, value) in vars)
+                Vars.Add(key, value);
+        }
+
+        public VoteOption(string langId, Dictionary<string, string> vars)
+        {
+            LangId = langId;
+            Vars = vars;
+        }
     }
 }

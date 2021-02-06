@@ -1,12 +1,13 @@
+using LiteDB;
 using System.Text.Json;
 
 namespace Mabron.DiscordBots.Games.Werwolf.Events
 {
     public class RemoveParticipant : GameEvent
     {
-        public ulong UserId { get; }
+        public ObjectId UserId { get; }
 
-        public RemoveParticipant(ulong userId)
+        public RemoveParticipant(ObjectId userId)
             => UserId = userId;
 
         public override bool CanSendTo(GameRoom game, GameUser user)

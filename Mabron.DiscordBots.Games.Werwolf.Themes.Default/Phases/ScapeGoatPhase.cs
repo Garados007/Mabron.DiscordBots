@@ -1,4 +1,5 @@
-﻿using Mabron.DiscordBots.Games.Werwolf.Phases;
+﻿using LiteDB;
+using Mabron.DiscordBots.Games.Werwolf.Phases;
 using Mabron.DiscordBots.Games.Werwolf.Themes.Default.Roles;
 using Mabron.DiscordBots.Games.Werwolf.Votings;
 using System.Collections.Generic;
@@ -12,7 +13,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
         {
             public ScapeGoat ScapeGoat { get; }
 
-            public ScapeGoatSelect(ScapeGoat scapeGoat, GameRoom game, IEnumerable<ulong>? participants = null) 
+            public ScapeGoatSelect(ScapeGoat scapeGoat, GameRoom game, IEnumerable<ObjectId>? participants = null) 
                 : base(game, participants)
             {
                 ScapeGoat = scapeGoat;
@@ -20,7 +21,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
 
             protected override bool AllowDoNothingOption => true;
 
-            protected override string DoNothingOptionText => "Abstimmung beenden";
+            protected override string DoNothingOptionTextId => "stop-voting";
 
             private bool CanFinishVoting = false;
 
@@ -34,7 +35,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
                 return voter == ScapeGoat;
             }
 
-            public override void Execute(GameRoom game, ulong id, Role role)
+            public override void Execute(GameRoom game, ObjectId id, Role role)
             {
                 if (role is BaseRole baseRole)
                 {
@@ -47,7 +48,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
                 return CanFinishVoting ? 0 : 1;
             }
 
-            public override string? Vote(GameRoom game, ulong voter, int id)
+            public override string? Vote(GameRoom game, ObjectId voter, int id)
             {
                 if (CanFinishVoting)
                     return "You already select finish";
@@ -89,7 +90,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
                 !game.Participants.Values.Where(x => x is OldMan oldMan && oldMan.WasKilledByVillager).Any();
         }
 
-        protected override ScapeGoatSelect Create(ScapeGoat role, GameRoom game, IEnumerable<ulong>? ids = null)
+        protected override ScapeGoatSelect Create(ScapeGoat role, GameRoom game, IEnumerable<ObjectId>? ids = null)
             => new ScapeGoatSelect(role, game, ids);
 
         protected override bool FilterVoter(ScapeGoat role)

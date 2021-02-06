@@ -3,6 +3,7 @@ using System.Threading;
 using System.Collections.Generic;
 using System;
 using System.Collections.Concurrent;
+using LiteDB;
 
 namespace Mabron.DiscordBots.Games.Werwolf
 {
@@ -26,7 +27,8 @@ namespace Mabron.DiscordBots.Games.Werwolf
             int id;
             while (rooms.ContainsKey(id = r.Next())) ;
 #if ROOM_ID_1
-            id = 1;
+            // this is a magic value that results in a "Test_" url
+            id = unchecked((int)0xfb_2d_eb_4d);
 #endif
             var room = new GameRoom(id, leader);
             room.Theme = new Themes.Default.DefaultTheme(room);
@@ -44,23 +46,23 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
         public string GetUserToken(GameRoom game, GameUser user)
         {
-            ReadOnlySpan<byte> b1 = BitConverter.GetBytes(game.Id);
-            ReadOnlySpan<byte> b2 = BitConverter.GetBytes(user.DiscordId);
-            Span<byte> rb = stackalloc byte[12];
+            ReadOnlySpan<byte> b1 = BitConverter.GetBytes(game.Id); // 4 B
+            ReadOnlySpan<byte> b2 = user.Id.ToByteArray(); // 12 B
+            Span<byte> rb = stackalloc byte[16];
             b1.CopyTo(rb[0 .. 4]);
-            b2.CopyTo(rb[4 .. 12]);
-            return Convert.ToBase64String(rb).Replace('/', '-').Replace('+', '_');
+            b2.CopyTo(rb[4 .. 16]);
+            return Convert.ToBase64String(rb).Replace('/', '-').Replace('+', '_').TrimEnd('=');
         }
 
         public (GameRoom game, GameUser user)? GetFromToken(string token)
         {
-            token = token.Replace('-', '/').Replace('_', '+');
-            Span<byte> bytes = stackalloc byte[12];
-            if (!Convert.TryFromBase64String(token, bytes, out int bytesWritten) || bytesWritten != 12)
+            token = token.Replace('-', '/').Replace('_', '+') + "==";
+            Span<byte> bytes = stackalloc byte[16];
+            if (!Convert.TryFromBase64String(token, bytes, out int bytesWritten) || bytesWritten != 16)
                 return null;
 
             int gameId = BitConverter.ToInt32(bytes[0 .. 4]);
-            ulong userId = BitConverter.ToUInt64(bytes[4 .. 12]);
+            ObjectId userId = new ObjectId(bytes[4..16].ToArray());
             var game = GetGame(gameId);
             if (game == null)
                 return null;

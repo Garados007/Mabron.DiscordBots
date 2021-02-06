@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using LiteDB;
+using System.Text.Json;
 
 namespace Mabron.DiscordBots.Games.Werwolf.Events
 {
@@ -8,18 +9,20 @@ namespace Mabron.DiscordBots.Games.Werwolf.Events
 
         public uint? ExecutionRound { get; }
 
-        public OnRoleInfoChanged(Role role, uint? executionRound = null)
-            => (Role, ExecutionRound) = (role, executionRound);
+        public ObjectId? Target { get; }
+
+        public OnRoleInfoChanged(Role role, uint? executionRound = null, ObjectId? target = null)
+            => (Role, ExecutionRound, Target) = (role, executionRound, target);
 
         public override bool CanSendTo(GameRoom game, GameUser user)
-            => true;
+            => Target == null || Target == user.Id;
 
         public override void WriteContent(Utf8JsonWriter writer, GameRoom game, GameUser user)
         {
             var id = game.TryGetId(Role);
-            var ownRole = game.TryGetRole(user.DiscordId);
+            var ownRole = game.TryGetRole(user.Id);
             var seenRole = id != null ?
-                Role.GetSeenRole(game, ExecutionRound, user, id.Value, Role) : null;
+                Role.GetSeenRole(game, ExecutionRound, user, id, Role) : null;
             writer.WriteString("id", id?.ToString());
             writer.WriteStartArray("tags");
             foreach (var tag in Role.GetSeenTags(game, user, ownRole, Role))

@@ -17,13 +17,13 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Roles
         public override Role CreateNew()
             => new OldMan(Theme);
 
-        public override void Kill(GameRoom game)
+        public override void ChangeToAboutToKill(GameRoom game)
         {
-            base.Kill(game);
+            base.ChangeToAboutToKill(game);
             var idiots = game.AliveRoles
                 .Where(x => x is Idiot idiot && idiot.IsRevealed);
             foreach (var idiot in idiots)
-                idiot.Kill(game);
+                idiot.SetKill(game, new KillInfos.OldManKillsIdiot());
         }
     }
 }

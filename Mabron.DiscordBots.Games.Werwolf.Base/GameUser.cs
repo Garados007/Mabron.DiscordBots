@@ -8,7 +8,14 @@ namespace Mabron.DiscordBots.Games.Werwolf
     {
         public ObjectId Id { get; set; } = new ObjectId();
 
-        public ulong DiscordId { get; set; }
+        public UserId UserId { get; set; }
+                
+        [BsonIgnore, Obsolete]
+        public ulong DiscordId
+        {
+            get => UserId.Id;
+            set => UserId = new UserId(UserId.Source, value);
+        }
 
         public string Username { get; set; } = "";
 
@@ -17,6 +24,8 @@ namespace Mabron.DiscordBots.Games.Werwolf
         public string ThemeColor { get; set; } = "#ffffff";
 
         public string BackgroundImage { get; set; } = "";
+
+        public string Language { get; set; } = "";
 
         // Stats
 
@@ -37,8 +46,9 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
         public static GameUser Create(IUser user)
         {
+            var userId = new UserId(UserIdSource.Discord, user.Id);
             var gameUser = Theme.User!.Query()
-                .Where(x => x.DiscordId == user.Id)
+                .Where(x => x.UserId == userId)
                 .FirstOrDefault();
             if (gameUser != null)
             {
@@ -49,7 +59,11 @@ namespace Mabron.DiscordBots.Games.Werwolf
             }
             gameUser = new GameUser
             {
-                DiscordId = user.Id,
+                UserId = new UserId
+                {
+                    Source = UserIdSource.Discord,
+                    Id = user.Id,
+                },
                 Username = user.Username,
                 Image = user.GetAvatarUrl() ?? user.GetDefaultAvatarUrl() ?? ""
             };
@@ -57,11 +71,59 @@ namespace Mabron.DiscordBots.Games.Werwolf
             return gameUser;
         }
 
-        public static GameUser? Get(ulong id)
+        public static GameUser? Get(UserIdSource userIdSource, ulong id)
         {
+            var userId = new UserId(userIdSource, id);
             return Theme.User!.Query()
-                .Where(x => x.DiscordId == id)
+                .Where(x => x.UserId == userId)
                 .FirstOrDefault();
         }
+    }
+
+    public struct UserId : IEquatable<UserId>
+    {
+        public UserIdSource Source { get; set; }
+
+        public ulong Id { get; set; }
+
+        //public UserId() { }
+
+        public UserId(UserIdSource source, ulong id)
+        {
+            Source = source;
+            Id = id;
+        }
+
+        public override bool Equals(object? obj)
+        {
+            return obj is UserId id && Equals(id);
+        }
+
+        public bool Equals(UserId other)
+        {
+            return Source == other.Source &&
+                   Id == other.Id;
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(Source, Id);
+        }
+
+        public static bool operator ==(UserId left, UserId right)
+        {
+            return left.Equals(right);
+        }
+
+        public static bool operator !=(UserId left, UserId right)
+        {
+            return !(left == right);
+        }
+    }
+
+    public enum UserIdSource : byte
+    {
+        Discord = 0,
+        Temporary = 255,
     }
 }

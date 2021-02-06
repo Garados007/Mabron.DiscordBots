@@ -45,6 +45,7 @@ type alias Game =
     , config: Dict String Int
     , leaderIsPlayer: Bool
     , deadCanSeeAllRoles: Bool
+    , allCanSeeRoleOfDead: Bool
     , autostartVotings: Bool
     , autofinishVotings: Bool
     , votingTimeout: Bool
@@ -60,6 +61,7 @@ type alias GamePhase =
 type alias GameStage =
     { langId: String
     , backgroundId: String
+    , theme: String
     }
 
 type alias GameVoting =
@@ -73,7 +75,8 @@ type alias GameVoting =
     }
 
 type alias GameVotingOption =
-    { name: String
+    { langId: String
+    , vars: Dict String String
     , user: List String
     }
 
@@ -99,6 +102,7 @@ type alias GameUserStats =
 type alias UserConfig =
     { theme: String
     , background: String
+    , language: String
     }
 
 decodeGameUserResult : Decoder GameUserResult
@@ -114,6 +118,7 @@ decodeGameUserResult =
                             ( JD.succeed GameStage
                                 |> required "lang-id" JD.string
                                 |> required "background-id" JD.string
+                                |> required "theme" JD.string
                             )
                         |> required "voting"
                             (JD.succeed GameVoting
@@ -126,7 +131,8 @@ decodeGameUserResult =
                                     (JD.nullable Iso8601.decoder)
                                 |> required "options"
                                     (JD.succeed GameVotingOption
-                                        |> required "name" JD.string
+                                        |> required "lang-id" JD.string
+                                        |> required "vars" (JD.dict JD.string)
                                         |> required "user" (JD.list JD.string)
                                         |> JD.dict
                                     )
@@ -166,6 +172,7 @@ decodeGameUserResult =
                 |> required "config" (JD.dict JD.int)
                 |> required "leader-is-player" JD.bool
                 |> required "dead-can-see-all-roles" JD.bool
+                |> required "all-can-see-role-of-dead" JD.bool
                 |> required "autostart-votings" JD.bool
                 |> required "autofinish-votings" JD.bool
                 |> required "voting-timeout" JD.bool
@@ -177,6 +184,7 @@ decodeGameUserResult =
             ( JD.succeed UserConfig
                 |> required "theme" JD.string
                 |> required "background" JD.string
+                |> required "language" JD.string
                 |> JD.nullable
             )
 

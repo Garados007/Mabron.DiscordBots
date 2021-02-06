@@ -17,6 +17,15 @@ namespace Mabron.DiscordBots.Games.Werwolf
             }
         }
 
+        private sealed class InitialStage : Stage
+        {
+            public override string LanguageId => "";
+
+            public override string BackgroundId => "";
+
+            public override string ColorTheme => "";
+        }
+
         public sealed class Step
         {
             public Phase Phase { get; }
@@ -39,8 +48,8 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
         public Stage Stage => CurrentStep.Stage;
 
-        internal PhaseFlow(Stage stage, Step step)
-            => InitialStep = CurrentStep = new Step(stage, new InitialPhase(), false)
+        internal PhaseFlow(Step step)
+            => InitialStep = CurrentStep = new Step(new InitialStage(), new InitialPhase(), false)
             {
                 Next = step
             };

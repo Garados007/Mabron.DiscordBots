@@ -12,8 +12,18 @@ namespace Mabron.DiscordBots.Games.Werwolf
         public static void SetupDB()
         {
             database = new LiteDatabase("game.werwolf.litedb");
+            if (database.UserVersion == 0)
+            {
+                var user = database.GetCollection<GameUser>("user");
+                user.DropIndex("DiscordId");
+                user.UpdateMany(
+                    BsonExpression.Create("{UserId:{Source:\"Discord\",_id:$.DiscordId}}"),
+                    BsonExpression.Create("1=1")
+                );
+                database.UserVersion = 1;
+            }
             User = database.GetCollection<GameUser>("user");
-            User.EnsureIndex(x => x.DiscordId, true);
+            User.EnsureIndex(x => x.UserId, true);
         }
 
         public abstract Role GetBasicRole();
