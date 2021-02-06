@@ -38,7 +38,6 @@ type alias Model =
     , langInfo: LanguageInfo
     , rootLang: Dict String Language
     , themeLangs: Dict Language.ThemeKey Language
-    , theme: Maybe (String, String)
     , events: List (Bool,String)
     , styles: Styles
     }
@@ -79,7 +78,6 @@ init token key =
         }
     , rootLang = Dict.empty
     , themeLangs = Dict.empty
-    , theme = Nothing
     , events = []
     , styles = Styles.init
     }
@@ -110,7 +108,9 @@ getLanguage model =
                 model.themeLangs
             <| Maybe.andThen
                 (\x -> Maybe.map (Language.toThemeKey x) lang)
-                model.theme
+            <| Maybe.map .theme
+            <| Maybe.andThen .game
+            <| model.game
     in Language.alternate themeLang rootLang
     
 applyResponse : NetworkResponse -> Model -> (Model, List Network.NetworkRequest)
@@ -173,14 +173,20 @@ applyResponse response model =
             <| case Maybe.map .language game.userConfig of
                 Nothing -> []
                 Just l ->
-                    if Dict.member l model.rootLang
-                    then []
-                    else List.filterMap identity
-                        [ Just <| Network.GetRootLang l
-                        , Maybe.map Network.GetLang
+                    List.filterMap identity
+                        [ if Dict.member l model.rootLang
+                            then Nothing
+                            else Just <| Network.GetRootLang l
+                        , Maybe.andThen
+                            (\key ->
+                                if Dict.member key model.themeLangs
+                                then Nothing
+                                else Just <| Network.GetLang key
+                            )
                             <| Maybe.map
                                 (\x -> Language.toThemeKey x l)
-                            <| model.theme
+                            <| Maybe.map .theme
+                            <| game.game
                         ]
         RespError error ->
             Tuple.pair
@@ -196,10 +202,10 @@ applyResponse response model =
             Tuple.pair
                 { model
                 | langInfo = info
-                , theme = 
-                    Maybe.map
-                        (\(v1, v2, _) -> (v1, v2))
-                    <| Language.firstTheme info
+                -- , theme = 
+                --     Maybe.map
+                --         (\(v1, v2, _) -> (v1, v2))
+                --     <| Language.firstTheme info
                 }
             <|  ( case Maybe.map Network.GetLang <| Language.firstTheme info of
                     Just x -> (::) x
@@ -431,9 +437,31 @@ applyEventData event model =
                 , autofinishVotings = newConfig.autofinishVotings
                 , votingTimeout = newConfig.votingTimeout
                 , autofinishRound = newConfig.autofinishRound
+                , theme = newConfig.theme
                 }
             }
-            []
+            <| Maybe.withDefault []
+            <| Maybe.map
+                (\game ->
+                    case Maybe.map .language game.userConfig of
+                        Nothing -> []
+                        Just l ->
+                            List.filterMap identity
+                                [ if Dict.member l model.rootLang
+                                    then Nothing
+                                    else Just <| Network.GetRootLang l
+                                , Maybe.andThen
+                                    (\key ->
+                                        if Dict.member key model.themeLangs
+                                        then Nothing
+                                        else Just <| Network.GetLang key
+                                    )
+                                    <| Maybe.map
+                                        (\x -> Language.toThemeKey x l)
+                                    <| Just newConfig.theme
+                                ]
+                )
+            <| model.game
         EventData.SetUserConfig newConfig -> Tuple.pair
             { model
             | game = Maybe.map
@@ -457,7 +485,9 @@ applyEventData event model =
                     , Maybe.map Network.GetLang
                         <| Maybe.map
                             (\x -> Language.toThemeKey x newConfig.language)
-                        <| model.theme
+                        <| Maybe.map .theme
+                        <| Maybe.andThen .game
+                        <| model.game
                     ]
         EventData.SetVotingTimeout vid timeout -> Tuple.pair 
             { model

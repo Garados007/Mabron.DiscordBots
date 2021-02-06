@@ -262,7 +262,7 @@ viewGameFrame model lang roles game user =
                 <| Views.ViewRoomEditor.view
                     lang
                     roles
-                    model.theme
+                    (Just game.theme)
                     game
                     (user == game.leader)
                     model.editor

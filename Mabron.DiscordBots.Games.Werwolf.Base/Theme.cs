@@ -9,6 +9,8 @@ namespace Mabron.DiscordBots.Games.Werwolf
         private static LiteDatabase? database;
         public static ILiteCollection<GameUser>? User { get; private set; }
 
+        public string LanguageTheme { get; set; } = "default";
+
         public static void SetupDB()
         {
             database = new LiteDatabase("game.werwolf.litedb");

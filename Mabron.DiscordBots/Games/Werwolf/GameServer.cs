@@ -314,6 +314,11 @@ namespace Mabron.DiscordBots.Games.Werwolf
                 writer.WriteBoolean("voting-timeout", game.UseVotingTimeouts);
                 writer.WriteBoolean("autofinish-rounds", game.AutoFinishRounds);
 
+                writer.WriteStartArray("theme");
+                writer.WriteStringValue(game.Theme?.GetType().FullName ?? typeof(DefaultTheme).FullName);
+                writer.WriteStringValue(game.Theme?.LanguageTheme ?? "default");
+                writer.WriteEndArray();
+
                 writer.WriteEndObject();
                 writer.WriteString("user", user.Id.ToString());
 
@@ -372,6 +377,8 @@ namespace Mabron.DiscordBots.Games.Werwolf
                         var autoFinishVotings = game.AutoFinishVotings;
                         var votingTimeout = game.UseVotingTimeouts;
                         var autoFinishRounds = game.AutoFinishRounds;
+                        var theme = game.Theme;
+                        var themeLang = game.Theme?.LanguageTheme;
 
                         if (post.Parameter.TryGetValue("leader", out string? value))
                         {
@@ -446,6 +453,31 @@ namespace Mabron.DiscordBots.Games.Werwolf
                             autoFinishRounds = bool.Parse(value);
                         }
 
+                        if (post.Parameter.TryGetValue("theme-impl", out value))
+                        {
+                            var type = Type.GetType(value);
+                            if (type == null)
+                                return $"theme implementation {value} not found";
+                            if (!type.IsSubclassOf(typeof(Theme)))
+                                return $"theme implementation {value} is not a valid theme";
+                            if (type.FullName != theme?.GetType().FullName)
+                            {
+                                try
+                                {
+                                    theme = (Theme)Activator.CreateInstance(type, game)!;
+                                }
+                                catch (Exception e)
+                                {
+                                    return $"cannot instantiate theme implementation: {e}";
+                                }
+                            }
+                        }
+
+                        if (post.Parameter.TryGetValue("theme-lang", out value))
+                        {
+                            themeLang = string.IsNullOrWhiteSpace(value) ? "default" : value;
+                        }
+
                         if (autoFinishVotings && votingTimeout)
                             return "you cannot have 'auto finish votings' and 'voting timeout' activated at the same time.";
 
@@ -481,12 +513,15 @@ namespace Mabron.DiscordBots.Games.Werwolf
                         game.AutoFinishVotings = autoFinishVotings;
                         game.UseVotingTimeouts = votingTimeout;
                         game.AutoFinishRounds = autoFinishRounds;
+                        game.Theme = theme;
+                        if (game.Theme != null && themeLang != null)
+                            game.Theme.LanguageTheme = themeLang;
                     }
                     catch (Exception e)
                     {
                         return e.ToString();
                     }
-                    game.SendEvent(new Events.SetGameConfig());
+                    game.SendEvent(new Events.SetGameConfig(typeof(DefaultTheme)));
                     return null;
                 }
 

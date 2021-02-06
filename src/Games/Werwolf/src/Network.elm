@@ -125,6 +125,7 @@ editGameConfig =
     , autofinishVotings = Nothing
     , votingTimeout = Nothing
     , autofinishRound = Nothing
+    , theme = Nothing
     }
 
 type alias EditGameConfig =
@@ -137,6 +138,7 @@ type alias EditGameConfig =
     , autofinishVotings: Maybe Bool
     , votingTimeout: Maybe Bool
     , autofinishRound: Maybe Bool
+    , theme: Maybe (String, String)
     }
 
 convertEditGameConfig : EditGameConfig -> String
@@ -192,6 +194,12 @@ convertEditGameConfig config =
             if new then "true" else "false"
         )
         config.autofinishRound
+    , Maybe.map
+        (\(new, _) -> "theme-impl=" ++ Url.percentEncode new)
+        config.theme
+    , Maybe.map
+        (\(_, new) -> "theme-lang=" ++ Url.percentEncode new)
+        config.theme
     ]
     |> List.filterMap identity
     |> List.intersperse "&"

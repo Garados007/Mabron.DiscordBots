@@ -1,9 +1,17 @@
-﻿using System.Text.Json;
+﻿using System;
+using System.Text.Json;
 
 namespace Mabron.DiscordBots.Games.Werwolf.Events
 {
     public class SetGameConfig : GameEvent
     {
+        public Type DefaultTheme { get; }
+
+        public SetGameConfig(Type defaultTheme)
+        {
+            DefaultTheme = defaultTheme;
+        }
+
         public override bool CanSendTo(GameRoom game, GameUser user)
             => true;
 
@@ -23,6 +31,11 @@ namespace Mabron.DiscordBots.Games.Werwolf.Events
             writer.WriteBoolean("autofinish-votings", game.AutoFinishVotings);
             writer.WriteBoolean("voting-timeout", game.UseVotingTimeouts);
             writer.WriteBoolean("autofinish-rounds", game.AutoFinishRounds);
+
+            writer.WriteStartArray("theme");
+            writer.WriteStringValue(game.Theme?.GetType().FullName ?? DefaultTheme.FullName);
+            writer.WriteStringValue(game.Theme?.LanguageTheme ?? "default");
+            writer.WriteEndArray();
         }
     }
 }
