@@ -1,0 +1,3 @@
+[submodule "Mabron.DiscordBots/content/vendor/flag-icon-css"]
+	path = Mabron.DiscordBots/content/vendor/flag-icon-css
+	url = https://github.com/lipis/flag-icon-css.git
