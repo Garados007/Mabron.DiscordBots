@@ -23,29 +23,22 @@ import Browser
 import Browser.Navigation
 import Html exposing (Html, div, text)
 import Html.Attributes as HA exposing (class)
-import Html.Lazy as HL
 import Url exposing (Url)
 import Url.Parser exposing ((</>))
 import Task
-import Debug.Extra
 import Time exposing (Posix)
 import Maybe.Extra
 import Dict
 import Views.ViewGamePhase
 import Maybe.Extra
-import Color exposing (Color)
-import Color.Accessibility as CA
-import Color.Convert as CC
-import Color.Manipulate as CM
-import Regex
 import Level
-import Styles exposing (Styles)
+import Styles
 
 import Json.Decode as JD
 import Json.Encode as JE
 import WebSocket
 import Maybe
-import Level exposing (isAnimating)
+import Level
 import Styles
 import Styles
 import Views.ViewModal
