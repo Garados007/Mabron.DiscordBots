@@ -4,6 +4,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using LiteDB;
+using System.Threading;
 
 namespace Mabron.DiscordBots.Games.Werwolf
 {
@@ -124,10 +125,14 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
         public bool FullConfiguration => RoleConfiguration.Values.Sum() == Participants.Count;
 
+        int lockNextPhase = 0;
         public void NextPhase()
         {
+            if (Interlocked.Exchange(ref lockNextPhase, 1) != 0)
+                return;
             if (!Phase?.Next(this) ?? true)
                 Phase = null;
+            Interlocked.Exchange(ref lockNextPhase, 0);
         }
 
         public void StartGame()

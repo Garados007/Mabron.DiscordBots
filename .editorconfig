@@ -2,3 +2,6 @@
 
 # IDE0001: Namen vereinfachen
 dotnet_diagnostic.IDE0001.severity = suggestion
+
+# IDE0005: Using-Direktive ist unnötig.
+dotnet_diagnostic.IDE0005.severity = suggestion

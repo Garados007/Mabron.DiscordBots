@@ -10,6 +10,12 @@
         "Mabron.DiscordBots.Games.Werwolf.Themes.Default.DefaultTheme": {
             "default": {
                 "de": "Standard-Theme"
+            },
+            "rotlicht": {
+                "de": "Werwölfe im Rotlichtviertel (Beta)"
+            },
+            "military": {
+                "de": "Militär (Beta)"
             }
         }
     }

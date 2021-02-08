@@ -74,7 +74,13 @@ namespace Mabron.DiscordBots.Games.Werwolf
             api.RestEndpoints.AddRange(new[]
             {
                 RestActionEndpoint.Create(RolesAsync)
-                    .Add(fact.Location(fact.UrlConstant("roles"))),
+                    .Add(fact.Location(fact.UrlConstant("roles"), fact.MaxLength())),
+                RestActionEndpoint.Create<string>(RolesAsync, "type")
+                    .Add(fact.Location(
+                        fact.UrlConstant("roles"),
+                        fact.UrlArgument("type"),
+                        fact.MaxLength()
+                     )),
                 RestActionEndpoint.Create<string>(GameAsync, "token")
                     .Add(fact.Location(
                         fact.UrlConstant("game"), 
@@ -187,6 +193,29 @@ namespace Mabron.DiscordBots.Games.Werwolf
         }
 
         private static async Task<HttpDataSource> RolesAsync()
+        {
+            var stream = new MemoryStream();
+            var writer = new Utf8JsonWriter(stream);
+            writer.WriteStartObject();
+
+            var theme = new DefaultTheme(null);
+            writer.WriteStartArray(theme.GetType().FullName ?? "");
+            foreach (var template in theme.GetRoleTemplates())
+            {
+                writer.WriteStringValue(template.GetType().Name);
+            }
+            writer.WriteEndArray();
+
+            writer.WriteEndObject();
+            await writer.FlushAsync();
+            stream.Position = 0;
+            return new HttpStreamDataSource(stream)
+            {
+                MimeType = MimeType.ApplicationJson,
+            };
+        }
+
+        private static async Task<HttpDataSource> RolesAsync(string themeType)
         {
             var stream = new MemoryStream();
             var writer = new Utf8JsonWriter(stream);
@@ -455,7 +484,17 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
                         if (post.Parameter.TryGetValue("theme-impl", out value))
                         {
-                            var type = Type.GetType(value);
+                            static Type? LoadType(string name)
+                            {
+                                foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+                                {
+                                    var type = assembly.GetType(name, false, true);
+                                    if (type != null)
+                                        return type;
+                                }
+                                return null;
+                            }
+                            var type = LoadType(value);
                             if (type == null)
                                 return $"theme implementation {value} not found";
                             if (!type.IsSubclassOf(typeof(Theme)))

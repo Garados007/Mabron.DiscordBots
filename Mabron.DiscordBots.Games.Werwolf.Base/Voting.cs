@@ -133,6 +133,8 @@ namespace Mabron.DiscordBots.Games.Werwolf
             if (!hasEntries)
                 return Options.Select(x => x.id);
             int max = Options.Max(x => x.option.Users.Count);
+            if (max == 0)
+                return Enumerable.Empty<int>();
             return Options.Where(x => x.option.Users.Count == max)
                 .Select(x => x.id);
         }

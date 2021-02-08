@@ -30,6 +30,9 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
                 if (!(role is BaseRole baseRole))
                     return;
                 baseRole.IsLoved = true;
+                foreach (var other in game.Participants.Values)
+                    if (role != other && other is BaseRole otherBase && otherBase.IsLoved)
+                        game.SendEvent(new Events.OnRoleInfoChanged(other, target: id));
                 if (game.Phase?.Current is AmorPhase pick)
                 {
                     pick.VotingFinished(this);

@@ -2,15 +2,18 @@ module Views.ViewRoomEditor exposing (..)
 
 import Data
 import Network exposing (NetworkRequest(..), EditGameConfig, editGameConfig)
+import Model exposing (getSelectedLanguage)
 
 import Html exposing (Html, div, text)
 import Html.Attributes as HA exposing (class)
 import Html.Events as HE
 import Dict exposing (Dict)
 import Maybe.Extra
-import Language exposing (Language)
+import Language exposing (Language, LanguageInfo)
 import Html
-import Svg.Attributes exposing (in_)
+import Svg.Attributes
+import Json.Decode as JD
+import Json.Encode as JE
 
 type Msg
     = SetBuffer (Dict String Int) EditGameConfig
@@ -19,9 +22,11 @@ type Msg
     | ShowRoleInfo String
     | Noop
 
-view : Language -> Data.RoleTemplates -> Maybe Language.ThemeRawKey -> Data.Game -> Bool 
+view : Language -> LanguageInfo -> Data.RoleTemplates
+    -> Data.GameUserResult
+    -> Maybe Language.ThemeRawKey -> Data.Game -> Bool
     -> Dict String Int -> Html Msg
-view lang roles theme game editable buffer =
+view lang langInfo roles gameResult theme game editable buffer =
     let
 
         handleNewRoleCount : String -> Maybe Int -> Msg
@@ -166,6 +171,64 @@ view lang roles theme game editable buffer =
                 , Html.span [] [ text title ]
                 ]
 
+        userLang : String
+        userLang = Model.getSelectedLanguage gameResult
+
+        viewThemeSelector : Bool -> Html Msg
+        viewThemeSelector enabled =
+            div [ class "theme-selector" ]
+                <| List.singleton
+                <| Html.select
+                [ HA.disabled <| not enabled
+                , HE.on "change"
+                    <| JD.map
+                        (\key -> SendConf { editGameConfig | theme = Just key })
+                    <| JD.andThen
+                        (\raw ->
+                            case
+                                JD.decodeString
+                                    ( JD.map2 Tuple.pair
+                                        (JD.index 0 JD.string)
+                                        (JD.index 1 JD.string)
+                                    )
+                                    raw
+                            of
+                                Ok value -> JD.succeed value
+                                Err _ -> JD.fail "error"
+                        )
+                    <| HE.targetValue
+                ]
+            <| List.map
+                (\((tk1, tk2), value) ->
+                    Html.option
+                        [ HA.selected
+                            <| Debug.log "selected"
+                            <| (tk1, tk2) == (Debug.log "theme" game.theme)
+                        , HA.value 
+                            <| JE.encode 0
+                            <| JE.list JE.string
+                                [ tk1, tk2 ]
+                        ]
+                        [ text value ]
+                )
+            <| List.concatMap
+                (\(k1, d1) ->
+                    List.map
+                        (Tuple.mapFirst <| Tuple.pair k1)
+                    <| List.filterMap
+                        (\(k2, d2) ->
+                            Dict.get userLang d2
+                            |> Maybe.Extra.orElseLazy
+                                (\() -> Dict.get "de" d2)
+                            |> Maybe.Extra.orElseLazy
+                                (\() -> Dict.values d2 |> List.head)
+                            |> Maybe.map
+                                (Tuple.pair k2)
+                        )
+                    <| Dict.toList d1
+                )
+            <| Dict.toList langInfo.themes
+
     in div [ class "editor" ]
         [ div [ class "editor-roles" ]
             -- <| List.map viewSingleRole
@@ -247,6 +310,7 @@ view lang roles theme game editable buffer =
                     | autofinishRound = Just new
                     }
             ]
+        , viewThemeSelector editable
         , if editable
             then div 
                 [ HA.classList

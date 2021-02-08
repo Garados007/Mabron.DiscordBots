@@ -6,84 +6,71 @@ namespace Mabron.DiscordBots.Games.Werwolf
 {
     public class PhaseFlowBuilder
     {
-        readonly List<OneOf<Stage, Phase>> initOnlyPhases = new List<OneOf<Stage, Phase>>();
-        readonly List<OneOf<Stage, Phase>> consecutivePhases = new List<OneOf<Stage, Phase>>();
+        readonly List<OneOf<Stage, Phase, PhaseFlow.PhaseGroup>> phases = new List<OneOf<Stage, Phase, PhaseFlow.PhaseGroup>>();
 
-        public void Add(Phase phase, bool initOnly = false)
+        public void Add(Phase phase)
         {
-            var list = initOnly ? initOnlyPhases : consecutivePhases;
-            list.Add(phase);
+            phases.Add(phase);
         }
 
-        public void Add(IEnumerable<Phase> phases, bool initOnly = false)
+        public void Add(IEnumerable<Phase> phases)
         {
-            var list = initOnly ? initOnlyPhases : consecutivePhases;
             foreach (var phase in phases)
-                list.Add(phase);
+                this.phases.Add(phase);
         }
 
-        public void Add(Func<IEnumerable<Phase>> phases, bool initOnly = false)
+        public void Add(Func<IEnumerable<Phase>> phases)
         {
-            Add(phases(), initOnly);
+            Add(phases());
         }
 
-        public void Add(Stage stage, bool initOnly = false)
+        public void Add(Stage stage)
         {
-            if (initOnly)
-                initOnlyPhases.Add(stage);
-            else consecutivePhases.Add(stage);
+            phases.Add(stage);
         }
 
-        public PhaseFlow? Build()
+        public void Add(PhaseFlow.PhaseGroup group)
         {
-            if (initOnlyPhases.Count + consecutivePhases.Count == 0)
+            phases.Add(group);
+        }
+
+        public PhaseFlow? BuildPhaseFlow()
+        {
+            var group = BuildGroup();
+            if (group == null)
                 return null;
-            
-            PhaseFlow.Step? firstConsecutive = null;
-            PhaseFlow.Step? last = null;
+            else return new PhaseFlow(group.Entry);
+        }
+
+        public PhaseFlow.PhaseGroup? BuildGroup()
+        {
+            if (phases.Count == 0)
+                return null;
+
+            PhaseFlow.Step? last = null, init = null;
             Stage? stage = null;
-            foreach (var stagePhase in consecutivePhases)
+            foreach (var stagePhase in phases)
             {
-                if (stagePhase.TryPickT0(out Stage stage_, out Phase phase))
+                if (stagePhase.TryPickT0(out Stage stage_, out OneOf<Phase, PhaseFlow.PhaseGroup> phaseOrPhaseGroup))
                 {
                     stage = stage_;
                     continue;
                 }
                 if (stage == null)
                     return null;
-                var step = new PhaseFlow.Step(stage, phase, firstConsecutive == null);
+                PhaseFlow.Step step;
+                if (phaseOrPhaseGroup.TryPickT0(out Phase phase, out PhaseFlow.PhaseGroup group))
+                    step = new PhaseFlow.Step(stage, phase);
+                else step = new PhaseFlow.Step(stage, group);
+
                 if (last != null)
                     last.Next = step;
-                firstConsecutive ??= step;
                 last = step;
+                init ??= step;
             }
-            if (last != null)
-                last.Next = firstConsecutive;
-            
-            PhaseFlow.Step? firstInit = null;
-            last = null;
-            stage = null;
-            foreach (var stagePhase in initOnlyPhases)
-            {
-                if (stagePhase.TryPickT0(out Stage stage_, out Phase phase))
-                {
-                    stage = stage_;
-                    continue;
-                }
-                if (stage == null)
-                    return null;
-                var step = new PhaseFlow.Step(stage, phase, firstInit == null);
-                if (last != null)
-                    last.Next = step;
-                firstInit ??= step;
-                last = step;
-            }
-            if (last != null)
-                last.Next = firstConsecutive;
-            
-            var init = firstInit ?? firstConsecutive;
-            if (init != null && stage != null)
-                return new PhaseFlow(init);
+
+            if (init != null)
+                return new PhaseFlow.PhaseGroup(init);
             else return null;
         }
     }

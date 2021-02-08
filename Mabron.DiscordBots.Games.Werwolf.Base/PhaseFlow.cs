@@ -1,3 +1,4 @@
+using OneOf;
 using System.Linq;
 
 namespace Mabron.DiscordBots.Games.Werwolf
@@ -28,28 +29,134 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
         public sealed class Step
         {
-            public Phase Phase { get; }
+            public OneOf<Phase, PhaseGroup> Phase { get; }
 
             public Stage Stage { get; }
 
             public Step? Next { get; internal set; }
 
-            internal bool IsSequenceFirst { get; }
+            public Step CurrentStep => Phase.TryPickT0(out _, out PhaseGroup phaseGroup) ? this : phaseGroup.Current.CurrentStep;
 
-            internal Step(Stage stage, Phase phase, bool isSequenceFirst)
-                => (Stage, Phase, IsSequenceFirst) = (stage, phase, isSequenceFirst);
+            public Phase CurrentPhase => Phase.Match(x => x, x => x.Current.CurrentPhase);
+
+            internal Step(Stage stage, Phase phase)
+                => (Stage, Phase) = (stage, phase);
+
+            internal Step(Stage stage, PhaseGroup group)
+                => (Stage, Phase) = (stage, group);
+
+            public void SetExecute()
+            {
+                if (Phase.TryPickT1(out PhaseGroup phaseGroup, out _))
+                {
+                    phaseGroup.IsExecuted = true;
+                    phaseGroup.Current.SetExecute();
+                }
+            }
+        }
+
+        public sealed class PhaseGroup
+        {
+            public Step Entry { get; }
+
+            public Step Current { get; private set; }
+
+            public bool IsExecuted { get; internal set; } = false;
+
+            public bool IsEntered { get; internal set; } = false;
+
+            public PhaseGroup(Step entry)
+                => (Entry, Current) = (entry, entry);
+
+            /// <summary>
+            /// Moves forward to the next inner phase. If this was the last one
+            /// this method will return false.
+            /// <br />
+            /// If the last inner phase was executed this will reset its state.
+            /// </summary>
+            /// <returns>true if a next inner phase exists.</returns>
+            public bool GoNext(bool checkGroup)
+            {
+                if (checkGroup && Current.Phase.TryPickT1(out PhaseGroup phaseGroup, out _))
+                {
+                    if (phaseGroup.GoNext(true))
+                        return true;
+                }
+                if (Current.Next != null)
+                {
+                    Current = Current.Next;
+                    return true;
+                }
+                else
+                {
+                    Current = Entry;
+                    return false;
+                }
+            }
+
+            /// <summary>
+            /// Initialize the current step if not entered before otherwise it will
+            /// move forward to the next step. If the current step contains a
+            /// <see cref="PhaseGroup"/> it will try to initialize (or move) this
+            /// one first.
+            /// <br />
+            /// If a inner group is at the end and executed during the current runtime
+            /// it will execute this group again.
+            /// <br />
+            /// This method returns false if none of the inner phases (including
+            /// the inner groups) can be executed next.
+            /// </summary>
+            /// <returns></returns>
+            public bool InitGoNext()
+            {
+                if (!IsEntered)
+                {
+                    IsEntered = true;
+                    IsExecuted = false;
+                    if (Current.Phase.IsT0)
+                        return true;
+                }
+                bool hasPhaseSkipped = false;
+                bool checkGroup;
+                do
+                {
+                    checkGroup = true;
+                    if (Current.Phase.TryPickT1(out PhaseGroup phaseGroup, out _))
+                    {
+                        hasPhaseSkipped = true;
+                        if (phaseGroup.InitGoNext())
+                            return true;
+                        else if (phaseGroup.IsExecuted)
+                        {
+                            phaseGroup.IsExecuted = false;
+                            if (phaseGroup.InitGoNext())
+                                return true;
+                        }
+                        else checkGroup = false;
+                    }
+                    else
+                    {
+                        if (hasPhaseSkipped)
+                            return true;
+                        else hasPhaseSkipped = true;
+                    }
+                }
+                while (GoNext(checkGroup));
+                IsEntered = false;
+                return false;
+            }
         }
 
         public Step InitialStep { get; }
 
         public Step CurrentStep { get; private set; }
 
-        public Phase Current => CurrentStep.Phase;
+        public Phase Current => CurrentStep.CurrentPhase;
 
-        public Stage Stage => CurrentStep.Stage;
+        public Stage Stage => CurrentStep.CurrentStep.Stage;
 
         internal PhaseFlow(Step step)
-            => InitialStep = CurrentStep = new Step(new InitialStage(), new InitialPhase(), false)
+            => InitialStep = CurrentStep = new Step(new InitialStage(), new InitialPhase())
             {
                 Next = step
             };
@@ -58,8 +165,21 @@ namespace Mabron.DiscordBots.Games.Werwolf
         {
             foreach (var voting in Current.Votings.ToArray())
                 Current.RemoveVoting(voting);
+            if (CurrentStep.Phase.TryPickT1(out PhaseGroup phaseGroup, out _))
+            {
+                if (phaseGroup.InitGoNext())
+                    return true;
+                else if (phaseGroup.IsExecuted)
+                {
+                    phaseGroup.IsExecuted = false;
+                    if (phaseGroup.InitGoNext())
+                        return true;
+                }
+            }
             var next = CurrentStep.Next;
             if (next == null)
+                return false;
+            if (next.Phase.TryPickT1(out phaseGroup, out _) && !phaseGroup.InitGoNext())
                 return false;
             CurrentStep = next;
             return true;
@@ -67,15 +187,9 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
         public bool Next(GameRoom game)
         {
-            // if this counter is larger than 2 it means there is no valid phase left.
             var lastStage = Stage;
-            int firstCounter = 0;
             while (Next())
             {
-                if (CurrentStep.IsSequenceFirst)
-                    firstCounter++;
-                if (firstCounter > 2)
-                    return false;
                 if (!Current.CanExecute(game))
                     continue;
 
@@ -87,6 +201,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                         lastStage = Stage;
                     }
                     game.SendEvent(new Events.NextPhase(Current));
+                    CurrentStep.SetExecute();
                 }
 
                 Current.Init(game);

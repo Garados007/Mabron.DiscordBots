@@ -38,61 +38,69 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default
             var dayStage = new Stages.DayStage();
             var afternoonStage = new Stages.AfternoonStage();
 
-            // build phases
-            var phases = new PhaseFlowBuilder();
-            static IEnumerable<Phase> KillHandling()
+            static PhaseFlow.PhaseGroup KillHandling(Stage stage)
             {
+                var phases = new PhaseFlowBuilder();
+                phases.Add(stage);
                 // remove flags if possible
-                yield return new Phases.KillFlagWerwolfVictimAction();
+                phases.Add(new Phases.KillFlagWerwolfVictimAction());
                 // transition and execute special actions
-                yield return new Werwolf.Phases.KillTransitionToAboutToKillAction();
+                phases.Add(new Werwolf.Phases.KillTransitionToAboutToKillAction());
                 // transition to prepare special phases
-                yield return new Werwolf.Phases.KillTransitionToBeforeKillAction();
+                phases.Add(new Werwolf.Phases.KillTransitionToBeforeKillAction());
                 // special phases
-                yield return new Phases.HunterPhase();
-                yield return new Phases.ScapeGoatPhase();
-                yield return new Phases.InheritMajorPhase();
+                phases.Add(new Phases.HunterPhase());
+                phases.Add(new Phases.ScapeGoatPhase());
+                phases.Add(new Phases.InheritMajorPhase());
                 // lastly kill and check for game end
-                yield return new Werwolf.Phases.KillTransitionToKilledAction();
-                yield return new Werwolf.Phases.CheckWinConditionAction();
+                phases.Add(new Werwolf.Phases.KillTransitionToKilledAction());
+                phases.Add(new Werwolf.Phases.CheckWinConditionAction());
+                return phases.BuildGroup() ?? throw new InvalidOperationException();
             }
 
-            // add init phases
-            phases.Add(nightStage, true);
-            phases.Add(new Phases.AmorPhase(), true);
+            PhaseFlow.PhaseGroup DailyLoop(Stage night, Stage morning, Stage day, Stage afternoon)
+            {
+                var phases = new PhaseFlowBuilder();
 
-            // add night phases
+                // add night phases
+                phases.Add(night);
+                phases.Add(new Phase[]
+                {
+                    new Phases.HealerPhase(),
+                    new Phases.OraclePhase(),
+                    new Phases.WerwolfPhase(),
+                    new Phases.WitchPhase(),
+                    new Phases.FlutistPhase(),
+                });
+
+                // add morning phases
+                phases.Add(morning);
+                phases.Add(KillHandling(morning));
+
+                // add day phases
+                phases.Add(day);
+                phases.Add(new Phase[]
+                {
+                    new Phases.ElectMajorPhase(),
+                    new Phases.DailyVictimElectionPhase(),
+                });
+
+                // add afternoon phases
+                phases.Add(afternoon);
+                phases.Add(KillHandling(afternoon));
+
+                // return
+                return phases.BuildGroup() ?? throw new InvalidOperationException();
+            }
+
+            // build phases
+            var phases = new PhaseFlowBuilder();
             phases.Add(nightStage);
-            phases.Add(new Phase[]
-            {
-                new Phases.HealerPhase(),
-                new Phases.OraclePhase(),
-                new Phases.WerwolfPhase(),
-                new Phases.WitchPhase(),
-                new Phases.FlutistPhase(),
-            });
+            phases.Add(new Phases.AmorPhase());
 
-            // add kill handling
-            phases.Add(morningStage);
-            phases.Add(KillHandling);
+            phases.Add(DailyLoop(nightStage, morningStage, dayStage, afternoonStage));
 
-            // add day phases
-            phases.Add(dayStage);
-            phases.Add(new Phase[]
-            {
-                new Phases.ElectMajorPhase(),
-                new Phases.DailyVictimElectionPhase(),
-            });
-
-            // add kill handling
-            phases.Add(afternoonStage);
-            phases.Add(new Phase[]
-            {
-                new Phases.ScapeGoatResetAction(),
-            });
-            phases.Add(KillHandling);
-
-            return phases.Build() ?? throw new InvalidOperationException();
+            return phases.BuildPhaseFlow() ?? throw new InvalidOperationException();
         }
 
         public override IEnumerable<WinConditionCheck> GetWinConditions()

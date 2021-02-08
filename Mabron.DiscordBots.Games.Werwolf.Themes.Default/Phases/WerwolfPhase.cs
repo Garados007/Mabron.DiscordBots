@@ -85,7 +85,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
                 if (id != 1)
                     return;
                 var rng = new Random();
-                int wolfCount = game.AliveRoles.Select(x => x is WerwolfBase).Count();
+                int wolfCount = game.AliveRoles.Where(x => x is WerwolfBase).Count();
                 int aliveCount = game.AliveRoles.Count();
                 var probabilitySeeWolf = (double)wolfCount / aliveCount;
                 var probabilitySeeGirl = 1.0 / aliveCount;

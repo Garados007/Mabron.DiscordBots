@@ -4,6 +4,7 @@ module Model exposing
     , applyResponse
     , applyEventData
     , getLanguage
+    , getSelectedLanguage
     , init
     )
 
@@ -82,21 +83,24 @@ init token key =
     , styles = Styles.init
     }
 
+getSelectedLanguage : Data.GameUserResult -> String
+getSelectedLanguage gameResult =
+    gameResult.userConfig
+        |> Maybe.map .language
+        |> Maybe.andThen
+            (\key ->
+                if key == ""
+                then Nothing
+                else Just key
+            )
+        |> Maybe.withDefault "de"
+
 getLanguage : Model -> Language
 getLanguage model =
     let
         lang : Maybe String
         lang = model.game
-            |> Maybe.andThen .userConfig
-            |> Maybe.map .language
-            |> Maybe.andThen
-                (\key ->
-                    if key == ""
-                    then Nothing
-                    else Just key
-                )
-            |> Maybe.withDefault "de"
-            |> Just
+            |> Maybe.map getSelectedLanguage
 
         rootLang : Language
         rootLang =

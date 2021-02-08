@@ -72,6 +72,15 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default
             return false;
         }
 
+        public override void ChangeToAboutToKill(GameRoom game)
+        {
+            base.ChangeToAboutToKill(game);
+            if (IsLoved)
+                foreach (var role in game.Participants.Values)
+                    if (role is BaseRole baseRole && role != this && baseRole.IsLoved)
+                        role.SetKill(game, new KillInfos.KilledByLove());
+        }
+
         //public override void Kill(GameRoom game)
         //    => Kill(game, true);
 

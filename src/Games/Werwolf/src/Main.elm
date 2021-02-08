@@ -233,7 +233,7 @@ tryViewGameFrame model lang =
     Maybe.Extra.andThen2
         (\result roles ->
             Maybe.map2
-                (viewGameFrame model lang roles)
+                (viewGameFrame model lang roles result)
                 result.game
                 result.user
         )
@@ -243,10 +243,11 @@ tryViewGameFrame model lang =
 viewGameFrame : Model
     -> Language
     -> Data.RoleTemplates
+    -> Data.GameUserResult
     -> Data.Game
     -> String
     -> Html Msg
-viewGameFrame model lang roles game user =
+viewGameFrame model lang roles gameResult game user =
     div [ class "frame-game-outer" ]
         [ div [ class "frame-game-left" ]
             [ Html.map WrapUser
@@ -261,7 +262,9 @@ viewGameFrame model lang roles game user =
             , Html.map WrapEditor
                 <| Views.ViewRoomEditor.view
                     lang
+                    model.langInfo
                     roles
+                    gameResult
                     (Just game.theme)
                     game
                     (user == game.leader)
