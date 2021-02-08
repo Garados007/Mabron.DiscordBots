@@ -58,7 +58,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default
                 return phases.BuildGroup() ?? throw new InvalidOperationException();
             }
 
-            PhaseFlow.PhaseGroup DailyLoop(Stage night, Stage morning, Stage day, Stage afternoon)
+            static PhaseFlow.PhaseGroup DailyLoop(Stage night, Stage morning, Stage day, Stage afternoon)
             {
                 var phases = new PhaseFlowBuilder();
 

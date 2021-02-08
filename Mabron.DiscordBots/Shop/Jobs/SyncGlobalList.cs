@@ -1,15 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
-using System.Threading;
-using Quartz;
-using Quartz.Impl;
-using System.Collections.Concurrent;
-using Discord;
+﻿using Discord;
 using Discord.WebSocket;
+using Quartz;
+using System;
+using System.Collections.Generic;
 using System.Linq;
-using LiteDB;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Mabron.DiscordBots.Shop.Jobs
 {

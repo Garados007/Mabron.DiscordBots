@@ -1,7 +1,6 @@
 ﻿using LiteDB;
 using Mabron.DiscordBots.Games.Werwolf.Phases;
 using Mabron.DiscordBots.Games.Werwolf.Votings;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 

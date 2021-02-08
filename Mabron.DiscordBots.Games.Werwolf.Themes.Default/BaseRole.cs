@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 
 namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default
 {
