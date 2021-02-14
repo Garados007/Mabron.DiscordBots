@@ -54,5 +54,8 @@
         "leader": "Spielleiter",
         "level": "Level",
         "player-kick": "Spieler kicken"
+    },
+    "chat": {
+        "not-allowed": "Die Nachricht durfte nicht gesendet werden."
     }
 }

@@ -46,5 +46,10 @@ namespace Mabron.DiscordBots.Games.Werwolf.Phases
             phase1.ExecuteMultipleWinner(voting, game);
             phase2.ExecuteMultipleWinner(voting, game);
         }
+
+        public override bool CanMessage(GameRoom game, Role role)
+        {
+            return Phase1.CanMessage(game, role) || Phase2.CanMessage(game, role);
+        }
     }
 }

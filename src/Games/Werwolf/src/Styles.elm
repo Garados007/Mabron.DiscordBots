@@ -106,6 +106,9 @@ viewConfig oldConfig config weight =
         colorDarker : Color
         colorDarker = darken 0.50 colorBase
 
+        textHightlight : Color
+        textHightlight = darken 0.5 <| CM.rotateHue 180 colorBase
+
         build : String -> Regex.Regex
         build = Regex.fromString >> Maybe.withDefault Regex.never
     in div [ class "styles" ]
@@ -139,13 +142,15 @@ viewConfig oldConfig config weight =
                 , ("text-color", textColor)
                 , ("text-color-light", textColorLight)
                 , ("text-inv-color", textInvColor)
+                , ("text-hightlight", textHightlight)
                 , ("color-light", colorLight)
                 , ("color-light-transparent", CM.fadeOut 0.4 colorLight)
                 , ("color-medium", colorMedium)
                 , ("color-dark", colorDark)
-                , ("color-dark-transparent", CM.fadeOut 0.4 colorLight)
+                , ("color-dark-transparent", CM.fadeOut 0.4 colorDark)
+                , ("color-dark-semitransparent", CM.fadeOut 0.2 colorDark)
                 , ("color-darker", colorDarker)
-                , ("color-darker-transparent", CM.fadeOut 0.4 colorLight)
+                , ("color-darker-transparent", CM.fadeOut 0.4 colorDarker)
                 ]
         , div 
             [ class "background"

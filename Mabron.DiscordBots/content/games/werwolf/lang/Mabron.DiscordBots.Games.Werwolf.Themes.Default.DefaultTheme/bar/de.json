@@ -6,25 +6,25 @@
             "player": "Spieler"
         },
         "roles": {
-            "Amor": "Essensausgabe",
-            "Angel": "traumatisierter Kamerad",
-            "Flutist": "Spion",
-            "Girl": "Geheimpolizei",
-            "Healer": "Sanitäter",
-            "Hunter": "Scharfschütze",
-            "Idiot": "Trottel vom Dienst",
-            "OldMan": "Veteran",
-            "Oracle": "Aufklärer",
-            "PureSoul": "Erika",
-            "ScapeGoat": "Unteroffizier",
-            "Villager": "Gefreiter",
-            "Werwolf": "Saboteur",
-            "Witch": "Oberfeldarzt",
+            "Amor": "Kellner",
+            "Angel": "Bruder Thomas",
+            "Flutist": "Musiker",
+            "Girl": "Tochter vom Wirt",
+            "Healer": "Wirt",
+            "Hunter": "Jäger",
+            "Idiot": "Besoffener",
+            "OldMan": "trinkfester Mann",
+            "Oracle": "Bierleiche",
+            "PureSoul": "Schnapskobold",
+            "ScapeGoat": "Komiker",
+            "Villager": "Kneipenbesucher",
+            "Werwolf": "Bierpanscher",
+            "Witch": "Drogendieler",
             "Unknown": "???"
         },
         "role-info": {
             "Amor": "Im Krieg gibt es viele Tote, viele einsame Seelne und viele die einfach nicht einsam sterben wollen. Beim Essen hat ein Kamerad seinem Besten zu einer Liebe verholfen die Stärker ist als er zu erst dachte. Beide sind glücklich und Ihr Schicksal ist von nun an verbunden. Sollte einer der Verliebten sterben, so stirbt der andere sofort an Kummer.",
-            "Angel": "Das Ziel des traumatischen Kameraden ist es in der ersten Runde (1 Tag- und Nachtphase) zu sterben. Sollte dies eintreffen, dann gewinnt er das Spiel sofort.\nSollte mit dem traumatisierten Kameraden gespielt werden, so fängt das Spiel mit einer Tag- statt Nachtphase an.\nSollte der traumatisierte Kamerad es nicht schaffen in der ersten Runde zu sterben, so wird dieser automatisch zu einen normalen Gefreiten.",
+            "Angel": "Das Ziel von Bruder Thomas ist es in der ersten Runde (1 Tag- und Nachtphase) die Kneipe zu verlassen. Sollte dies eintreffen, dann gewinnt Bruder Thomas sofort.\nSollte mit Bruder Thomas gespielt werden, so fängt das Spiel mit einer Tag- statt Nachtphase an.\nSollte Bruder Thomas es nicht schaffen in der ersten Runde die Kneipe zu verlassen, so wird dieser automatisch zu einem der anderen betrunkenen Kneipenbesucher.",
             "Flutist": "Der Spion hat sich eingeschmuggelt, um Infos für die gegnerische Seite zu sammeln. Es stellt sich heraus, dass es auch hier Leute gibt, die sich ihm anschließen möchten. Jede Nacht findet er einen neuen Anhänger. Der Spion und alle Deserteure kämpfen von nun an für die Gegner.\nDas Spiel ist sofort beendet, wenn nur noch Deserteure oder der Spion leben. Dann gewinnt der Spion.\nGibt es 7 oder weniger Mitspieler, so darf der Spion nur einen Deserteur pro Nacht bestimmen.\nTipp für die anderen Mitspieler: Versucht den Spion möglichst früh loszuwerden.",
             "Girl": "Die Geheimpolizei kann während der Phase der Saboteure ihnen für eine kurze Zeit folgen, um ihre Identität zu erfahren. Aufgrund mangelhaften Trainings besteht dabei die Möglichkeit, dass sie von den Saboteuren erwischt werden. \nBei diesem Katz-und-Maus-Spiel kann die Geheimpolizei die Saboteure entlarven oder von ihnen bemerkt werden.",
             "Healer": "Der Sanitäter wird in der Nacht zu einem Notfall gerufen und verzucht das Leben dieses Kameraden zu bewahren, dieser kann diese Nacht nicht von den Saboteuren getötet werden.\nDer Sanitäter kann nicht jede Nacht denselben Kameraden schützen, so kommt es das in zwei aufeinander folgenden Nächten nie die selbe Person sicher ist.",
@@ -32,65 +32,65 @@
             "Idiot": "Der Trottel vom Dienst kann nicht direkt von der Mannschaft umgebracht werden. Sollte der Trottel von ihr ausgewählt werden, so wird allen klar, dass er einfach nur nicht sofort eine Lehre anfangen wollte und vergibt ihm. \nDamit verliert er aber auch sein Wahlrecht bei den zukünftigen Appellen. War dieser Depp vorher Spieß, so ist die Funktion von ihm völlig verloren und die Truppe hat keinen Kommandeur mehr. \nWenn ein Veteran anwesend ist tritt folgendes in Kraft: Sobald dieser stirbt, wird der Trottel automatisch von der Mannschaft gelyncht, sobald er als dieser erkannt wurde.",
             "Oracle": "Der Aufklärungstrupp ist mal wieder unterwegs, um die Gegend zu erkunden. Dabei entdecken sie oft wie ihre Kameraden wirklich sind. In Stressmomenten wie solchen, sieht man den richtigen Character der Menschen zum Vorschein kommen.",
             "OldMan": "Der Veteran hat so lange gedient und Kampferfahrung gesammelt, dass dieser sich nicht von einem einzelnen feigen Hinterhalt der Saboteure umbringen lässt. Stattdessen müssen diese zweimal ran. Bei allen anderen (Oberfeldarzt, Scharfschütze, Mannschaft, etc.) bringt ihm seine Kampferfahrung nichts. \nWird mit dem Trottel vom Dienst gespielt: Sobald der Veteran stirbt, geht auch die Weisheit von der Mannschaft verloren. Diese kann sich dann nicht mehr zurückhalten und bringt den Trottel um, wenn dieser als das, was er ist, ertappt wurde",
-            "PureSoul": "Erika ist eine normale Kameradin. Jeder weiß das sie nie etwas gemeines oder böses tun würde. Sie ist die reinste Person in der Mannschaft.",
+            "PureSoul": "Der Schnapskobold ist Stammgast der Kneipe. Seine alltäglichen Besuche sind jedem bekannt. Unbekannt ist es jedoch, wenn er mal nüchtern ist",
             "ScapeGoat": "Der Unteroffizier wird automatisch als Schuldiger ausgerufen, wenn bei einem Apell kein eindeutiger Schuldiger gefunden wird. Dies will der Unteroffizier natürlich vermeiden.\nWird der Unteroffizier durch ein Unentschieden als Schuldiger ausgerufen und dadurch von der Mannschaft umgebracht, dann bekommt der Unteroffizier das Recht bei dem kommendem Apell zu bestimmen wer abstimmen darf und wer nicht. Wenn er nur einen bestimmt und dieser direkt von den Saboteuren umgebracht wird, so entfällt der nächste Apell.",
             "Villager": "Keine Fähigkeiten, kein Talent und erstrecht keine Besonderheiten! \nDie neuen Gefreiten sind bekanntermaßen nur als Kanonenfutter zu gebrauchen.",
             "Werwolf": "Ein Saboteur dessen Ziel es ist, alle Gefreiten zu töten, um den bevorstehenden Gegenangriff zu verhindern. \nDie Saboteure schlagen jede Nacht zu und suchen sich ein schlafendes Opfer.",
             "Witch": "Der Oberfeldarzt hat Medizin, aber nicht besonders viel. Im Krieg muss er oft entscheiden, ob jemand an seinen Wunden erliegt oder die Heimat wieder sehen wird.\nEr hat einmal Medizin um einen zu retten, für wen wird er es nutzen? Aber auch er kann töten, und das mit den fiesesten Mitteln. Er hat ein Ass im Ärmel und kann mit diesem einen in den Tot reißen, ohne das man direkt weiß, dass er es war.\nEr kann in der Nacht eines, beide oder keins der Medikamente nutzen."
         },
         "phases": {
-            "AmorPhase": "Amor sucht das Liebespaar",
-            "DailyVictimElectionPhase": "Apell",
-            "ElectMajorPhase": "Spießwahl",
-            "FlutistPhase": "Spion sammelt Anhänger",
-            "HealerPhase": "Sanitäter retten ein Leben",
-            "HunterPhase": "Scharfschütze schießt zum letzten mal",
-            "InheritMajorPhase": "Vererbung des Spieß",
-            "OraclePhase": "Aufklärungstrupp ist mal wieder unterwegs",
-            "ScapeGoatPhase": "Auswahl der Stimmberechtigten",
-            "WerwolfPhase": "Meeting der Saboteure",
-            "WitchPhase": "Harte Zeiten für den Oberfeldarzt"
+            "AmorPhase": "Kellner serviert das Essen",
+            "DailyVictimElectionPhase": "Noch ne Runde Bier",
+            "ElectMajorPhase": "Bürgermeisterwahl",
+            "FlutistPhase": "Musiker verzaubert mit seiner Musik",
+            "HealerPhase": "Wirt gibt einen aus!",
+            "HunterPhase": "Der Jäger will dicht werden",
+            "InheritMajorPhase": "Vererbung des Bürgermeisters",
+            "OraclePhase": "Im Suff neue Freunde finden!",
+            "ScapeGoatPhase": "Ein guter Witz",
+            "WerwolfPhase": "panschen des Bieres",
+            "WitchPhase": "Kleines Geschäft unter 'Freunden'"
         },
         "tags": {
-            "not-alive": "(tot)",
-            "loved": "(verliebt)",
-            "werwolf-select": "(Saboteuropfer)",
-            "enchant-flutist": "(desertiert)",
-            "major": "(Spieß)"
+            "not-alive": "(nüchtern)",
+            "loved": "(vollgefuttert)",
+            "werwolf-select": "(Nüchterner)",
+            "enchant-flutist": "(tanzend)",
+            "major": "(Bürgermeister)"
         },
         "voting-title": {
             "default": "Wähle eine Option",
             "ScapeGoatPhase+ScapeGoatSelect": "Verteile Stimmrechte",
-            "WitchPhase+WitchSafe": "Lebenstrank nutzen",
-            "WitchPhase+WitchKill": "Todestrank nutzen"
+            "WitchPhase+WitchSafe": "Lebensdroge nutzen",
+            "WitchPhase+WitchKill": "Todesdroge nutzen"
         },
         "voting-options": {
             "default": {
-                "do-nothing": "Nichts tun",
+                "do-nothing": "Weiter saufen",
                 "player": "{player}"
             },
             "ScapeGoatPhase+ScapeGoatSelect": {
-                "stop-voting": "Abstimmung beenden"
+                "stop-voting": "Alle Gläser leer"
             },
             "WitchPhase+WitchSafe": {
-                "player": "{player} retten"
+                "player": "{player} abfüllen"
             },
             "WerwolfPhase+GirlVote": {
-                "spy": "Ausspionieren"
+                "spy": "Beobachten"
             }
         },
         "event": {
             "player-notification": {
-                "village-kill": "Die Mannschaft hat entschieden den Kameraden zu töten.",
-                "killed-by-major": "Der Spieß hat entschieden den Kameraden zu töten.",
-                "scapegoat-kill": "Der Unteroffizier musste sterben da ihr euch nicht entscheiden konntet.",
-                "new-voted-major": "Ein neuer Spieß wurde bestimmt!",
-                "hunter-kill": "Der Scharfschütze hat geschossen.",
-                "new-major": "Der Spieß wurde vererbt.",
-                "night-kills": "Leider haben nicht alle die Nacht überlebt.",
-                "scapegoat-vote": "Der Unteroffizier hat entschieden welche Kameraden am kommenden Tag abstimmen dürfen.",
-                "old-man-and-idiot-killed": "Die Mannschaft hatte seine Vernunft verloren und den Trottel vom Dienst gelyncht.",
-                "KilledByLove": "Der Liebeskummer war zu stark und man ist an gebrochenen Herzen gestorben."
+                "village-kill": "Die Kneipenbesucher haben jemanden rausgeschmissen.",
+                "killed-by-major": "Der Bürgermeister hat entschieden den Nüchternen rauszuwerfen.",
+                "scapegoat-kill": "Der Komiker wurde wegen Erregung öffentlichen Ergernisses rausgeworfen.",
+                "new-voted-major": "Ein neuer Bürgermeister wurde bestimmt!",
+                "hunter-kill": "Der Jäger hat geschossen.",
+                "new-major": "Der Bürgermeistertitel wurde vererbt.",
+                "night-kills": "Leider haben nicht alle ihre Gläser geleert.",
+                "scapegoat-vote": "Der Komiker hat seinen letzen Sketch.",
+                "old-man-and-idiot-killed": "Die Kneipenbesucher waren zu besoffen und konnten nicht mehr klar denken",
+                "KilledByLove": "Der Hunger wurde wieder zu groß."
             }
         }
     }

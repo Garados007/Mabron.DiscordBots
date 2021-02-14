@@ -25,7 +25,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
         public string BackgroundImage { get; set; } = "";
 
-        public string Language { get; set; } = "";
+        public string Language { get; set; } = "de";
 
         // Stats
 

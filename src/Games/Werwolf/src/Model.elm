@@ -41,6 +41,8 @@ type alias Model =
     , themeLangs: Dict Language.ThemeKey Language
     , events: List (Bool,String)
     , styles: Styles
+    , chats: List Data.ChatMessage
+    , chatView: Maybe String
     }
 
 type Modal
@@ -81,6 +83,8 @@ init token key =
     , themeLangs = Dict.empty
     , events = []
     , styles = Styles.init
+    , chats = []
+    , chatView = Nothing
     }
 
 getSelectedLanguage : Data.GameUserResult -> String
@@ -276,6 +280,23 @@ applyEventData event model =
                 }
             }
             []
+        EventData.ChatEvent chat -> Tuple.pair
+            { model
+            | chats = 
+                (::)
+                    { chat
+                    | time = model.now
+                    , shown = model.chatView /= Nothing
+                    }
+                <| List.filter
+                    (\chat_ ->
+                        (Time.posixToMillis model.now) - (Time.posixToMillis chat_.time)
+                            < 1000 * 60 * 10
+                    )
+                <| List.take 30
+                <| model.chats
+            }
+            []
         EventData.GameEnd winner -> Tuple.pair
             { model
             | game = editGame model <| \game ->
@@ -429,11 +450,18 @@ applyEventData event model =
                 { game
                 | config = newConfig.config
                 , participants =
-                    if newConfig.leaderIsPlayer == game.leaderIsPlayer
-                    then game.participants
-                    else if newConfig.leaderIsPlayer
-                    then Dict.insert game.leader Nothing game.participants
-                    else Dict.remove game.leader game.participants
+                    (\participants ->
+                        if newConfig.leaderIsPlayer == game.leaderIsPlayer
+                        then participants
+                        else if newConfig.leaderIsPlayer
+                        then Dict.insert game.leader Nothing participants
+                        else Dict.remove game.leader participants
+                    )
+                    <| if Tuple.first game.theme == Tuple.first newConfig.theme
+                        then game.participants
+                        else game.participants
+                            |> Dict.map
+                                (always <| always Nothing)
                 , leaderIsPlayer = newConfig.leaderIsPlayer
                 , deadCanSeeAllRoles = newConfig.deadCanSeeAllRoles
                 , allCanSeeRoleOfDead = newConfig.allCanSeeRoleOfDead

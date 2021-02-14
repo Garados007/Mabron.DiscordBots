@@ -3,7 +3,7 @@ module Views.ViewPlayerNotification exposing (..)
 import Data
 import Html exposing (Html, div, text)
 import Html.Attributes as HA exposing (class)
-import Dict exposing (Dict)
+import Dict
 import Language exposing (Language)
 
 view : Language -> Maybe Data.Game -> String -> List String -> Html Never

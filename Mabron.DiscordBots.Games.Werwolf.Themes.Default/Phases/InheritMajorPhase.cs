@@ -52,5 +52,10 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
 
         protected override InheritMajor Create(GameRoom game, IEnumerable<ObjectId>? ids = null)
             => new InheritMajor(game, ids);
+
+        public override bool CanMessage(GameRoom game, Role role)
+        {
+            return true;
+        }
     }
 }

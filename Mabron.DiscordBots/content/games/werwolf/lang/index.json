@@ -12,10 +12,13 @@
                 "de": "Standard-Theme"
             },
             "rotlicht": {
-                "de": "Werwölfe im Rotlichtviertel (Beta)"
+                "de": "AIDS im Rotlichtviertel (Beta)"
             },
             "military": {
-                "de": "Militär (Beta)"
+                "de": "Saboteure beim Millitär (Beta)"
+            },
+            "bar": {
+                "de": "Bierpanscher in der Kneipe (Beta)"
             }
         }
     }

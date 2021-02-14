@@ -14,5 +14,10 @@
             base.Init(game);
             Execute(game);
         }
+
+        public override bool CanMessage(GameRoom game, Role role)
+        {
+            return false;
+        }
     }
 }

@@ -18,9 +18,11 @@ import Views.ViewModal
 import Views.ViewWinners
 import Views.ViewPlayerNotification
 import Views.ViewRoleInfo
+import Views.ViewChat
 
 import Browser
 import Browser.Navigation
+import Browser.Dom
 import Html exposing (Html, div, text)
 import Html.Attributes as HA exposing (class)
 import Url exposing (Url)
@@ -58,8 +60,9 @@ type Msg
     | WrapEditor Views.ViewRoomEditor.Msg
     | WrapPhase Views.ViewGamePhase.Msg
     | WrapError Int
-    | WrapSelectModal Model.Modal
+    | WrapSelectModal Views.ViewSettingsBar.Msg
     | WrapThemeEditor Views.ViewThemeEditor.Msg
+    | WrapChat Views.ViewChat.Msg
     | CloseModal
     | WsMsg (Result JD.Error WebSocket.WebSocketMsg)
 
@@ -163,6 +166,11 @@ view model lang =
                 <| model.game == Nothing || model.roles == Nothing
             )
         |> Maybe.withDefault (text "")
+    , case (model.chatView, Maybe.andThen .game model.game) of
+        (Just input, Just game) -> 
+            Views.ViewChat.view lang game model.chats input
+                |> Html.map WrapChat
+        _ -> text ""
     , case model.modal of
         Model.NoModal -> text ""
         Model.SettingsModal conf ->
@@ -216,17 +224,18 @@ view model lang =
 
 viewEvents : List (Bool, String) -> Html msg
 viewEvents events =
-    div [ class "event-list" ]
-        <| List.map
-            (\(used, content) ->
-                div [ HA.classList
-                        [ ("event-item", True)
-                        , ("used", used)
-                        ]
-                    ]
-                    [ text content ]
-            )
-            events
+    -- div [ class "event-list" ]
+    --     <| List.map
+    --         (\(used, content) ->
+    --             div [ HA.classList
+    --                     [ ("event-item", True)
+    --                     , ("used", used)
+    --                     ]
+    --                 ]
+    --                 [ text content ]
+    --         )
+    --         events
+    text ""
 
 tryViewGameFrame : Model -> Language -> Maybe (Html Msg)
 tryViewGameFrame model lang =
@@ -408,8 +417,17 @@ update msg model =
                     <| model.errors
                 }
                 Cmd.none
-        WrapSelectModal modal ->
+        WrapSelectModal (Views.ViewSettingsBar.ViewModal modal) ->
             Tuple.pair { model | modal = modal } Cmd.none
+        WrapSelectModal Views.ViewSettingsBar.ViewChat ->
+            Tuple.pair 
+                { model 
+                | chatView = Just ""
+                , chats = List.map
+                    (\chat -> { chat | shown = True })
+                    model.chats
+                } 
+                Cmd.none
         WrapThemeEditor sub ->
             case model.modal of
                 Model.SettingsModal editor ->
@@ -431,6 +449,26 @@ update msg model =
                             )
                             sendEvents
                 _ -> (model, Cmd.none)
+        WrapChat (Views.ViewChat.SetInput input) ->
+            Tuple.pair
+                { model | chatView = Just input }
+                Cmd.none
+        WrapChat (Views.ViewChat.Send input) ->
+            Tuple.pair
+                { model | chatView = Just "" }
+                <| Cmd.map Response
+                <| Network.executeRequest
+                <| Network.PostChat model.token
+                    (model.game
+                        |> Maybe.andThen .game
+                        |> Maybe.andThen .phase
+                        |> Maybe.map .langId
+                    )
+                    input
+        WrapChat Views.ViewChat.Close ->
+            Tuple.pair
+                { model | chatView = Nothing }
+                Cmd.none
         CloseModal ->
             ({ model | modal = Model.NoModal }, Cmd.none)
         WsMsg (Ok (WebSocket.Data d)) ->
@@ -447,10 +485,34 @@ update msg model =
                     |> Result.toMaybe
                     |> Maybe.map (JE.encode 2)
                     |> Maybe.withDefault d.data
+
+                doScroll : String -> Cmd Msg
+                doScroll id =
+                    Browser.Dom.getViewportOf id
+                        |> Task.andThen
+                            (\info ->
+                                Browser.Dom.setViewportOf
+                                    id
+                                    0
+                                    info.scene.height
+                            )
+                        |> Task.attempt
+                            (always Noop)
+
+                doScrollIfNewChat : (Model, Cmd Msg) -> (Model, Cmd Msg)
+                doScrollIfNewChat (newModel,newMsg) =
+                    if newModel.chats /= model.chats
+                    then Tuple.pair newModel
+                        <| Cmd.batch
+                            [ newMsg
+                            , doScroll "chat-box-history"
+                            ]
+                    else (newModel, newMsg)
                     
             in case decodedData of
                 Ok data ->
-                    Tuple.mapSecond
+                    doScrollIfNewChat
+                    <| Tuple.mapSecond
                         (List.map
                             (Network.executeRequest
                                 >> Cmd.map Response

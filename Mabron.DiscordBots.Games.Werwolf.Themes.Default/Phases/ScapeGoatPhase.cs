@@ -109,5 +109,10 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
                 RemoveVoting(voting);
             }
         }
+
+        public override bool CanMessage(GameRoom game, Role role)
+        {
+            return true;
+        }
     }
 }

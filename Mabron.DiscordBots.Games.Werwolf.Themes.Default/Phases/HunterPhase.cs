@@ -50,5 +50,10 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
 
         protected override bool FilterVoter(Hunter role)
             => !role.IsAlive && !role.HasKilled;
+
+        public override bool CanMessage(GameRoom game, Role role)
+        {
+            return true;
+        }
     }
 }

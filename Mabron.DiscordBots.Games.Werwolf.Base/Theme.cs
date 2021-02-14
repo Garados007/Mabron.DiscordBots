@@ -32,7 +32,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
         public abstract IEnumerable<Role> GetRoleTemplates();
 
-        public abstract PhaseFlow GetPhases();
+        public abstract PhaseFlow GetPhases(IDictionary<Role, int> roles);
 
         public abstract IEnumerable<WinConditionCheck> GetWinConditions();
 
@@ -59,6 +59,11 @@ namespace Mabron.DiscordBots.Games.Werwolf
             }
             error = null;
             return true;
+        }
+
+        public virtual void PostInit(GameRoom game)
+        {
+
         }
     }
 }

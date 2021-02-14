@@ -12,7 +12,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default
         }
 
         public override Role GetBasicRole()
-            => new Roles.Villager(this);
+            => new Roles.Unknown(this);
 
         public override IEnumerable<Role> GetRoleTemplates()
         {
@@ -28,9 +28,13 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default
             yield return new Roles.OldMan(this);
             yield return new Roles.ScapeGoat(this);
             yield return new Roles.Flutist(this);
+            yield return new Roles.PureSoul(this);
+            yield return new Roles.TwoSisters(this);
+            yield return new Roles.ThreeBrothers(this);
+            yield return new Roles.Angel(this);
         }
 
-        public override PhaseFlow GetPhases()
+        public override PhaseFlow GetPhases(IDictionary<Role, int> roles)
         {
             // init stages
             var nightStage = new Stages.NightStage();
@@ -58,36 +62,65 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default
                 return phases.BuildGroup() ?? throw new InvalidOperationException();
             }
 
-            static PhaseFlow.PhaseGroup DailyLoop(Stage night, Stage morning, Stage day, Stage afternoon)
+            static PhaseFlow.PhaseGroup DailyLoop(Stage night, Stage morning, Stage day, Stage afternoon, IDictionary<Role, int> roles)
             {
                 var phases = new PhaseFlowBuilder();
 
-                // add night phases
-                phases.Add(night);
-                phases.Add(new Phase[]
+                void AddNight()
                 {
-                    new Phases.HealerPhase(),
-                    new Phases.OraclePhase(),
-                    new Phases.WerwolfPhase(),
-                    new Phases.WitchPhase(),
-                    new Phases.FlutistPhase(),
-                });
 
-                // add morning phases
-                phases.Add(morning);
-                phases.Add(KillHandling(morning));
+                    // add night phases
+                    phases.Add(night);
+                    phases.Add(new Phase[]
+                    {
+                        new Phases.HealerPhase(),
+                        new Phases.OraclePhase(),
+                        new Phases.WerwolfPhase(),
+                        new Phases.WitchPhase(),
+                        new Phases.FlutistPhase(),
+                        new Phases.TwoSisterDiscussionPhase(),
+                        new Phases.ThreeBrotherDiscussionPhase(),
+                    });
 
-                // add day phases
-                phases.Add(day);
-                phases.Add(new Phase[]
+                    // add morning phases
+                    phases.Add(morning);
+                    phases.Add(KillHandling(morning));
+                    phases.Add(new Phases.AngelMiss());
+                }
+                void AddDay()
                 {
-                    new Phases.ElectMajorPhase(),
-                    new Phases.DailyVictimElectionPhase(),
-                });
 
-                // add afternoon phases
-                phases.Add(afternoon);
-                phases.Add(KillHandling(afternoon));
+                    // add day phases
+                    phases.Add(day);
+                    phases.Add(new Phase[]
+                    {
+                        new Phases.ElectMajorPhase(),
+                        new Phases.DailyVictimElectionPhase(),
+                    });
+
+                    // add afternoon phases
+                    phases.Add(afternoon);
+                    phases.Add(KillHandling(afternoon));
+                }
+
+                bool HasAngel()
+                {
+                    foreach (var (role, count) in roles)
+                        if (role is Roles.Angel)
+                            return count > 0;
+                    return false;
+                }
+
+                if (HasAngel())
+                {
+                    AddDay();
+                    AddNight();
+                }
+                else
+                {
+                    AddNight();
+                    AddDay();
+                }
 
                 // return
                 return phases.BuildGroup() ?? throw new InvalidOperationException();
@@ -98,15 +131,25 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default
             phases.Add(nightStage);
             phases.Add(new Phases.AmorPhase());
 
-            phases.Add(DailyLoop(nightStage, morningStage, dayStage, afternoonStage));
+            phases.Add(DailyLoop(nightStage, morningStage, dayStage, afternoonStage, roles));
 
             return phases.BuildPhaseFlow() ?? throw new InvalidOperationException();
         }
 
         public override IEnumerable<WinConditionCheck> GetWinConditions()
         {
+            yield return AngelDied;
             yield return OnlyLovedOnes;
             yield return OnlyEnchanted;
+        }
+
+        public bool AngelDied(GameRoom game, [NotNullWhen(true)] out ReadOnlyMemory<Role>? winner)
+        {
+            winner = game.Participants.Values
+                .Where(x => x is Roles.Angel angel && angel.KillState == KillState.Killed && !angel.MissedFirstRound)
+                .Cast<Role>()
+                .ToArray();
+            return winner.Value.Length > 0;
         }
 
         static bool OnlyLovedOnes(GameRoom game, [NotNullWhen(true)] out ReadOnlyMemory<Role>? winner)
@@ -132,6 +175,41 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default
             winner = game.Participants.Values
                 .Where(x => x is Roles.Flutist).Cast<Role>().ToArray();
             return true;
+        }
+
+        public override bool CheckRoleUsage(Role role, ref int count, int oldCount, [NotNullWhen(false)] out string? error)
+        {
+            if (role is Roles.TwoSisters)
+            {
+                if (count < 0)
+                    count = 0;
+                else if (count > 2)
+                    count = 2;
+                else if (count > 0 && count < 2)
+                {
+                    if (oldCount < count)
+                        count = 2;
+                    else count = 0;
+                }
+                error = null;
+                return true;
+            }
+            if (role is Roles.ThreeBrothers)
+            {
+                if (count < 0)
+                    count = 0;
+                else if (count > 3)
+                    count = 3;
+                else if (count > 0 && count < 3)
+                {
+                    if (oldCount < count)
+                        count = 3;
+                    else count = 0;
+                }
+                error = null;
+                return true;
+            }
+            return base.CheckRoleUsage(role, ref count, oldCount, out error);
         }
     }
 }

@@ -57,6 +57,11 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
 
             protected override WerwolfVote Create(GameRoom game, IEnumerable<ObjectId>? ids = null)
                 => new WerwolfVote(game, ids);
+
+            public override bool CanMessage(GameRoom game, Role role)
+            {
+                return role is WerwolfBase;
+            }
         }
 
         public class GirlVote : Voting
@@ -112,6 +117,11 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
 
             protected override Girl GetRole(GirlVote voting)
                 => voting.Girl;
+
+            public override bool CanMessage(GameRoom game, Role role)
+            {
+                return role is WerwolfBase;
+            }
         }
 
         public override void RemoveVoting(Voting voting)

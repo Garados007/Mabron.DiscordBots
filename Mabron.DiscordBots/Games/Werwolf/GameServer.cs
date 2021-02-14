@@ -74,12 +74,6 @@ namespace Mabron.DiscordBots.Games.Werwolf
             {
                 RestActionEndpoint.Create(RolesAsync)
                     .Add(fact.Location(fact.UrlConstant("roles"), fact.MaxLength())),
-                RestActionEndpoint.Create<string>(RolesAsync, "type")
-                    .Add(fact.Location(
-                        fact.UrlConstant("roles"),
-                        fact.UrlArgument("type"),
-                        fact.MaxLength()
-                     )),
                 RestActionEndpoint.Create<string>(GameAsync, "token")
                     .Add(fact.Location(
                         fact.UrlConstant("game"), 
@@ -169,6 +163,15 @@ namespace Mabron.DiscordBots.Games.Werwolf
                         fact.UrlArgument<ObjectId>("user", TryParseObjectId),
                         fact.MaxLength()
                     )),
+                RestActionEndpoint.Create<string, string?, UrlEncodedData>(MessageAsync, "token", "phase", "message")
+                    .Add(fact.Location(
+                        fact.UrlConstant("game"),
+                        fact.UrlArgument("token"),
+                        fact.UrlConstant("chat"),
+                        fact.MaxLength()
+                    ))
+                    .Add(fact.Optional(fact.GetArgument("phase")))
+                    .Add(new PostRule("message")),
             });
             server.AddWebService(api);
 
@@ -192,29 +195,6 @@ namespace Mabron.DiscordBots.Games.Werwolf
         }
 
         private static async Task<HttpDataSource> RolesAsync()
-        {
-            var stream = new MemoryStream();
-            var writer = new Utf8JsonWriter(stream);
-            writer.WriteStartObject();
-
-            var theme = new DefaultTheme(null);
-            writer.WriteStartArray(theme.GetType().FullName ?? "");
-            foreach (var template in theme.GetRoleTemplates())
-            {
-                writer.WriteStringValue(template.GetType().Name);
-            }
-            writer.WriteEndArray();
-
-            writer.WriteEndObject();
-            await writer.FlushAsync();
-            stream.Position = 0;
-            return new HttpStreamDataSource(stream)
-            {
-                MimeType = MimeType.ApplicationJson,
-            };
-        }
-
-        private static async Task<HttpDataSource> RolesAsync(string themeType)
         {
             var stream = new MemoryStream();
             var writer = new Utf8JsonWriter(stream);
@@ -358,7 +338,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                     writer.WriteStartObject("user-config");
                     writer.WriteString("theme", userConfig.ThemeColor ?? "#ffffff");
                     writer.WriteString("background", userConfig.BackgroundImage ?? "");
-                    writer.WriteString("language", userConfig.Language ?? "");
+                    writer.WriteString("language", string.IsNullOrEmpty(userConfig.Language) ? "de" : userConfig.Language);
                     writer.WriteEndObject();
                 }
                 else writer.WriteNull("user-config");
@@ -433,7 +413,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
                                     else newConfig.Add(entry, count);
                                 }
                                 else return $"unknown role '{role}'";
-                            foreach (var (role, newCount) in newConfig)
+                            foreach (var (role, newCount) in newConfig.ToArray())
                             {
                                 var count = newCount;
                                 if (!game.Theme!.CheckRoleUsage(role, ref count, 
@@ -551,9 +531,17 @@ namespace Mabron.DiscordBots.Games.Werwolf
                         game.AutoFinishVotings = autoFinishVotings;
                         game.UseVotingTimeouts = votingTimeout;
                         game.AutoFinishRounds = autoFinishRounds;
+                        if (game.Theme != theme)
+                        {
+                            foreach (var key in game.Participants.Keys)
+                                game.Participants[key] = null;
+                            game.RoleConfiguration.Clear();
+                        }
                         game.Theme = theme;
                         if (game.Theme != null && themeLang != null)
+                        {
                             game.Theme.LanguageTheme = themeLang;
+                        }
                     }
                     catch (Exception e)
                     {
@@ -980,6 +968,42 @@ namespace Mabron.DiscordBots.Games.Werwolf
                 return null;
             }
             writer.WriteString("error", Do(token, user));
+
+            writer.WriteEndObject();
+            await writer.FlushAsync();
+            stream.Position = 0;
+            return new HttpStreamDataSource(stream)
+            {
+                MimeType = MimeType.ApplicationJson,
+            };
+        }
+
+        public static async Task<HttpDataSource> MessageAsync(string token, string? phase, UrlEncodedData message)
+        {
+            var stream = new MemoryStream();
+            var writer = new Utf8JsonWriter(stream);
+            writer.WriteStartObject();
+
+            static string? Do(string token, string? phase, string message)
+            {
+                var result = GameController.Current.GetFromToken(token);
+                if (result == null)
+                    return "token not found";
+
+                var (game, user) = result.Value;
+                var currentPhase = game.Phase?.Current;
+                var current = currentPhase?.LanguageId;
+                var role = game.TryGetRole(user.Id);
+                var allowed = (user.Id == game.Leader && !game.LeaderIsPlayer) ||
+                    currentPhase == null ||
+                    (current == phase && role != null && currentPhase.CanMessage(game, role));
+                game.SendEvent(new Events.ChatEvent(user.Id, phase, message, allowed));
+
+                return null;
+            }
+            if (message.Parameter.TryGetValue("message", out string? value))
+                writer.WriteString("error", Do(token, phase, value));
+            else writer.WriteString("error", "no message set");
 
             writer.WriteEndObject();
             await writer.FlushAsync();

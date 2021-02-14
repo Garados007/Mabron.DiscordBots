@@ -42,5 +42,10 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
 
         protected override HealerVote Create(GameRoom game, IEnumerable<ObjectId>? ids = null)
             => new HealerVote(game, ids);
+
+        public override bool CanMessage(GameRoom game, Role role)
+        {
+            return role is Roles.Healer;
+        }
     }
 }

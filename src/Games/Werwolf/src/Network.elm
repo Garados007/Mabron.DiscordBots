@@ -13,6 +13,8 @@ import Http
 import Dict exposing (Dict)
 import Url
 import Language exposing (Language, LanguageInfo)
+import Http
+import Http
 
 type NetworkRequest
     = GetRoles
@@ -30,6 +32,7 @@ type NetworkRequest
     | GetGameNext String
     | GetGameStop String
     | GetUserKick String String
+    | PostChat String (Maybe String) String
 
 type NetworkResponse
     = RespRoles Data.RoleTemplates
@@ -96,6 +99,8 @@ executeRequest request =
         GetGameStop token -> getGameStop token
             |> mapRespError
         GetUserKick token user -> getUserKick token user
+            |> mapRespError
+        PostChat token phase message -> postChat token phase message
             |> mapRespError
 
 type alias Response a = Result Http.Error a
@@ -319,4 +324,16 @@ getLang (k1, k2, k3) =
         { url = "/content/games/werwolf/lang/" ++ k1 ++ "/" ++ k2 ++
             "/" ++ k3 ++ ".json"
         , expect = Http.expectJson identity Language.decodeLanguage
+        }
+
+postChat : String -> Maybe String -> String -> Cmd (Response Data.Error)
+postChat token phase message =
+    Http.post
+        { url = (++) ("/api/game/" ++ token ++ "/" ++ "/chat")
+            <| Maybe.withDefault ""
+            <| Maybe.map ((++) "?phase=" << Url.percentEncode) phase
+        , body = Http.stringBody "application/x-www-form-urlencoded"
+            <| (++) "message="
+            <| Url.percentEncode message
+        , expect = Http.expectJson identity Data.decodeError
         }

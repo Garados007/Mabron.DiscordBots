@@ -46,5 +46,10 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
 
         protected override OraclePick Create(GameRoom game, IEnumerable<ObjectId>? ids = null)
             => new OraclePick(game, ids);
+
+        public override bool CanMessage(GameRoom game, Role role)
+        {
+            return role is Roles.Oracle;
+        }
     }
 }

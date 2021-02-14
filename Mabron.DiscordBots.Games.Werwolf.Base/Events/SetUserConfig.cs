@@ -24,7 +24,7 @@ namespace Mabron.DiscordBots.Games.Werwolf.Events
                 writer.WriteStartObject("user-config");
                 writer.WriteString("theme", userConfig.ThemeColor ?? "#ffffff");
                 writer.WriteString("background", userConfig.BackgroundImage ?? "");
-                writer.WriteString("language", userConfig.Language ?? "");
+                writer.WriteString("language", string.IsNullOrEmpty(userConfig.Language) ? "de" : userConfig.Language);
                 writer.WriteEndObject();
             }
             else writer.WriteNull("user-config");

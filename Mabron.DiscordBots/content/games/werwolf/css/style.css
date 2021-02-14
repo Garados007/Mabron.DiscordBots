@@ -6,6 +6,7 @@
 @import url("editor.css");
 @import url("winner-box.css");
 @import url("player-notification.css");
+@import url("chat-box.css");
 
 :root {
   /* the default base color of the page */
@@ -19,6 +20,8 @@
   --text-color-light: #666;
   /* the inverted text color */
   --text-inv-color: #fff;
+  /* the highlight text color */
+  --text-hightlight: #000;
 
   /* a light color for some light backgrounds */
   --color-light: #ccc;
@@ -28,6 +31,7 @@
   /* a dark color for backgrounds, shadows and borders */
   --color-dark: #888;
   --color-dark-transparent: #888b;
+  --color-dark-semitransparent: #888d;
   /* a more darker color for some dark active backgrounds */
   --color-darker: #444;
   --color-darker-transparent: #444b;
@@ -304,14 +308,52 @@ body {
   right: 0.5em;
   z-index: 1;
   display: flex;
-  flex-direction: row-reverse;
+  flex-direction: column;
 }
 .settings-bar svg {
   height: 2em;
   width: 2em;
   fill: var(--color-medium);
   cursor: pointer;
+  margin: 0 0 0.75em;
 }
 .settings-bar svg:hover {
   fill: var(--color-darker);
+}
+.settings-bar svg .hightlight {
+  fill: var(--text-hightlight);
+}
+@media (max-width: 900px) {
+  .frame-game-outer {
+    flex-direction: column;
+    height: unset;
+  }
+  .frame-game-left {
+    width: unset;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    padding-right: 3em;
+  }
+  .user-container {
+    flex: 0 1 20em;
+  }
+  .frame-game-body {
+    position: unset;
+  }
+  .phase-header,
+  .phase-controls {
+    flex-direction: column-reverse;
+    width: unset;
+  }
+  .phase-controls > *:nth-child(1) {
+    border-top: 0.05em solid var(--color-dark);
+  }
+  .theme-editor .pane:not(.countries) {
+    flex-direction: column;
+  }
+  .chat-box {
+    position: fixed;
+  }
 }

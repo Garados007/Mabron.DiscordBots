@@ -141,7 +141,7 @@ namespace Mabron.DiscordBots.Games.Werwolf
             ExecutionRound++;
             SendEvent(new Events.GameStart());
             // Setup phases
-            Phase = Theme?.GetPhases();
+            Phase = Theme?.GetPhases(RoleConfiguration);
             if (Phase != null && (!Phase.Current.IsGamePhase || !Phase.Current.CanExecute(this)))
                 NextPhase();
             // update user cache
@@ -150,6 +150,8 @@ namespace Mabron.DiscordBots.Games.Werwolf
                 UserCache[user] = Theme.User!.Query()
                     .Where(x => x.Id == user)
                     .First();
+            // post init
+            Theme?.PostInit(this);
         }
 
         public void StopGame(ReadOnlyMemory<Role>? winner)

@@ -2,7 +2,7 @@ module Views.ViewRoomEditor exposing (..)
 
 import Data
 import Network exposing (NetworkRequest(..), EditGameConfig, editGameConfig)
-import Model exposing (getSelectedLanguage)
+import Model
 
 import Html exposing (Html, div, text)
 import Html.Attributes as HA exposing (class)
@@ -10,8 +10,6 @@ import Html.Events as HE
 import Dict exposing (Dict)
 import Maybe.Extra
 import Language exposing (Language, LanguageInfo)
-import Html
-import Svg.Attributes
 import Json.Decode as JD
 import Json.Encode as JE
 
@@ -202,8 +200,7 @@ view lang langInfo roles gameResult theme game editable buffer =
                 (\((tk1, tk2), value) ->
                     Html.option
                         [ HA.selected
-                            <| Debug.log "selected"
-                            <| (tk1, tk2) == (Debug.log "theme" game.theme)
+                            <| (tk1, tk2) == game.theme
                         , HA.value 
                             <| JE.encode 0
                             <| JE.list JE.string

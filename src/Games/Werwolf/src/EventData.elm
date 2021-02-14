@@ -11,6 +11,7 @@ import Time exposing (Posix)
 type EventData
     = AddParticipant String GameUser
     | AddVoting GameVoting
+    | ChatEvent Data.ChatMessage
     | GameEnd (Maybe (List String))
     | GameStart (Dict String (Maybe GameParticipant))
     | MultiPlayerNotification (Dict String (List String))
@@ -80,6 +81,8 @@ decodeEventData =
                         )
                     |> JD.map AddVoting
                     |> JD.field "voting"
+                "ChatEvent" ->
+                    JD.map ChatEvent Data.decodeChatMessage
                 "GameEnd" ->
                     JD.map GameEnd
                     <| JD.field "winner"

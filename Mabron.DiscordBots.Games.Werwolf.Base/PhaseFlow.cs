@@ -16,6 +16,11 @@ namespace Mabron.DiscordBots.Games.Werwolf
             {
                 return true;
             }
+
+            public override bool CanMessage(GameRoom game, Role role)
+            {
+                return false;
+            }
         }
 
         private sealed class InitialStage : Stage

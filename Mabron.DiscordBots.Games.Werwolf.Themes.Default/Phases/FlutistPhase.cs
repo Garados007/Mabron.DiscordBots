@@ -95,5 +95,10 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
                 AddVoting(picks[index] = new FlutistPick(game, ids));
             RemoveVoting(voting);
         }
+
+        public override bool CanMessage(GameRoom game, Role role)
+        {
+            return role is Roles.Flutist;
+        }
     }
 }

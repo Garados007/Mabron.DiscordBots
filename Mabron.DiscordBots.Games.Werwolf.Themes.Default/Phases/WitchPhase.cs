@@ -92,6 +92,11 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
             {
                 base.RemoveVoting(voting);
             }
+
+            public override bool CanMessage(GameRoom game, Role role)
+            {
+                return role is Witch;
+            }
         }
 
         public class WitchKillPhase : SeperateVotingPhase<WitchKill, Witch>
@@ -104,6 +109,11 @@ namespace Mabron.DiscordBots.Games.Werwolf.Themes.Default.Phases
 
             protected override Witch GetRole(WitchKill voting)
                 => voting.Witch;
+
+            public override bool CanMessage(GameRoom game, Role role)
+            {
+                return role is Witch;
+            }
         }
 
         public override bool CanExecute(GameRoom game)

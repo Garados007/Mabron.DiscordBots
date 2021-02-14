@@ -19,6 +19,8 @@ namespace Mabron.DiscordBots.Games.Werwolf
 
         public abstract bool CanExecute(GameRoom game);
 
+        public abstract bool CanMessage(GameRoom game, Role role);
+
         public virtual void Init(GameRoom game)
         {
             votings.Clear();
@@ -53,6 +55,5 @@ namespace Mabron.DiscordBots.Games.Werwolf
         {
 
         }
-        
     }
 }

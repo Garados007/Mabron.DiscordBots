@@ -1,5 +1,6 @@
 module Data exposing
-    ( Error
+    ( ChatMessage
+    , Error
     , Game
     , GameParticipant
     , GamePhase
@@ -11,6 +12,7 @@ module Data exposing
     , GameVotingOption
     , RoleTemplates
     , UserConfig
+    , decodeChatMessage
     , decodeError
     , decodeGameUserResult
     , decodeRoleTemplates
@@ -201,3 +203,22 @@ decodeError =
     JD.field "error"
         <| JD.nullable
         <| JD.string
+
+type alias ChatMessage =
+    { time: Posix
+    , sender: String
+    , phase: Maybe String
+    , message: String
+    , canSend: Bool
+    , shown: Bool
+    }
+
+decodeChatMessage : Decoder ChatMessage
+decodeChatMessage =
+    JD.succeed ChatMessage
+        |> Json.Decode.Pipeline.hardcoded (Time.millisToPosix 0)
+        |> required "sender" JD.string
+        |> required "phase" (JD.nullable JD.string)
+        |> required "message" JD.string
+        |> required "can-send" JD.bool
+        |> Json.Decode.Pipeline.hardcoded False
